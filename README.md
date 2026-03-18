@@ -8,8 +8,8 @@ glassware detects steganographic payloads, invisible Unicode characters, and bid
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/samgrowls/glassworm.git
-cd glassworm
+git clone https://github.com/samgrowls/glassworks.git
+cd glassworks
 
 # 2. Build the project (debug mode for development)
 cargo build
