@@ -49,7 +49,7 @@ class NPMSelector:
         days_back: int = 30,
         download_threshold: int = 1000,
         max_packages: int = 100,
-        rate_limit_delay: float = 0.5,
+        rate_limit_delay: float = 0.2,  # Reduced for faster testing
     ):
         self.days_back = days_back
         self.download_threshold = download_threshold
@@ -136,9 +136,14 @@ class NPMSelector:
 
     def _has_install_scripts(self, metadata: dict) -> tuple[bool, list[str]]:
         """Check if package has preinstall/postinstall scripts."""
-        scripts = metadata.get("scripts", {})
+        # Check in the latest version's scripts (most reliable location)
+        dist_tags = metadata.get("dist-tags", {})
+        latest_version = dist_tags.get("latest", "")
+        versions = metadata.get("versions", {})
+        version_data = versions.get(latest_version, {})
+        scripts = version_data.get("scripts", {})
+        
         install_scripts = []
-
         for script_name in ["preinstall", "postinstall", "install"]:
             if script_name in scripts:
                 install_scripts.append(script_name)
@@ -157,11 +162,10 @@ class NPMSelector:
 
         dist = version_data.get("dist", {})
         tarball_url = dist.get("tarball", "")
-        publish_time = dist.get("publish_time")
-
-        # Fallback for publish time
-        if not publish_time:
-            publish_time = version_data.get("publish-time", "")
+        
+        # Get publish time from the time field (more reliable than dist.publish_time)
+        time_field = metadata.get("time", {})
+        publish_time = time_field.get(latest_version)
 
         return latest_version, tarball_url, publish_time
 
@@ -265,8 +269,8 @@ class NPMSelector:
             List of PackageCandidate objects matching criteria.
         """
         if search_queries is None:
-            # Broad search for recently published packages
-            search_queries = ["", "util", "helper", "tools", "dev", "cli"]
+            # Focused search for packages likely to have install scripts
+            search_queries = ["preinstall", "postinstall", "node-gyp", "bindings", "install"]
 
         console.print(
             f"\n[bold blue]Searching npm for Tier 1 candidates...[/bold blue]"
@@ -277,13 +281,17 @@ class NPMSelector:
 
         candidates: list[PackageCandidate] = []
         seen_names: set[str] = set()
+        evaluated = 0
+        no_scripts = 0
+        too_old = 0
+        too_popular = 0
 
         for query in search_queries:
             if len(candidates) >= self.max_packages:
                 break
 
-            console.print(f"\n[dim]Search query: '{query or '(empty)'}'[/dim]")
-            packages = await self.search_packages(query, size=250)
+            console.print(f"\n[dim]Search query: '{query}'[/dim]")
+            packages = await self.search_packages(query, size=50)
 
             for pkg_obj in packages:
                 if len(candidates) >= self.max_packages:
@@ -294,6 +302,15 @@ class NPMSelector:
                     continue
 
                 seen_names.add(name)
+                evaluated += 1
+                
+                # Show progress
+                if evaluated % 10 == 0:
+                    console.print(
+                        f"  [dim]Evaluated {evaluated} packages, found {len(candidates)} "
+                        f"(no_scripts={no_scripts}, too_old={too_old}, too_popular={too_popular})...[/dim]"
+                    )
+                
                 candidate = await self.evaluate_package(pkg_obj)
 
                 if candidate:
@@ -303,9 +320,28 @@ class NPMSelector:
                         f"[dim]({candidate.downloads_weekly} downloads/wk, "
                         f"scripts: {', '.join(candidate.scripts)})[/dim]"
                     )
+                else:
+                    # Track why it was rejected
+                    metadata = await self.get_package_metadata(name)
+                    if metadata:
+                        has_scripts, scripts = self._has_install_scripts(metadata)
+                        if not has_scripts:
+                            no_scripts += 1
+                        else:
+                            _, _, publish_time = self._get_latest_version_metadata(metadata)
+                            is_recent, _ = self._is_recently_published(publish_time)
+                            if not is_recent:
+                                too_old += 1
+                            else:
+                                downloads = await self.get_download_count(name)
+                                if downloads >= self.download_threshold:
+                                    too_popular += 1
 
         console.print(
-            f"\n[bold]Found {len(candidates)} Tier 1 candidates[/bold]"
+            f"\n[bold]Found {len(candidates)} Tier 1 candidates from {evaluated} evaluated[/bold]"
+        )
+        console.print(
+            f"[dim]Rejected: no_scripts={no_scripts}, too_old={too_old}, too_popular={too_popular}[/dim]"
         )
         return candidates
 

@@ -18,6 +18,8 @@
 use crate::config::UnicodeConfig;
 use crate::detector::Detector;
 use crate::finding::{DetectionCategory, Finding, Severity};
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::path::Path;
 
 /// Minimum length for high-entropy blob detection
@@ -25,6 +27,24 @@ const MIN_BLOB_LENGTH: usize = 64;
 
 /// Entropy threshold for detecting encrypted/encoded content
 const ENTROPY_THRESHOLD: f64 = 4.5;
+
+/// Lazy-compiled regex patterns for performance
+static HEX_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"[0-9a-fA-F]{64,}").unwrap());
+static BASE64_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"[A-Za-z0-9+/=]{64,}").unwrap());
+static STRING_LITERAL_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#""([^"]{64,})"|'([^']{64,})'"#).unwrap());
+static TEMPLATE_LITERAL_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"`([^`]{64,})`").unwrap());
+
+static EVAL_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\beval\s*\(").unwrap());
+static FUNCTION_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bnew\s+Function\s*\(").unwrap());
+static VM_RUN_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bvm\.runIn(NewContext|ThisContext)\s*\(").unwrap());
+static EXEC_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(exec|execSync)\s*\(").unwrap());
+static CHILD_PROCESS_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bchild_process\s*\+").unwrap());
 
 /// Detector for encrypted payload patterns (GW005)
 pub struct EncryptedPayloadDetector;
@@ -88,8 +108,7 @@ impl EncryptedPayloadDetector {
     /// Check if content contains a high-entropy blob
     fn detect_high_entropy_blob(&self, content: &str) -> bool {
         // Check for hex patterns: continuous hex chars >= 64
-        let hex_pattern = regex::Regex::new(r"[0-9a-fA-F]{64,}").unwrap();
-        for m in hex_pattern.find_iter(content) {
+        for m in HEX_PATTERN.find_iter(content) {
             let entropy = self.calculate_entropy(m.as_str().as_bytes());
             if entropy > ENTROPY_THRESHOLD {
                 return true;
@@ -97,8 +116,7 @@ impl EncryptedPayloadDetector {
         }
 
         // Check for base64 patterns: continuous base64 chars >= 64
-        let base64_pattern = regex::Regex::new(r"[A-Za-z0-9+/=]{64,}").unwrap();
-        for m in base64_pattern.find_iter(content) {
+        for m in BASE64_PATTERN.find_iter(content) {
             let entropy = self.calculate_entropy(m.as_str().as_bytes());
             if entropy > ENTROPY_THRESHOLD {
                 return true;
@@ -123,17 +141,15 @@ impl EncryptedPayloadDetector {
     /// Find the line number containing a high-entropy blob
     fn find_high_entropy_blob_line(&self, content: &str) -> Option<usize> {
         // Check for hex patterns
-        let hex_pattern = regex::Regex::new(r"[0-9a-fA-F]{64,}").unwrap();
         for (line_num, line) in content.lines().enumerate() {
-            if hex_pattern.is_match(line) {
+            if HEX_PATTERN.is_match(line) {
                 return Some(line_num + 1);
             }
         }
 
         // Check for base64 patterns
-        let base64_pattern = regex::Regex::new(r"[A-Za-z0-9+/=]{64,}").unwrap();
         for (line_num, line) in content.lines().enumerate() {
-            if base64_pattern.is_match(line) {
+            if BASE64_PATTERN.is_match(line) {
                 return Some(line_num + 1);
             }
         }
@@ -157,23 +173,14 @@ impl EncryptedPayloadDetector {
     fn find_dynamic_execution(&self, content: &str) -> Vec<usize> {
         let mut exec_lines = Vec::new();
 
-        let patterns = [
-            r"\beval\s*\(",
-            r"\bnew\s+Function\s*\(",
-            r"\bvm\.runInNewContext\s*\(",
-            r"\bvm\.runInThisContext\s*\(",
-            r"\bchild_process\s*\+",
-            r"\bexec\s*\(",
-            r"\bexecSync\s*\(",
-        ];
-
         for (line_num, line) in content.lines().enumerate() {
-            for pattern in &patterns {
-                let re = regex::Regex::new(pattern).unwrap();
-                if re.is_match(line) {
-                    exec_lines.push(line_num + 1);
-                    break;
-                }
+            if EVAL_PATTERN.is_match(line)
+                || FUNCTION_PATTERN.is_match(line)
+                || VM_RUN_PATTERN.is_match(line)
+                || EXEC_PATTERN.is_match(line)
+                || CHILD_PROCESS_PATTERN.is_match(line)
+            {
+                exec_lines.push(line_num + 1);
             }
         }
 
@@ -183,16 +190,15 @@ impl EncryptedPayloadDetector {
     /// Extract a string literal from a line of code
     fn extract_string_literal(&self, line: &str) -> Option<String> {
         // Match single-quoted, double-quoted, or template literals
-        let patterns = [
-            regex::Regex::new(r#"["']([^"']{64,})["']"#).unwrap(),
-            regex::Regex::new(r"`([^`]{64,})`").unwrap(),
-        ];
+        if let Some(caps) = STRING_LITERAL_PATTERN.captures(line) {
+            if let Some(m) = caps.get(1).or_else(|| caps.get(2)) {
+                return Some(m.as_str().to_string());
+            }
+        }
 
-        for pattern in &patterns {
-            if let Some(caps) = pattern.captures(line) {
-                if let Some(m) = caps.get(1) {
-                    return Some(m.as_str().to_string());
-                }
+        if let Some(caps) = TEMPLATE_LITERAL_PATTERN.captures(line) {
+            if let Some(m) = caps.get(1) {
+                return Some(m.as_str().to_string());
             }
         }
 

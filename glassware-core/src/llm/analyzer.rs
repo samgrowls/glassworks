@@ -120,21 +120,27 @@ impl OpenAiCompatibleAnalyzer {
         file_path: &Path,
         findings: &[Finding],
     ) -> Result<LlmVerdict, LlmError> {
-        // Truncate source if > 50,000 bytes
-        let (source_to_send, truncation_notice) = if source.len() > 50_000 {
-            // Find a valid UTF-8 boundary at ~50,000 bytes
+        // Truncate source if too large (configurable via env var, default 50,000 bytes)
+        let max_content_size: usize = std::env::var("GLASSWARE_LLM_MAX_CONTENT_SIZE")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(50_000);
+
+        let (source_to_send, truncation_notice) = if source.len() > max_content_size {
+            // Find a valid UTF-8 boundary at the limit
             let truncation_point = source
                 .char_indices()
-                .take(50_000)
+                .take(max_content_size)
                 .last()
                 .map(|(i, _)| i)
-                .unwrap_or(50_000);
+                .unwrap_or(max_content_size);
             let truncated = &source[..truncation_point];
             (
                 truncated,
                 format!(
-                    "\n// ... [truncated, original size: {} bytes]",
-                    source.len()
+                    "\n// ... [truncated, original size: {} bytes, max: {} bytes]",
+                    source.len(),
+                    max_content_size
                 ),
             )
         } else {

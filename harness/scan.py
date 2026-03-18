@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 import signal
+import sqlite3
 import subprocess
 import sys
 import tarfile
@@ -286,26 +287,22 @@ class Scanner:
         return candidates
 
     def scan_package(
-        self, candidate: PackageCandidate, run_id: str
-    ) -> tuple[int, Optional[str]]:
+        self, candidate: PackageCandidate, run_id: str, tarball_path: Path
+    ) -> tuple[int, Optional[str], Optional[dict]]:
         """
         Scan a single package.
 
         Returns:
             - Finding count
             - Vault path (if flagged)
+            - Raw glassware output data (for inserting findings)
         """
         name = candidate.name
         version = candidate.version
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
-            tarball_path = tmpdir / "package.tgz"
             extract_path = tmpdir / "extracted"
-
-            # Download tarball
-            if not download_tarball(candidate.tarball_url, tarball_path):
-                return 0, None
 
             # Calculate hash
             tarball_hash = sha256_file(tarball_path)
@@ -313,7 +310,7 @@ class Scanner:
             # Extract
             extract_path.mkdir()
             if not extract_tarball(tarball_path, extract_path):
-                return 0, None
+                return 0, None, None
 
             # Find package.json to get actual extracted dir
             package_dir = extract_path / "package"
@@ -343,7 +340,169 @@ class Scanner:
                     tarball_path, package_dir, name, version
                 )
 
-            return finding_count, vault_path
+            return finding_count, vault_path, output_data
+
+    def scan_package_with_tarball(
+        self, candidate: PackageCandidate, run_id: str, tarball_path: Path
+    ) -> tuple[int, Optional[str], Optional[dict]]:
+        """Wrapper for scan_package that takes tarball path."""
+        return self.scan_package(candidate, run_id, tarball_path)
+
+    def rescan_run(self, original_run_id: str) -> str:
+        """Re-scan flagged packages from a previous run, optionally with LLM."""
+        console.print(f"\n[bold blue]=== Re-scanning Run {original_run_id[:8]}... ===[/bold blue]")
+
+        # Get flagged packages from original run
+        flagged = self.db.get_flagged_packages(original_run_id)
+        if not flagged:
+            console.print("[yellow]No flagged packages found in that run[/yellow]")
+            return ""
+
+        console.print(f"Found {len(flagged)} flagged packages to re-scan")
+
+        # Create new scan run for re-scan results
+        filter_params = {"rescan_of": original_run_id, "with_llm": self.use_llm}
+        run_id = self.db.create_scan_run(
+            filter_params=filter_params,
+            glassware_version=self._get_glassware_version(),
+            notes=f"Re-scan of run {original_run_id}" + (" with LLM" if self.use_llm else ""),
+        )
+
+        packages_flagged = 0
+        self.total_packages = len(flagged)
+
+        try:
+            with Progress(
+                TextColumn("[bold blue]{task.description}"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TaskProgressColumn(),
+                TimeRemainingColumn(),
+                console=console,
+            ) as progress:
+                scan_task = progress.add_task(
+                    "Re-scanning packages", total=self.total_packages
+                )
+
+                for i, pkg in enumerate(flagged):
+                    if self.interrupted:
+                        break
+
+                    self.current_package = i + 1
+                    name = pkg["name"]
+                    version = pkg["version"]
+
+                    progress.update(
+                        scan_task,
+                        advance=1,
+                        description=f"[bold blue]Re-scanning {name}@{version}[/bold blue]",
+                    )
+
+                    start_time = time.time()
+
+                    # Download tarball from vault or re-download from npm
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        tmpdir = Path(tmpdir)
+                        tarball_path = tmpdir / "package.tgz"
+
+                        # Try vault first
+                        vault_path = pkg["vault_path"]
+                        if vault_path and Path(vault_path).exists():
+                            shutil.copy2(vault_path, tarball_path)
+                        else:
+                            # Re-download from npm
+                            tarball_url = pkg["tarball_url"]
+                            if not download_tarball(tarball_url, tarball_path):
+                                console.print(f"  [yellow]⚠ Download failed[/yellow]")
+                                continue
+
+                        tarball_hash = sha256_file(tarball_path)
+
+                        # Scan the package
+                        finding_count, vault_path_new, output_data = self.scan_package_with_tarball(
+                            PackageCandidate(
+                                name=name,
+                                version=version,
+                                tarball_url=pkg["tarball_url"],
+                                published_at=pkg["published_at"],
+                                author=pkg["author"],
+                                downloads_weekly=pkg["downloads_weekly"],
+                                has_install_scripts=pkg["has_install_scripts"],
+                                scripts=[],
+                            ),
+                            run_id,
+                            tarball_path,
+                        )
+
+                    scan_duration_ms = int((time.time() - start_time) * 1000)
+
+                    # Add to database (will fail on UNIQUE constraint if already exists, which is fine)
+                    try:
+                        package_id = self.db.add_package(
+                            run_id=run_id,
+                            name=name,
+                            version=version,
+                            tarball_url=pkg["tarball_url"],
+                            tarball_sha256=tarball_hash,
+                            published_at=pkg["published_at"],
+                            author=pkg["author"],
+                            downloads_weekly=pkg["downloads_weekly"],
+                            has_install_scripts=pkg["has_install_scripts"],
+                        )
+
+                        # Update with scan results
+                        self.db.update_package_scan(
+                            package_id=package_id,
+                            finding_count=finding_count,
+                            scan_duration_ms=scan_duration_ms,
+                            glassware_output="",
+                            vault_path=vault_path_new,
+                        )
+
+                        # Insert individual findings
+                        if output_data:
+                            findings = parse_glassware_findings(output_data)
+                            for finding in findings:
+                                self.db.add_finding(
+                                    package_id=package_id,
+                                    file_path=finding["file_path"],
+                                    line=finding["line"],
+                                    column=finding["column"],
+                                    rule_id=finding["rule_id"],
+                                    category=finding["category"],
+                                    severity=finding["severity"],
+                                    message=finding["message"],
+                                    confidence=finding["confidence"],
+                                    decoded_payload=finding["decoded_payload"],
+                                    raw_json="",
+                                )
+                    except sqlite3.IntegrityError:
+                        # Package already exists in this run - skip
+                        pass
+
+                    if finding_count > 0:
+                        packages_flagged += 1
+                        console.print(
+                            f"  [red]⚠ {finding_count} findings[/red] "
+                            f"[dim]({scan_duration_ms}ms)[/dim]"
+                        )
+                    else:
+                        console.print(
+                            f"  [green]✓ Clean[/green] [dim]({scan_duration_ms}ms)[/dim]"
+                        )
+
+        except ScanInterrupted:
+            console.print(
+                "\n[yellow]Re-scan interrupted. Finalizing run record...[/yellow]"
+            )
+
+        # Finalize run
+        self.db.finalize_scan_run(run_id, self.total_packages, packages_flagged)
+
+        # Print summary
+        self.print_summary(run_id)
+
+        return run_id
 
     def run(self) -> str:
         """Run the full scanning workflow."""
@@ -404,8 +563,21 @@ class Scanner:
 
                     start_time = time.time()
 
-                    # Scan the package
-                    finding_count, vault_path = self.scan_package(candidate, run_id)
+                    # Download tarball to temp dir and calculate hash
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        tmpdir = Path(tmpdir)
+                        tarball_path = tmpdir / "package.tgz"
+                        
+                        if not download_tarball(candidate.tarball_url, tarball_path):
+                            console.print(f"  [yellow]⚠ Download failed[/yellow]")
+                            continue
+                        
+                        tarball_hash = sha256_file(tarball_path)
+                        
+                        # Scan the package (includes extract + glassware run)
+                        finding_count, vault_path, output_data = self.scan_package_with_tarball(
+                            candidate, run_id, tarball_path
+                        )
 
                     scan_duration_ms = int((time.time() - start_time) * 1000)
 
@@ -430,6 +602,24 @@ class Scanner:
                         glassware_output="",  # Would need to capture this
                         vault_path=vault_path,
                     )
+
+                    # Insert individual findings
+                    if output_data:
+                        findings = parse_glassware_findings(output_data)
+                        for finding in findings:
+                            self.db.add_finding(
+                                package_id=package_id,
+                                file_path=finding["file_path"],
+                                line=finding["line"],
+                                column=finding["column"],
+                                rule_id=finding["rule_id"],
+                                category=finding["category"],
+                                severity=finding["severity"],
+                                message=finding["message"],
+                                confidence=finding["confidence"],
+                                decoded_payload=finding["decoded_payload"],
+                                raw_json="",  # Could store full finding JSON
+                            )
 
                     if finding_count > 0:
                         packages_flagged += 1
@@ -589,11 +779,9 @@ def main():
     if args.rescan:
         # Re-scan flagged packages from previous run
         console.print(f"[dim]Re-scanning flagged packages from run {args.rescan}[/dim]")
-        # TODO: Implement re-scan logic
-        console.print("[yellow]Re-scan not yet implemented[/yellow]")
-        return
-
-    run_id = scanner.run()
+        run_id = scanner.rescan_run(args.rescan)
+    else:
+        run_id = scanner.run()
 
     if run_id:
         console.print(f"\n[green]Scan complete. Run ID: {run_id}[/green]")

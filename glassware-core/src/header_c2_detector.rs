@@ -20,7 +20,52 @@
 use crate::config::UnicodeConfig;
 use crate::detector::Detector;
 use crate::finding::{DetectionCategory, Finding, Severity};
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::path::Path;
+
+/// Lazy-compiled regex patterns for performance
+static HTTP_GET_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bhttp\.get\s*\(").unwrap());
+static HTTPS_GET_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bhttps\.get\s*\(").unwrap());
+static FETCH_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bfetch\s*\(").unwrap());
+static AXIOS_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\baxios\.").unwrap());
+static REQUEST_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\brequest\s*\(").unwrap());
+static HTTPS_REQUEST_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bhttps\.request\s*\(").unwrap());
+
+static HEADERS_BRACKET_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bheaders\s*\[").unwrap());
+static HEADERS_GET_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bheaders\.get\s*\(").unwrap());
+static GET_HEADER_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bgetHeader\s*\(").unwrap());
+static RESPONSE_HEADERS_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bresponse\.headers").unwrap());
+static RES_HEADERS_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bres\.headers").unwrap());
+
+static CREATE_DECIPHERIV_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bcreateDecipheriv\s*\(").unwrap());
+static CREATE_DECIPHER_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bcreateDecipher\s*\(").unwrap());
+static CRYPTO_SUBTLE_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bcrypto\.subtle\.decrypt\s*\(").unwrap());
+static DECIPHER_UPDATE_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bdecipher\.update\s*\(").unwrap());
+static DECIPHER_FINAL_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bdecipher\.final\s*\(").unwrap());
+static DECRYPT_METHOD_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b\.decrypt\s*\(").unwrap());
+
+static EVAL_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\beval\s*\(").unwrap());
+static FUNCTION_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bnew\s+Function\s*\(").unwrap());
+static VM_RUN_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bvm\.runIn(NewContext|ThisContext)\s*\(").unwrap());
+static EXEC_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(exec|execSync|spawn)\s*\(").unwrap());
+static CHILD_PROCESS_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bchild_process\s*\+").unwrap());
 
 /// Detector for HTTP header C2 patterns (GW008)
 pub struct HeaderC2Detector;
@@ -87,52 +132,35 @@ impl HeaderC2Detector {
     /// Check if content contains HTTP header extraction patterns
     fn detect_http_header_extraction(&self, content: &str) -> bool {
         // Check for HTTP client usage
-        let http_patterns = [
-            r"\bhttp\.get\s*\(",
-            r"\bhttps\.get\s*\(",
-            r"\bfetch\s*\(",
-            r"\baxios\.",
-            r"\brequest\s*\(",
-            r"\bhttps\.request\s*\(",
-        ];
-
-        let has_http_client = http_patterns
-            .iter()
-            .any(|pattern| regex::Regex::new(pattern).unwrap().is_match(content));
+        let has_http_client = HTTP_GET_PATTERN.is_match(content)
+            || HTTPS_GET_PATTERN.is_match(content)
+            || FETCH_PATTERN.is_match(content)
+            || AXIOS_PATTERN.is_match(content)
+            || REQUEST_PATTERN.is_match(content)
+            || HTTPS_REQUEST_PATTERN.is_match(content);
 
         if !has_http_client {
             return false;
         }
 
         // Check for header access patterns
-        let header_patterns = [
-            r"\bheaders\s*\[",
-            r"\bheaders\.get\s*\(",
-            r"\bgetHeader\s*\(",
-            r"\bresponse\.headers",
-            r"\bres\.headers",
-        ];
-
-        header_patterns
-            .iter()
-            .any(|pattern| regex::Regex::new(pattern).unwrap().is_match(content))
+        HEADERS_BRACKET_PATTERN.is_match(content)
+            || HEADERS_GET_PATTERN.is_match(content)
+            || GET_HEADER_PATTERN.is_match(content)
+            || RESPONSE_HEADERS_PATTERN.is_match(content)
+            || RES_HEADERS_PATTERN.is_match(content)
     }
 
     /// Find the line number containing HTTP header access
     fn find_http_header_line(&self, content: &str) -> Option<usize> {
-        let header_patterns = [
-            r"\bheaders\s*\[",
-            r"\bheaders\.get\s*\(",
-            r"\bgetHeader\s*\(",
-            r"\bresponse\.headers",
-            r"\bres\.headers",
-        ];
-
         for (line_num, line) in content.lines().enumerate() {
-            for pattern in &header_patterns {
-                if regex::Regex::new(pattern).unwrap().is_match(line) {
-                    return Some(line_num + 1);
-                }
+            if HEADERS_BRACKET_PATTERN.is_match(line)
+                || HEADERS_GET_PATTERN.is_match(line)
+                || GET_HEADER_PATTERN.is_match(line)
+                || RESPONSE_HEADERS_PATTERN.is_match(line)
+                || RES_HEADERS_PATTERN.is_match(line)
+            {
+                return Some(line_num + 1);
             }
         }
 
@@ -142,18 +170,12 @@ impl HeaderC2Detector {
     /// Check if content contains decryption patterns
     fn detect_decryption(&self, content: &str) -> bool {
         // Check for crypto/decryption patterns
-        let crypto_patterns = [
-            r"\bcreateDecipheriv\s*\(",
-            r"\bcreateDecipher\s*\(",
-            r"\bcrypto\.subtle\.decrypt\s*\(",
-            r"\bdecipher\.update\s*\(",
-            r"\bdecipher\.final\s*\(",
-            r"\b\.decrypt\s*\(",
-        ];
-
-        let has_crypto = crypto_patterns
-            .iter()
-            .any(|pattern| regex::Regex::new(pattern).unwrap().is_match(content));
+        let has_crypto = CREATE_DECIPHERIV_PATTERN.is_match(content)
+            || CREATE_DECIPHER_PATTERN.is_match(content)
+            || CRYPTO_SUBTLE_PATTERN.is_match(content)
+            || DECIPHER_UPDATE_PATTERN.is_match(content)
+            || DECIPHER_FINAL_PATTERN.is_match(content)
+            || DECRYPT_METHOD_PATTERN.is_match(content);
 
         if has_crypto {
             return true;
@@ -199,20 +221,11 @@ impl HeaderC2Detector {
 
     /// Check if content contains dynamic execution patterns
     fn detect_dynamic_execution(&self, content: &str) -> bool {
-        let patterns = [
-            r"\beval\s*\(",
-            r"\bnew\s+Function\s*\(",
-            r"\bvm\.runInNewContext\s*\(",
-            r"\bvm\.runInThisContext\s*\(",
-            r"\bchild_process\s*\+",
-            r"\bexec\s*\(",
-            r"\bexecSync\s*\(",
-            r"\bspawn\s*\(",
-        ];
-
-        patterns
-            .iter()
-            .any(|pattern| regex::Regex::new(pattern).unwrap().is_match(content))
+        EVAL_PATTERN.is_match(content)
+            || FUNCTION_PATTERN.is_match(content)
+            || VM_RUN_PATTERN.is_match(content)
+            || EXEC_PATTERN.is_match(content)
+            || CHILD_PROCESS_PATTERN.is_match(content)
     }
 }
 

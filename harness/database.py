@@ -290,9 +290,12 @@ class Database:
         with get_connection(self.db_path) as conn:
             cursor = conn.execute(
                 """
-                SELECT * FROM packages 
-                WHERE scan_run_id = ? AND finding_count > 0
-                ORDER BY finding_count DESC, severity
+                SELECT p.*, MAX(f.severity) as max_severity
+                FROM packages p
+                LEFT JOIN findings f ON p.id = f.package_id
+                WHERE p.scan_run_id = ? AND p.finding_count > 0
+                GROUP BY p.id
+                ORDER BY p.finding_count DESC
             """,
                 (run_id,),
             )
