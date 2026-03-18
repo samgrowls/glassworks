@@ -29,7 +29,7 @@ cargo install --path glassware-cli
 
 ## Why
 
-In March 2026, the GlassWare campaign compromised 72+ VS Code extensions and 150+ GitHub repositories using invisible Unicode characters to hide malicious payloads in plain sight. The code looks normal in your editor. The payload is invisible. glassware makes it visible.
+In March 2026, the GlassWorm campaign compromised 72+ VS Code extensions and 150+ GitHub repositories using invisible Unicode characters to hide malicious payloads in plain sight. The code looks normal in your editor. The payload is invisible. glassware makes it visible.
 
 ```
 $ glassware project/
@@ -230,7 +230,7 @@ See [harness/README.md](harness/README.md) for full documentation.
 
 ## The GlassWare Campaign
 
-glassware is named after the GlassWare threat campaign, active since October 2025. The campaign uses invisible Unicode steganography to hide malicious payloads in JavaScript/TypeScript files across npm packages, GitHub repositories, and VS Code extensions.
+glassware is named after the GlassWorm threat campaign, active since October 2025. The campaign uses invisible Unicode steganography to hide malicious payloads in JavaScript/TypeScript files across npm packages, GitHub repositories, and VS Code extensions.
 
 ## Comparison
 
@@ -252,7 +252,7 @@ glassware is named after the GlassWare threat campaign, active since October 202
 
 glassware includes **180+ tests** covering:
 
-- **Campaign fixtures**: Reconstructed patterns from real GlassWare attacks (Wave 1-5, Shai-Hulud)
+- **Campaign fixtures**: Reconstructed patterns from real GlassWorm attacks (Wave 1-5, Shai-Hulud)
 - **False positive fixtures**: Legitimate code that should NOT trigger (crypto, i18n, build scripts)
 - **Edge cases**: Obfuscation techniques documenting known limitations
 
