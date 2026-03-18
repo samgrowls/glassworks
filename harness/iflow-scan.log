@@ -1,0 +1,95 @@
+=== @iflow-mcp/ SCOPE SCAN ===
+Started: 2026-03-18T17:53:39Z
+
+[1/22] Scanning @iflow-mcp/blake365-options-chain...
+  ERROR: Failed to download
+[2/22] Scanning @iflow-mcp/cameroncooke_xcodebuildmcp...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[3/22] Scanning @iflow-mcp/cursor-mcp...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[4/22] Scanning @iflow-mcp/deployto-dev-namecheap-domains-mcp...
+  ERROR: Failed to download
+[5/22] Scanning @iflow-mcp/figma-mcp...
+  Findings: 4 (Critical: 0)
+cp: cannot create regular file 'data/evidence/mcp-scan/': No such file or directory
+./scan_iflow.sh: line 73: data/evidence/mcp-scan/iflow-flagged.jsonl: No such file or directory
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[6/22] Scanning @iflow-mcp/garethcott-enhanced-postgres-mcp-server...
+  ERROR: Failed to download
+[7/22] Scanning @iflow-mcp/garethcott_enhanced-postgres-mcp-server...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[8/22] Scanning @iflow-mcp/hemanth-mcp-ui-server...
+  ERROR: Failed to download
+[9/22] Scanning @iflow-mcp/jageenshukla-hello-world-mcp-server...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[10/22] Scanning @iflow-mcp/mailgun-mcp-server...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[11/22] Scanning @iflow-mcp/matthewdailey-mcp-starter...
+  Findings: 7 (Critical: 6)
+cp: cannot create regular file 'data/evidence/mcp-scan/': No such file or directory
+./scan_iflow.sh: line 73: data/evidence/mcp-scan/iflow-flagged.jsonl: No such file or directory
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[12/22] Scanning @iflow-mcp/matthewdailey-rime-mcp...
+  Findings: 2 (Critical: 0)
+cp: cannot create regular file 'data/evidence/mcp-scan/': No such file or directory
+./scan_iflow.sh: line 73: data/evidence/mcp-scan/iflow-flagged.jsonl: No such file or directory
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[13/22] Scanning @iflow-mcp/mcp-starter...
+  Findings: 7 (Critical: 6)
+cp: cannot create regular file 'data/evidence/mcp-scan/': No such file or directory
+./scan_iflow.sh: line 73: data/evidence/mcp-scan/iflow-flagged.jsonl: No such file or directory
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[14/22] Scanning @iflow-mcp/minecraft-mcp-server...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[15/22] Scanning @iflow-mcp/modelcontextprotocol-servers-whois-mcp...
+  ERROR: Failed to download
+[16/22] Scanning @iflow-mcp/openai-gpt-image-mcp...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[17/22] Scanning @iflow-mcp/playwright-mcp...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[18/22] Scanning @iflow-mcp/puppeteer-mcp-server...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[19/22] Scanning @iflow-mcp/ref-tools-mcp...
+  Findings: 17 (Critical: 15)
+cp: cannot create regular file 'data/evidence/mcp-scan/': No such file or directory
+./scan_iflow.sh: line 73: data/evidence/mcp-scan/iflow-flagged.jsonl: No such file or directory
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[20/22] Scanning @iflow-mcp/strato-space-media-gen-mcp...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[21/22] Scanning @iflow-mcp/tsai1030-ziwei-mcp-server...
+  Findings: 0 (Critical: 0)
+./scan_iflow.sh: line 80: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+./scan_iflow.sh: line 83: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+[22/22] Scanning @iflow-mcp/wizd-airylark-mcp-server...
+  ERROR: Failed to download
+./scan_iflow.sh: line 87: data/evidence/mcp-scan/iflow-scan-results.json: No such file or directory
+
+=== SUMMARY ===
+Completed: 2026-03-18T17:54:22Z
+Results: data/evidence/mcp-scan/iflow-scan-results.json
+./scan_iflow.sh: line 93: data/evidence/mcp-scan/iflow-flagged.jsonl: No such file or directory
+Flagged packages: 0

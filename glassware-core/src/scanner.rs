@@ -50,13 +50,20 @@ impl UnicodeScanner {
     pub fn scan(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut all_findings = Vec::new();
 
+        // Skip invisible character detection for documentation files (emoji false positives)
+        let path_lower = file_path.to_lowercase();
+        let is_documentation = path_lower.ends_with(".md")
+            || path_lower.ends_with(".mdx")
+            || path_lower.ends_with(".txt")
+            || path_lower.ends_with(".rst");
+
         // Run all enabled detectors
-        if self.config.detectors.invisible_chars {
+        if self.config.detectors.invisible_chars && !is_documentation {
             let findings = self.invisible_detector.detect(content, file_path);
             all_findings.extend(findings);
         }
 
-        if self.config.detectors.homoglyphs {
+        if self.config.detectors.homoglyphs && !is_documentation {
             let findings = self.homoglyph_detector.detect(content, file_path);
             all_findings.extend(findings);
         }

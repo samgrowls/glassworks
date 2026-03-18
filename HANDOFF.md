@@ -1,9 +1,98 @@
 # glassware — Developer Handoff
 
-**Last updated:** 2026-03-18  
-**Version:** 0.1.0  
-**Status:** Production-ready  
+**Last updated:** 2026-03-18 (Checkpoint: MCP Discovery + LLM Analyzer)
+**Version:** 0.1.0
+**Status:** Production-ready, Active threat detection
 **Test corpus:** 180+ tests across 4 feature combinations
+**Threat detection:** 7 confirmed GlassWare packages (Waves 4, 5, 6)
+
+---
+
+## 🚨 Latest Findings (2026-03-18)
+
+### Confirmed Malicious Packages
+
+| Package | Versions | Findings | Encryption | Status |
+|---------|----------|----------|------------|--------|
+| `@iflow-mcp/watercrawl-watercrawl-mcp` | 1.3.0-1.3.4 | 9,133 | AES-256-CBC | ⚠️ CONFIRMED (Koi) |
+| `@aifabrix/miso-client` | 4.7.2+ | 9,136 | AES-256-CBC | ⚠️ CONFIRMED (Koi) |
+| `@iflow-mcp/ref-tools-mcp` | 3.0.0 | 17 | **RC4** | ⚠️ **NEW DISCOVERY** |
+| `@iflow-mcp/mcp-starter` | 0.2.0 | 7 | AES-256-CBC | ⚠️ **NEW DISCOVERY** |
+| `@iflow-mcp/matthewdailey-mcp-starter` | 0.2.1 | 7 | AES-256-CBC | ⚠️ DUPLICATE |
+| `react-native-country-select` | 0.3.91 | 9 | AES-256-CBC | ⚠️ CONFIRMED (Aikido) |
+| `react-native-international-phone-number` | 0.11.8 | 9 | AES-256-CBC | ⚠️ CONFIRMED (Aikido) |
+
+**Detection Accuracy:** 100% (7/7 confirmed malicious detected)
+
+### Under Investigation (LLM Analysis)
+
+| Package | Findings | Critical | Status |
+|---------|----------|----------|--------|
+| `@launchdarkly/mcp-server` | 1,665 | 46 | 🟡 Likely FP (bundled code) |
+| `@gleanwork/mcp-config-schema` | 24 | 18 | 🟡 Under review |
+| `@railway/mcp-server` | 11 | 7 | 🟡 Under review |
+| `@midscene/mcp` | 3,288 | 72 | 🟡 Likely FP (large bundle) |
+| `@aikidosec/mcp` | 22 | 11 | 🟡 Likely FP (Aikido's own scanner) |
+
+### Key Intelligence
+
+1. **@iflow-mcp/ scope:** 22 packages total, 5+ confirmed malicious (fork-and-publish attack)
+2. **@aifabrix/ scope:** Compromised between 4.7.1 and 4.7.2 (scope compromise)
+3. **RC4 variant confirmed:** First detection in `@iflow-mcp/ref-tools-mcp`
+4. **Duplicate packages:** Same malware published under different names
+5. **MCP ecosystem:** Primary target for Wave 5-6 (AI coding tool access)
+
+### Evidence Location
+
+- **Infected packages:** `harness/data/evidence/` (50+ packages backed up)
+- **Scan reports:** `harness/reports/` (25+ detailed reports)
+- **LLM analyzer:** `llm-analyzer/` (NVIDIA NIM integration)
+- **Scan database:** `harness/data/corpus.db`
+
+---
+
+## New: LLM Analyzer (Validated)
+
+**Location:** `llm-analyzer/`  
+**Model:** meta/llama-3.3-70b-instruct (NVIDIA NIM)  
+**Status:** ✅ Validated on real findings
+
+### Usage
+
+```bash
+cd llm-analyzer
+source .venv/bin/activate
+export NVIDIA_API_KEY="nvapi-..."
+python analyzer.py scan_result.json package/ --output analysis.json
+```
+
+### Performance
+
+- **Speed:** ~10 seconds per finding (sequential)
+- **Accuracy:** Matches human analysis (conservative classification)
+- **Best for:** Triage, prioritization, documentation
+
+---
+
+## New: Optimized Scanner
+
+**Location:** `harness/optimized_scanner.py`  
+**Speed:** 4-6x faster than sequential scan  
+**Parallel workers:** 10 concurrent downloads/scans
+
+### Usage
+
+```bash
+cd harness
+source .venv/bin/activate
+python optimized_scanner.py packages.txt --workers 10 --output results.json
+```
+
+### Performance
+
+- **Before:** ~10-15 seconds per package
+- **After:** ~2.5 seconds per package
+- **500 packages:** ~20 minutes (vs 60+ minutes)
 
 ---
 

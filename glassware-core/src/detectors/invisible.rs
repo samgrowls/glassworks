@@ -37,6 +37,9 @@ impl InvisibleCharDetector {
     pub fn detect(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
 
+        // Check if this is an i18n/translation file (legitimate use of ZWNJ/ZWJ)
+        let is_i18n_context = self.is_i18n_file(file_path);
+
         for (line_num, line) in content.lines().enumerate() {
             for (col_num, ch) in line.chars().enumerate() {
                 let code_point = ch as u32;
@@ -45,6 +48,14 @@ impl InvisibleCharDetector {
                     // Check if this is in a legitimate emoji context
                     if self.is_emoji_context(line, col_num) {
                         continue;
+                    }
+
+                    // Skip ZWNJ/ZWJ in i18n/translation files (legitimate usage)
+                    if is_i18n_context {
+                        if code_point == 0x200C || code_point == 0x200D {
+                            // ZWNJ or ZWJ - legitimate in i18n
+                            continue;
+                        }
                     }
 
                     // Determine severity based on range
@@ -73,6 +84,34 @@ impl InvisibleCharDetector {
         findings
     }
 
+    /// Check if file is an i18n/translation file (legitimate ZWNJ/ZWJ usage)
+    fn is_i18n_file(&self, file_path: &str) -> bool {
+        let path_lower = file_path.to_lowercase();
+        
+        // Check for i18n-related directories
+        let i18n_dirs = [
+            "/i18n/", "/locale/", "/locales/", "/translation/", 
+            "/translations/", "/lang/", "/languages/",
+        ];
+        
+        if i18n_dirs.iter().any(|dir| path_lower.contains(dir)) {
+            return true;
+        }
+        
+        // Check for i18n-related filenames
+        let i18n_files = [
+            "i18n.", "i18n/", "translation.", "translations.",
+            "locale.", "locales.", "lang.", "languages.",
+            "gettranslation.", "gettext.", "polyglot.",
+        ];
+        
+        if i18n_files.iter().any(|file| path_lower.contains(file)) {
+            return true;
+        }
+        
+        false
+    }
+
     /// Check if the character at position is in an emoji context (legitimate)
     fn is_emoji_context(&self, line: &str, char_pos: usize) -> bool {
         let chars: Vec<char> = line.chars().collect();
@@ -81,11 +120,24 @@ impl InvisibleCharDetector {
         if char_pos > 0 {
             let prev = chars[char_pos - 1];
             let prev_cp = prev as u32;
-            // Emoji ranges (simplified)
-            if (0x1F300..=0x1F9FF).contains(&prev_cp)
-                || (0x2600..=0x26FF).contains(&prev_cp)
-                || (0x2700..=0x27BF).contains(&prev_cp)
+            // Common emoji that use variation selectors (U+FE0F for emoji presentation,
+            // U+FE0E for text presentation)
+            if (0x2139..=0x2139).contains(&prev_cp) ||  // ℹ️
+                (0x2194..=0x2199).contains(&prev_cp) ||  // ↔️-🙏
+                (0x21A9..=0x21AA).contains(&prev_cp) ||  // ↩️↪️
+                (0x231A..=0x231B).contains(&prev_cp) ||  // ⌚⌛
+                (0x23E9..=0x23F3).contains(&prev_cp) ||  // ⏩-⏳
+                (0x23F8..=0x23FA).contains(&prev_cp) ||  // ⏸️-⏺️
+                (0x25AA..=0x25AB).contains(&prev_cp) ||  // ▪️▫️
+                (0x25B6..=0x25B6).contains(&prev_cp) ||  // ▶️
+                (0x25C0..=0x25C0).contains(&prev_cp) ||  // ◀️
+                (0x25FB..=0x25FE).contains(&prev_cp) ||  // ◻️-◾
+                (0x2600..=0x26FF).contains(&prev_cp) ||  // Weather, zodiac, misc symbols
+                (0x2700..=0x27BF).contains(&prev_cp) ||  // Dingbats
+                (0x1F300..=0x1F9FF).contains(&prev_cp) || // Main emoji block
+                (0x1FA00..=0x1FA6F).contains(&prev_cp)
             {
+                // Chess, symbols
                 return true;
             }
         }

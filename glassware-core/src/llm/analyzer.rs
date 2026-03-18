@@ -8,6 +8,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use super::config::LlmConfig;
+use super::rate_limiter::RateLimiter;
 
 /// Verdict returned by the LLM for a single file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,6 +101,7 @@ If reclassified_severity is null, the original severity stands."#;
 pub struct OpenAiCompatibleAnalyzer {
     config: LlmConfig,
     client: reqwest::blocking::Client,
+    rate_limiter: RateLimiter,
 }
 
 impl OpenAiCompatibleAnalyzer {
@@ -110,7 +112,9 @@ impl OpenAiCompatibleAnalyzer {
             .build()
             .unwrap_or_else(|_| reqwest::blocking::Client::new());
 
-        Self { config, client }
+        let rate_limiter = RateLimiter::from_env();
+
+        Self { config, client, rate_limiter }
     }
 
     /// Analyze a file and return the LLM verdict
@@ -189,6 +193,12 @@ impl OpenAiCompatibleAnalyzer {
             ],
             "temperature": 0.1
         });
+
+        // Estimate token count (1 token ≈ 4 characters for English text)
+        let estimated_tokens = (user_prompt.len() / 4) as u32;
+
+        // Acquire rate limit permission (blocks if necessary)
+        self.rate_limiter.acquire(estimated_tokens);
 
         // Make API call
         let response = self

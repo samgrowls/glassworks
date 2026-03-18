@@ -36,6 +36,7 @@ static STRING_LITERAL_PATTERN: Lazy<Regex> =
 static TEMPLATE_LITERAL_PATTERN: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"`([^`]{64,})`").unwrap());
 
+// Dynamic execution patterns
 static EVAL_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\beval\s*\(").unwrap());
 static FUNCTION_PATTERN: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\bnew\s+Function\s*\(").unwrap());
@@ -45,6 +46,11 @@ static EXEC_PATTERN: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\b(exec|execSync)\s*\(").unwrap());
 static CHILD_PROCESS_PATTERN: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\bchild_process\s*\+").unwrap());
+
+// Decryption patterns - required for decrypt→exec flow
+static DECRYPT_PATTERN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)(createDecipheriv|createDecipher|\.decrypt|\batob\s*\(|Buffer\.from\s*\([^)]*\)\s*\.toString)").unwrap()
+});
 
 /// Detector for encrypted payload patterns (GW005)
 pub struct EncryptedPayloadDetector;
@@ -73,11 +79,13 @@ impl Detector for EncryptedPayloadDetector {
         // Check for high-entropy blobs
         let has_high_entropy_blob = self.detect_high_entropy_blob(content);
 
-        // Check for dynamic execution patterns
-        let dynamic_exec_lines = self.find_dynamic_execution(content);
+        // Check for decrypt→exec flow (not just any exec)
+        let has_decrypt_exec_flow = self.detect_decrypt_to_exec_flow(content);
 
-        // Only emit finding if BOTH conditions are present
-        if has_high_entropy_blob && !dynamic_exec_lines.is_empty() {
+        // Only emit finding if BOTH conditions are present:
+        // 1. High-entropy blob
+        // 2. Decryption pattern followed by dynamic execution
+        if has_high_entropy_blob && has_decrypt_exec_flow {
             // Find the line with the high-entropy blob for the finding location
             let blob_line = self.find_high_entropy_blob_line(content).unwrap_or(1);
 
@@ -89,10 +97,11 @@ impl Detector for EncryptedPayloadDetector {
                 '\0',
                 DetectionCategory::EncryptedPayload,
                 Severity::High,
-                "High-entropy blob combined with dynamic code execution — potential encrypted payload loader",
+                "High-entropy blob combined with decrypt→exec flow — potential encrypted payload loader",
                 "Review this file for encrypted payload patterns. The combination of high-entropy \
-                 encoded data and dynamic code execution is characteristic of encrypted loaders \
-                 used in supply chain attacks. Decode the blob to understand the hidden payload.",
+                 encoded data with decryption followed by dynamic code execution is characteristic \
+                 of encrypted loaders used in supply chain attacks. Decode the blob to understand \
+                 the hidden payload.",
             )
             .with_cwe_id("CWE-506")
             .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode");
@@ -169,22 +178,20 @@ impl EncryptedPayloadDetector {
         None
     }
 
-    /// Find lines containing dynamic execution patterns
-    fn find_dynamic_execution(&self, content: &str) -> Vec<usize> {
-        let mut exec_lines = Vec::new();
+    /// Detect decrypt→exec flow: decryption API usage followed by dynamic execution
+    fn detect_decrypt_to_exec_flow(&self, content: &str) -> bool {
+        // Check for decryption patterns
+        let has_decrypt = DECRYPT_PATTERN.is_match(content);
 
-        for (line_num, line) in content.lines().enumerate() {
-            if EVAL_PATTERN.is_match(line)
-                || FUNCTION_PATTERN.is_match(line)
-                || VM_RUN_PATTERN.is_match(line)
-                || EXEC_PATTERN.is_match(line)
-                || CHILD_PROCESS_PATTERN.is_match(line)
-            {
-                exec_lines.push(line_num + 1);
-            }
-        }
+        // Check for dynamic execution patterns
+        let has_exec = EVAL_PATTERN.is_match(content)
+            || FUNCTION_PATTERN.is_match(content)
+            || VM_RUN_PATTERN.is_match(content)
+            || EXEC_PATTERN.is_match(content)
+            || CHILD_PROCESS_PATTERN.is_match(content);
 
-        exec_lines
+        // Require BOTH decrypt AND exec
+        has_decrypt && has_exec
     }
 
     /// Extract a string literal from a line of code
@@ -251,10 +258,10 @@ mod tests {
     #[test]
     fn test_detect_hex_with_function() {
         let detector = EncryptedPayloadDetector::new();
-        // High-entropy base64 string (encrypted-looking data)
+        // High-entropy base64 string (encrypted-looking data) with decrypt→exec flow
         let content = r#"
             const data = "kJfXyZ2BvMnR0cHV3eIGIqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/";
-            new Function(data)();
+            new Function(atob(data))();
         "#;
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
@@ -315,7 +322,7 @@ mod tests {
         let detector = EncryptedPayloadDetector::new();
         let content = r#"
             const code = "dGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIHN0cmluZyB0aGF0IGlzIGxvbmcgZW5vdWdoIHRvIHRyaWdnZXIgZGV0ZWN0aW9uIGFuZCBzaG91bGQgYmUgZmxhZ2dlZA==";
-            vm.runInNewContext(code);
+            vm.runInNewContext(atob(code));
         "#;
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
@@ -327,7 +334,7 @@ mod tests {
         let detector = EncryptedPayloadDetector::new();
         let content = r#"
             const cmd = "Y21kLmV4ZSAvYyBlY2hvIGhlbGxvIHdvcmxkIHRoaXMgaXMgYSBsb25nIGJhc2U2NCBlbmNvZGVkIHN0cmluZyBmb3IgdGVzdGluZyBwdXJwb3Nlcw==";
-            execSync(cmd);
+            execSync(atob(cmd));
         "#;
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
@@ -382,6 +389,23 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         // Should NOT detect - blob too short (< 64 chars)
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_no_detect_exec_without_decrypt() {
+        let detector = EncryptedPayloadDetector::new();
+        // Legitimate build script pattern: high-entropy URLs + execSync but NO decryption
+        let content = r#"
+            const https = require('https');
+            const { execSync } = require('child_process');
+            const IOS_URL = 'https://github.com/example/flir-sdk-binaries/releases/download/v1.0.1/ios.zip';
+            const ANDROID_URL = 'https://github.com/example/flir-sdk-binaries/releases/download/v1.0.1/android.zip';
+            execSync(`unzip -o "${zipPath}" -d "${TMP_DIR}"`);
+        "#;
+
+        let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
+        // Should NOT detect - no decryption pattern (just download + exec)
         assert!(findings.is_empty());
     }
 

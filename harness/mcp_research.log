@@ -1,0 +1,1196 @@
+/home/property.sightlines/samgrowls/glassworks/harness/mcp_research.py:50: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  print(f"Started: {datetime.utcnow().isoformat()}")
+/home/property.sightlines/samgrowls/glassworks/harness/mcp_research.py:74: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "search_date": datetime.utcnow().isoformat(),
+=== MCP Ecosystem Research ===
+Started: 2026-03-18T17:50:28.504587
+
+Searching: mcp...
+  Found: 250 packages
+Searching: mcp-server...
+  Found: 250 packages
+Searching: model-context-protocol...
+  Found: 250 packages
+Searching: @modelcontextprotocol...
+  Found: 250 packages
+Searching: @mcp...
+  Found: 250 packages
+Searching: anthropic-mcp...
+  Found: 250 packages
+Searching: claude-mcp...
+  Found: 250 packages
+Searching: cursor-mcp...
+  Found: 250 packages
+
+Total unique packages: 1167
+
+Saved to: mcp_packages.json
+
+=== Package List ===
+  1. @0xmonaco/mcp-server
+  2. @4via6/relay
+  3. @_davideast/stitch-mcp
+  4. @a-bonus/google-docs-mcp
+  5. @abhaybabbar/retellai-mcp-server
+  6. @aborruso/ckan-mcp-server
+  7. @adaline/anthropic
+  8. @adamik/signer-mcp-server
+  9. @adenot/mcp-google-search
+ 10. @adisuryanathanael/mcp-server-filesystem2
+ 11. @ag-ui/mcp-apps-middleware
+ 12. @agent-infra/mcp-server-browser
+ 13. @agent-infra/mcp-server-filesystem
+ 14. @agent-infra/mcp-shared
+ 15. @agent-relay/mcp
+ 16. @agentbox/mcp-server
+ 17. @agentdeskai/browser-tools-mcp
+ 18. @ahdev/dokploy-mcp
+ 19. @ahrefs/mcp
+ 20. @ai-mentora/mcp-server
+ 21. @ai-sdk/anthropic
+ 22. @ai-sdk/google-vertex
+ 23. @aibtc/mcp-server
+ 24. @aikidosec/mcp
+ 25. @aiondadotcom/mcp-ssh
+ 26. @aiwerk/mcp-bridge
+ 27. @akutishevsky/lunchmoney-mcp
+ 28. @alchemy/mcp-server
+ 29. @alcyone-labs/modelcontextprotocol-sdk
+ 30. @alosies/gitlab-mcp-server
+ 31. @amap/amap-maps-mcp-server
+ 32. @amcharts/amcharts5
+ 33. @aml-modelcontextprotocol/aml-watcher-mcp
+ 34. @ampersend_ai/modelcontextprotocol-sdk
+ 35. @anaisbetts/mcp-installer
+ 36. @anaisbetts/mcp-youtube
+ 37. @anthropic-ai/bedrock-sdk
+ 38. @anthropic-ai/claude-agent-sdk
+ 39. @anthropic-ai/claude-code
+ 40. @anthropic-ai/foundry-sdk
+ 41. @anthropic-ai/mcpb
+ 42. @anthropic-ai/sandbox-runtime
+ 43. @anthropic-ai/sdk
+ 44. @anthropic-ai/tokenizer
+ 45. @anthropic-ai/vertex-sdk
+ 46. @anthropic-forge/cli
+ 47. @antv/mcp-server-chart
+ 48. @anyproto/anytype-mcp
+ 49. @apify/actors-mcp-server
+ 50. @apify/mcpc
+ 51. @arabold/docs-mcp-server
+ 52. @arinova-ai/openclaw-arinova-ai
+ 53. @arizeai/openinference-instrumentation-anthropic
+ 54. @arizeai/openinference-instrumentation-mcp
+ 55. @arizeai/phoenix-mcp
+ 56. @assistant-ui/mcp-docs-server
+ 57. @atlassian-dc-mcp/jira
+ 58. @atomixstudio/mcp
+ 59. @auth0/auth0-mcp-server
+ 60. @autodevjapan/godd-mcp-alpha
+ 61. @automatalabs/mcp-server-playwright
+ 62. @automattic/mcp-wordpress-remote
+ 63. @aws/run-mcp-servers-with-aws-lambda
+ 64. @azure-devops/mcp
+ 65. @azure/mcp
+ 66. @azure/mcp-darwin-arm64
+ 67. @azure/mcp-darwin-x64
+ 68. @azure/mcp-linux-arm64
+ 69. @azure/mcp-linux-x64
+ 70. @azure/mcp-win32-arm64
+ 71. @azure/mcp-win32-x64
+ 72. @balakumar.dev/mcpkit
+ 73. @bangdao-ai/acw-tools
+ 74. @beeper/desktop-mcp
+ 75. @benborla29/mcp-server-mysql
+ 76. @bennapp/modelcontextprotocol-sdk
+ 77. @berthojoris/mcp-mysql-server
+ 78. @bharathvaj/whois-mcp
+ 79. @big-whale-labs/modelcontextprotocol-sdk
+ 80. @biqblue/mcp-server
+ 81. @bitwarden/mcp-server
+ 82. @blocklet/mcp
+ 83. @bolide-ai/mcp
+ 84. @borodutch/modelcontextprotocol-sdk
+ 85. @brain-protocol/mcp
+ 86. @brander/mcp-tools
+ 87. @brave/brave-search-mcp-server
+ 88. @brightdata/mcp
+ 89. @brightshot/mcp
+ 90. @browserbasehq/mcp-server-browserbase
+ 91. @browsermcp/mcp
+ 92. @browserstack/mcp-server
+ 93. @bryan-thompson/inspector-assessment
+ 94. @burtthecoder/mcp-shodan
+ 95. @burtthecoder/mcp-virustotal
+ 96. @bytebase/dbhub
+ 97. @camsoft/mcp-sdk
+ 98. @caobing122/jira-mcp-server
+ 99. @cap-js/mcp-server
+100. @cardor/email-management
+101. @cardor/email-summarizer
+102. @ccusage/mcp
+103. @centia-io/mcp-server
+104. @chakra-ui/react-mcp
+105. @chatwork/mcp-server
+106. @chorus-aidlc/chorus-openclaw-plugin
+107. @circleci/mcp-server-circleci
+108. @claude-flow/aidefence
+109. @claude-flow/hooks
+110. @claude-flow/mcp
+111. @claude-flow/shared
+112. @claudeoverflow/mcp-server
+113. @clerk/mcp-tools
+114. @cloudflare/mcp-server-cloudflare
+115. @cloudflare/playwright-mcp
+116. @cmd8/excalidraw-mcp
+117. @cocal/google-calendar-mcp
+118. @codacy/codacy-mcp
+119. @cognigy/mcp-server
+120. @cognitionai/metabase-mcp-server
+121. @coinbase/agentkit-model-context-protocol
+122. @coinbase/cds-mcp-server
+123. @coingecko/coingecko-mcp
+124. @coingecko/coingecko-typescript
+125. @commercetools/commerce-mcp
+126. @composio/anthropic
+127. @composio/mcp
+128. @composio/vercel
+129. @considered/harmful
+130. @constellos/claude-code-kit
+131. @contentful/mcp-server
+132. @contextlint/mcp-server
+133. @contextube/mcp-server
+134. @contractspec/lib.contracts-runtime-server-mcp
+135. @contractspec/module.ai-chat
+136. @ctxprotocol/sdk
+137. @currents/mcp
+138. @cyanheads/git-mcp-server
+139. @cyanheads/mcp-ts-core
+140. @dandeliongold/server-everything
+141. @dangerusslee/gitlab-mcp-server
+142. @dankelleher/modelcontextprotocol-sdk
+143. @darrenjaws/spotify-mcp
+144. @dcluttr/dclare-mcp
+145. @decaf-ts/mcp-server
+146. @decocms/mesh
+147. @decocms/runtime
+148. @delorenj/mcp-server-ticketmaster
+149. @dennisk2025/text-alternating-case
+150. @descope/mcp-express
+151. @dev-boy/mcp-stdio-server
+152. @devcycle/cli
+153. @devness/coverit
+154. @devness/useai
+155. @devness/useai-cli
+156. @dguido/google-workspace-mcp
+157. @digitalocean/mcp
+158. @dimcool/mcp
+159. @directus/content-mcp
+160. @discourse/mcp
+161. @dittowords/mcp-server
+162. @djankies/vitest-mcp
+163. @dockbrain/mcp-filesystem-demo
+164. @doitintl/doit-mcp-server
+165. @donotdev/mcp-server
+166. @drawio/mcp
+167. @dynatrace-oss/dynatrace-mcp-server
+168. @e2b/mcp-server
+169. @easecloudio/mcp-metabase-server
+170. @edgedottrade/mcp
+171. @effect/ai-anthropic
+172. @einlogic/mcp-fabric-api
+173. @elementor/angie-sdk
+174. @elephant-xyz/mcp
+175. @elijahtynes/reliefweb-mcp-server
+176. @elixium.ai/mcp-server
+177. @elizaos/plugin-anthropic
+178. @elizaos/plugin-mcp
+179. @elsahafy/ux-mcp-server
+180. @elsium-ai/mcp
+181. @enescinar/twitter-mcp
+182. @epic-web/workshop-mcp
+183. @eraserlabs/eraser-mcp
+184. @esaio/esa-mcp-server
+185. @eslint/mcp
+186. @executeautomation/playwright-mcp-server
+187. @expo/mcp-tunnel
+188. @f4ww4z/mcp-mysql-server
+189. @fangjunjie/ssh-mcp-server
+190. @fast-kit/spec-kit
+191. @felixallistar/coolify-mcp
+192. @felores/airtable-mcp-server
+193. @fhirfly-io/mcp-server
+194. @filipc77/cowrite
+195. @firfi/huly-mcp
+196. @florentine-ai/mcp
+197. @forcefield/mcp-server
+198. @forestadmin/mcp-server
+199. @forgespace/siza-gen
+200. @framingui/mcp-server
+201. @freelancercom/phabricator-mcp
+202. @freelw/playwright-mcp-wrapper
+203. @gabriel3615/claude-stock-analysis-mcp
+204. @gavdi/cap-mcp
+205. @genart-dev/mcp-server
+206. @genkit-ai/mcp
+207. @geobio/google-workspace-server
+208. @getflip/swirl-ai
+209. @getmcp/core
+210. @getvetai/cli
+211. @gitee/mcp-gitee
+212. @gitee/mcp-gitee-windows-amd64
+213. @gleanwork/configure-mcp-server
+214. @gleanwork/connect-mcp-server
+215. @gleanwork/local-mcp-server
+216. @gleanwork/mcp-config-glean
+217. @gleanwork/mcp-config-schema
+218. @gleanwork/mcp-server
+219. @gleanwork/mcp-server-utils
+220. @gongrzhe/server-calendar-autoauth-mcp
+221. @gongrzhe/server-gmail-autoauth-mcp
+222. @google-cloud/cloud-run-mcp
+223. @google-cloud/gcloud-mcp
+224. @google-cloud/observability-mcp
+225. @google-cloud/storage-mcp
+226. @googlemaps/code-assist-mcp
+227. @gopersonal/advisor
+228. @goplausible/algorand-mcp
+229. @gotillit/local-mcp-server
+230. @grafana/llm
+231. @graphai/mcp_agent
+232. @graphite-atlas/mcp-server
+233. @greynewell/mcpbr
+234. @h1deya/mcp-client-cli
+235. @h1deya/mcp-server-weather
+236. @hazeljs/mcp
+237. @henkey/postgres-mcp-server
+238. @heroku/mcp-server
+239. @heroui/native-mcp
+240. @heroui/react-mcp
+241. @hexsleeves/tailscale-mcp-server
+242. @himanshusinghs/mongodb-mcp-server
+243. @hisma/server-puppeteer
+244. @hmake98/nest-mcp
+245. @hono/mcp
+246. @hubspot/mcp-server
+247. @hugeicons/mcp-server
+248. @huggingface/mcp-client
+249. @hypertrack/mcp-server
+250. @hypothesi/tauri-mcp-server
+251. @idachev/mcp-javadc
+252. @idealyst/mcp-server
+253. @iflow-mcp/blake365-options-chain
+254. @iflow-mcp/cameroncooke_xcodebuildmcp
+255. @iflow-mcp/cursor-mcp
+256. @iflow-mcp/deployto-dev-namecheap-domains-mcp
+257. @iflow-mcp/figma-mcp
+258. @iflow-mcp/garethcott-enhanced-postgres-mcp-server
+259. @iflow-mcp/garethcott_enhanced-postgres-mcp-server
+260. @iflow-mcp/hemanth-mcp-ui-server
+261. @iflow-mcp/jageenshukla-hello-world-mcp-server
+262. @iflow-mcp/mailgun-mcp-server
+263. @iflow-mcp/matthewdailey-mcp-starter
+264. @iflow-mcp/matthewdailey-rime-mcp
+265. @iflow-mcp/mcp-starter
+266. @iflow-mcp/minecraft-mcp-server
+267. @iflow-mcp/modelcontextprotocol-servers-whois-mcp
+268. @iflow-mcp/openai-gpt-image-mcp
+269. @iflow-mcp/playwright-mcp
+270. @iflow-mcp/puppeteer-mcp-server
+271. @iflow-mcp/ref-tools-mcp
+272. @iflow-mcp/strato-space-media-gen-mcp
+273. @iflow-mcp/tsai1030-ziwei-mcp-server
+274. @iflow-mcp/wizd-airylark-mcp-server
+275. @ignitionai/mcp-template
+276. @inkdropapp/mcp-server
+277. @inkeep/agents-mcp
+278. @inngest/agent-kit
+279. @inngest/ai
+280. @inquirer/ansi
+281. @insforge/mcp
+282. @instantdb/mcp
+283. @intlpullhq/mcp-server
+284. @irsooti/mcp
+285. @iterable/mcp
+286. @itsyuimorii/notion-mcp-server
+287. @ivotoby/openapi-mcp-server
+288. @jason.today/webmcp
+289. @jaypie/mcp
+290. @jeffreycao/copilot-api
+291. @jetbrains/mcp-proxy
+292. @jpisnice/shadcn-ui-mcp-server
+293. @json-render/mcp
+294. @jsonresume/jsonresume-mcp
+295. @jsonresume/mcp
+296. @jsonstudio/llms
+297. @juspay/neurolink
+298. @justanothermldude/mcp-exec
+299. @k-jarzyna/mcp-miro
+300. @kadoa/mcp
+301. @karashiiro/mcp
+302. @kazuph/mcp-fetch
+303. @kazuph/mcp-taskmanager
+304. @kenkaiiii/queen-mcp
+305. @kentcdodds/tmp-modelcontextprotocol_sdk
+306. @kilocode/cli
+307. @kimsungwhee/apple-docs-mcp
+308. @kimuson/modular-mcp
+309. @kintone/mcp-server
+310. @kirrosh/zond
+311. @kjerneverk/riotprompt
+312. @knip/mcp
+313. @knowsuchagency/fulcrum
+314. @kortex-hub/mcp-registry-types
+315. @kubb/core
+316. @kubb/mcp
+317. @kubb/plugin-mcp
+318. @kya-os/create-mcpi-app
+319. @kya-os/mcp-i
+320. @langchain/anthropic
+321. @langchain/langgraph
+322. @langchain/mcp-adapters
+323. @larksuiteoapi/lark-mcp
+324. @larryhudson/linear-mcp-server
+325. @laskarks/mcp-rag-node
+326. @laststance/readable-sequential-thinking
+327. @launchdarkly/mcp-server
+328. @lazydino/ccxt-mcp
+329. @leo000001/claude-code-mcp
+330. @leonardsellem/n8n-mcp-server
+331. @letta-ai/memory-mcp
+332. @leval/mcp-grafana
+333. @line/line-bot-mcp-server
+334. @liquidmetal-ai/raindrop-code
+335. @lishenxydlgzs/aws-athena-mcp
+336. @locofy/uipro-mcp
+337. @loxtep/customer-mcp-server
+338. @magicuidesign/mcp
+339. @magneticwatermelon/mcp-toolkit
+340. @makeplane/plane-mcp-server
+341. @mapbox/mcp-server
+342. @marimo-team/codemirror-mcp
+343. @mariozechner/pi-ai
+344. @mastergo/magic-mcp
+345. @mastra/core
+346. @mastra/mcp
+347. @mastra/mcp-docs-server
+348. @mastra/mcp-registry-registry
+349. @maz-ui/mcp
+350. @mcp-apps/kusto-mcp-server
+351. @mcp-b/chrome-devtools-mcp
+352. @mcp-b/ext-apps
+353. @mcp-b/global
+354. @mcp-b/react-webmcp
+355. @mcp-b/transports
+356. @mcp-b/webmcp-ts-sdk
+357. @mcp-devtools/jira
+358. @mcp-i/core
+359. @mcp-monorepo/weather
+360. @mcp-registry/mcp-obsidian-1
+361. @mcp-ui/client
+362. @mcp-ui/server
+363. @mcp-use/cli
+364. @mcp-use/inspector
+365. @mcp-use/modelcontextprotocol-sdk
+366. @mcp-z/server
+367. @mcpflow.io/mcp
+368. @mcpfun/mcp-server-ccxt
+369. @mcpmarket/mcp-auto-install
+370. @mcpweb-org/sdk
+371. @memberjunction/ai-mcp-client
+372. @memberjunction/ai-mcp-server
+373. @memly/mcp-server
+374. @metamask/client-mcp-core
+375. @metorial/anthropic
+376. @metorial/mcp-sdk-utils
+377. @metorial/mcp-session
+378. @metorial/sdk
+379. @metronome/sdk
+380. @microsoft/clarity-mcp-server
+381. @microsoft/devbox-mcp
+382. @microsoft/fabric-mcp
+383. @microsoft/github-copilot-app-modernization-mcp-server
+384. @microsoft/teams.mcp
+385. @microsoft/workiq
+386. @midscene/android-mcp
+387. @midscene/ios-mcp
+388. @midscene/mcp
+389. @midscene/web-bridge-mcp
+390. @milkdown/plugin-cursor
+391. @mindstudio-ai/agent
+392. @mintlify/mcp
+393. @mixio-pro/kalaasetu-mcp
+394. @mizchi/lsmcp
+395. @mobilenext/mobile-mcp
+396. @modelcontextprotocol/conformance
+397. @modelcontextprotocol/ext-apps
+398. @modelcontextprotocol/inspector
+399. @modelcontextprotocol/inspector-cli
+400. @modelcontextprotocol/inspector-client
+401. @modelcontextprotocol/inspector-server
+402. @modelcontextprotocol/sdk
+403. @modelcontextprotocol/server-basic-preact
+404. @modelcontextprotocol/server-basic-react
+405. @modelcontextprotocol/server-basic-solid
+406. @modelcontextprotocol/server-basic-svelte
+407. @modelcontextprotocol/server-basic-vanillajs
+408. @modelcontextprotocol/server-basic-vue
+409. @modelcontextprotocol/server-budget-allocator
+410. @modelcontextprotocol/server-cohort-heatmap
+411. @modelcontextprotocol/server-customer-segmentation
+412. @modelcontextprotocol/server-debug
+413. @modelcontextprotocol/server-everything
+414. @modelcontextprotocol/server-filesystem
+415. @modelcontextprotocol/server-map
+416. @modelcontextprotocol/server-memory
+417. @modelcontextprotocol/server-pdf
+418. @modelcontextprotocol/server-scenario-modeler
+419. @modelcontextprotocol/server-sequential-thinking
+420. @modelcontextprotocol/server-shadertoy
+421. @modelcontextprotocol/server-sheet-music
+422. @modelcontextprotocol/server-system-monitor
+423. @modelcontextprotocol/server-threejs
+424. @modelcontextprotocol/server-transcript
+425. @modelcontextprotocol/server-video-resource
+426. @modelcontextprotocol/server-wiki-explorer
+427. @modelfetch/cloudflare
+428. @modelfetch/netlify
+429. @mondaydotcomorg/atp-mcp-adapter
+430. @mondaydotcomorg/monday-api-mcp
+431. @moralisweb3/api-mcp-server
+432. @morphllm/morphmcp
+433. @mseep/airylark-mcp-server
+434. @mseep/linear-mcp
+435. @mseep/linear-mcp-server
+436. @mseep/mcp-smart-crawler
+437. @mseep/mcp-typescript-server-starter
+438. @mseep/puppeteer-mcp-server
+439. @mseep/verodat-mcp-server
+440. @mui/mcp
+441. @mulesoft/mcp-server
+442. @multimail/mcp-server
+443. @musistudio/llms
+444. @negokaz/excel-mcp-server
+445. @nekzus/mcp-server
+446. @nest-mcp/server
+447. @nestjs-mcp/server
+448. @netlify/mcp
+449. @next-ai-drawio/mcp-server
+450. @nexus2520/bitbucket-mcp-server
+451. @nexus2520/jira-mcp-server
+452. @ng-annotate/mcp-server
+453. @nipunibpaaris/modelcontextprotocol-typescript-sdk
+454. @nirvana-labs/nirvana-mcp
+455. @nitansde/mcp
+456. @nookplot/mcp
+457. @noteplanco/noteplan-mcp
+458. @notionhq/notion-mcp-server
+459. @noxsoft/mcp
+460. @nullshot/mcp
+461. @nuvin/nuvin-cli
+462. @nuxtjs/mcp-toolkit
+463. @o3r/mcp
+464. @odgrim/mcp-datetime
+465. @ohah/react-native-mcp-server
+466. @okx_ai/okx-trade-mcp
+467. @omni-tars/mcp-agent
+468. @onozaty/redmine-mcp-server
+469. @open-mercato/ai-assistant
+470. @openbnb/mcp-server-airbnb
+471. @openctx/provider-modelcontextprotocol
+472. @opentiny/next-sdk-agent
+473. @openziti/ziti-mcp-server
+474. @orchestrator-claude/mcp-server
+475. @orval/mcp
+476. @ouedyan/modelcontextprotocol-server-filesystem
+477. @panchopoliti/mcp-server-asana
+478. @pandacss/mcp
+479. @pangeacyber/mcp-proxy
+480. @pavindulakshan/modelcontextprotocol-typescript-sdk
+481. @payloadcms/plugin-mcp
+482. @peac/mappings-mcp
+483. @peonai/swarm
+484. @pepk/mcp-memory-sqlite
+485. @perplexity-ai/mcp-server
+486. @perstack/base
+487. @phantom/mcp-server
+488. @picahq/mcp
+489. @pikku/modelcontextprotocol
+490. @pinecone-database/mcp
+491. @piotr-agier/google-drive-mcp
+492. @platf/bridge
+493. @platformatic/mcp
+494. @playwright/cli
+495. @playwright/mcp
+496. @pollinations/model-context-protocol
+497. @postman/postman-mcp-server
+498. @ppdocs/mcp
+499. @preply/ds-mcp
+500. @presto-ai/google-workspace-mcp
+501. @primeng/mcp
+502. @primeuix/mcp
+503. @primevue/mcp
+504. @prismicio/mcp-server
+505. @prmichaelsen/remember-mcp
+506. @probelabs/probe
+507. @probelabs/probe-chat
+508. @professional-wiki/mediawiki-mcp-server
+509. @progress/kendo-angular-mcp
+510. @progress/kendo-cli
+511. @progress/kendo-jquery-mcp
+512. @progress/kendo-react-mcp
+513. @progress/telerik-wpf-mcp
+514. @promptbook/anthropic-claude
+515. @promptx/mcp-server
+516. @pulumi/mcp-server
+517. @pv-bhat/vibe-check-mcp
+518. @railway/mcp-server
+519. @razorpay/blade-mcp
+520. @reactive-agents/llm-provider
+521. @reactive-agents/tools
+522. @reactuses/core
+523. @redaksjon/protokoll-engine
+524. @redocly/mcp-typescript-sdk
+525. @regle/mcp-server
+526. @rekog/mcp-nest
+527. @remirror/extension-drop-cursor
+528. @remirror/extension-gap-cursor
+529. @remotion/mcp
+530. @requestly/mcp
+531. @resourcexjs/mcp-server
+532. @reus-able/frontend-helper-mcp
+533. @rigour-labs/mcp
+534. @rk0429/agentic-relay
+535. @roadmaphero/mcp-server
+536. @roarkanalytics/sdk
+537. @robinmordasiewicz/f5xc-api-mcp
+538. @robinmordasiewicz/f5xc-terraform-mcp
+539. @rollbar/mcp-server
+540. @roychri/mcp-server-asana
+541. @rushstack/mcp-server
+542. @salesforce/b2c-dx-mcp
+543. @salesforce/mcp
+544. @salesforce/mcp-provider-aura-experts
+545. @salesforce/mcp-provider-code-analyzer
+546. @salesforce/mcp-provider-devops
+547. @salesforce/mcp-provider-dx-core
+548. @salesforce/mcp-provider-lwc-experts
+549. @salesforce/mcp-provider-scale-products
+550. @santhoshramesh/grabon-mcp
+551. @sap-ux/fiori-mcp-server
+552. @sarmadparvez/postgresql-mcp
+553. @satyam1990/learn-mcp
+554. @scheduler-systems/gal-run
+555. @secretlint/secretlint-rule-anthropic
+556. @seleniumbox/sbox-mcp
+557. @sentry/mcp-server
+558. @sghanavati/relay-mcp
+559. @shinzolabs/instrumentation-mcp
+560. @shiplightai/mcp
+561. @shortcut/mcp
+562. @showrun/mcp-server
+563. @siemens/element-mcp
+564. @simulacra-ai/mcp
+565. @skanda-yutori/mcp-send-email
+566. @skillsmith/mcp-server
+567. @skyramp/mcp
+568. @slidemaster/mcp-server
+569. @slope-dev/slope
+570. @smartbear/mcp
+571. @smithery/cli
+572. @softeria/ms-365-mcp-server
+573. @sowonai/mcp-gmail
+574. @sparkleideas/mcp
+575. @speakeasy-api/docs-mcp-eval
+576. @spotlightjs/sidecar
+577. @stainless-api/github-internal
+578. @stainless-api/gitlab-internal
+579. @stainless-api/pylon-internal
+580. @stainless-api/sdk
+581. @starascendin/lifeos-mcp
+582. @steipete/claude-code-mcp
+583. @stellisoft/stellify-mcp
+584. @stigg/typescript-mcp
+585. @storybook/addon-mcp
+586. @storybook/mcp
+587. @stripe/mcp
+588. @structured-world/gitlab-mcp
+589. @studiometa/productive-mcp
+590. @sum-modelcontextprotocol/sum-number
+591. @supabase/mcp-server-postgrest
+592. @supabase/mcp-server-supabase
+593. @supabase/mcp-utils
+594. @superinbox/mcp-server
+595. @sveltejs/mcp
+596. @sveltejs/opencode
+597. @swarmify/agents-cli
+598. @syke1/mcp-server
+599. @sylphlab/tools-adaptor-mcp
+600. @sylphx/mcp-server-sdk
+601. @szcn/sentinelreview
+602. @szjc/szjc-mcp-server
+603. @t0ken.ai/memoryx-mcp-server
+604. @t2000/cli
+605. @taazkareem/clickup-mcp-server
+606. @taiga-ui/mcp
+607. @talzach/mcp-angular-cli
+608. @tan-yong-sheng/code-context-mcp
+609. @tencent-rtc/mcp
+610. @testomatio/mcp
+611. @testsprite/testsprite-mcp
+612. @thebushidocollective/han
+613. @thecorporation/mcp-server
+614. @theia/ai-anthropic
+615. @theia/ai-mcp
+616. @theia/ai-mcp-server
+617. @theia/ai-mcp-ui
+618. @thevgergroup/apollo-io-mcp
+619. @thirdstrandstudio/mcp-figma
+620. @thunder_ai/mcp-element-ui
+621. @tiberriver256/mcp-server-azure-devops
+622. @timmeck/brain
+623. @timmeck/marketing-brain
+624. @timmeck/trading-brain
+625. @tiptap/extension-collaboration-cursor
+626. @tjamescouch/agentchat
+627. @tjamescouch/gro
+628. @tmcp/session-manager
+629. @tmcp/transport-http
+630. @tocharianou/mcp-server-kibana
+631. @todoforai/puppeteer-mcp-server
+632. @tokenizin/mcp-npx-fetch
+633. @tokenlens/models
+634. @toolprint/mcp-logger
+635. @traceloop/instrumentation-anthropic
+636. @traceloop/instrumentation-mcp
+637. @transloadit/mcp-server
+638. @triedotdev/mcp
+639. @triptease/design-system-mcp
+640. @tryfinch/finch-api
+641. @tsmztech/mcp-server-salesforce
+642. @turbopuffer/turbopuffer
+643. @turbot/powerpipe-mcp
+644. @turbot/steampipe-mcp
+645. @twilio-alpha/mcp
+646. @twilio-alpha/openapi-mcp-server
+647. @tylercoles/mcp-server
+648. @types/pg-cursor
+649. @typescape-ai/mcp
+650. @typia/mcp
+651. @ui5/mcp-server
+652. @unchartedfr/zapcode
+653. @uniformdev/uniform-mcp
+654. @uniswap/ai-toolkit-claude-mcp-helper
+655. @univerjs-pro/mcp
+656. @univerjs-pro/mcp-ui
+657. @univerjs-pro/sheets-mcp
+658. @unthread-io/mcp-server
+659. @upstash/context7-mcp
+660. @upstash/mcp-server
+661. @utcp/mcp
+662. @vantasdk/vanta-mcp-server
+663. @vapi-ai/mcp-server
+664. @variflight-ai/variflight-mcp
+665. @vedtechsolutions/engram-mcp
+666. @veloxts/mcp
+667. @vercel/mcp-adapter
+668. @vibe-agent-toolkit/gateway-mcp
+669. @vibe/mcp
+670. @vibescope/mcp-server
+671. @vinkius-core/mcp-fusion
+672. @virtue-ai/gateway-connect
+673. @vizejs/musea-mcp-server
+674. @voltagent/mcp-server
+675. @vpr99/modelcontextprotocol-sdk
+676. @vuetify/mcp
+677. @vybit/mcp-server
+678. @waiaas/mcp
+679. @wavestreamer/mcp
+680. @wener/ai
+681. @whop/mcp
+682. @whop/sdk
+683. @williamp29/project-mcp-server
+684. @windagency/valora
+685. @winor30/mcp-server-datadog
+686. @wireweave/mcp-server
+687. @wix/mcp
+688. @wonderwhy-er/desktop-commander
+689. @wong2/mcp-cli
+690. @workday/canvas-kit-mcp
+691. @workflow/ai
+692. @x402/mcp
+693. @xano/developer-mcp
+694. @xeroapi/xero-mcp-server
+695. @xiaozhi-client/mcp-core
+696. @yama662607/agent-config-sync
+697. @yj10x/contextkeep
+698. @yoda.digital/gitlab-mcp-server
+699. @youdotcom-oss/mcp
+700. @youdotcom-oss/teams-anthropic
+701. @youversion/context-engine-mcp
+702. @ythalorossy/openfda
+703. @z_ai/mcp-server
+704. @zapier/zapier-sdk-mcp
+705. @zed-industries/claude-agent-acp
+706. @zeddotdev/postgres-context-server
+707. @zencoderai/slack-mcp-server
+708. @zeplin/mcp-server
+709. @zereight/mcp-gitlab
+710. @zeroheight/mcp-server
+711. @zhin.js/mcp
+712. @zilliz/claude-context-mcp
+713. @zudello/modelcontextprotocol
+714. @zuplo/mcp
+715. add-mcp
+716. advanced-websearch-mcp
+717. aegis-mcp-server
+718. agent-skill-loader
+719. agent5ive-mcp
+720. agentation-mcp
+721. agentcash
+722. agentmail-mcp
+723. agnost
+724. ai
+725. ai-sdk-provider-claude-code
+726. ai-trust
+727. airtable-mcp-server
+728. airweave-mcp-search
+729. algorand-mcp
+730. ansi-escapes
+731. anthropic-ai
+732. anthropic-vertex-ai
+733. archon-mcp
+734. arduino-claude-mcp
+735. arduino-mcp-server
+736. argocd-mcp
+737. asciikit-mcp
+738. ask-gemini-mcp
+739. astro-mcp
+740. attio-mcp-server
+741. autonomous-economy-sdk
+742. autosnippet
+743. autotel-mcp
+744. awesome-copilot-mcp
+745. backlog-mcp-server
+746. balldontlie-mcp
+747. barebrowse
+748. bc-telemetry-buddy-mcp
+749. bitbucket-mcp
+750. bitcoin-mcp
+751. bitcompass
+752. brand.dev
+753. browser-devtools-mcp
+754. browser-use
+755. budgie-mcp
+756. bugsnag-mcp-server
+757. cclsp
+758. chrome-devtools-mcp
+759. chrome-local-mcp
+760. clarity-mcp-server
+761. claude-brain
+762. claude-chatgpt-mcp
+763. claude-code
+764. claude-ext
+765. claude-mcp
+766. claude-mcp-context
+767. claude-mcp-workflow
+768. claude-outlook-mcp
+769. claude-plugin-wordpress-manager
+770. claude-prompt-optimizer-mcp
+771. claude-recall
+772. claude-talk-to-figma-mcp
+773. cli-cursor
+774. clinicaltrialsgov-mcp-server
+775. coda-mcp
+776. code-session-memory
+777. codeblog-mcp
+778. coder-config
+779. codesysultra
+780. codex-mcp-server
+781. codingbuddy-claude-plugin
+782. composiohq-modelcontextprotocol-typescript-sdk
+783. containerization-assist-mcp
+784. contentstack-cursor-mcp
+785. context7-mcp-server
+786. converse-mcp-server
+787. copilot-api
+788. costhawk
+789. create-cursor-mcp
+790. cursor-mcp
+791. cursor-mcp-installer-free
+792. cursor-mcp-server
+793. cursor-mcp-tool
+794. cursor-talk-to-figma-mcp
+795. cursor-talk-to-figma-socket
+796. cursorx-mcp
+797. dapp-local-mcp
+798. dart-mcp-server
+799. datadog-mcp-server
+800. deepl-mcp-server
+801. desearch-mcp-server
+802. devto-mcp
+803. discogs-mcp-server
+804. discord-mcp
+805. dj-claude
+806. dodopayments
+807. dodopayments-mcp
+808. drawio-mcp-server
+809. dspot-erp-mcp-server
+810. duckduckgo-mcp-server
+811. dura-mcp
+812. ecc-agentshield
+813. echarts-for-react
+814. elysia-mcp
+815. enfusion-mcp
+816. enhanced-postgres-mcp-server
+817. envmcp
+818. european-parliament-mcp-server
+819. exa-mcp-server
+820. expo-mcp
+821. express-mcp-handler
+822. fastify-mcp-server
+823. fastmcp
+824. fdic-mcp-server
+825. feishu-mcp
+826. fetcher-mcp
+827. figma-code-agent-mcp
+828. figma-console-mcp
+829. figma-context-mcp
+830. figma-developer-mcp
+831. figma-mcp
+832. figma-mcp-server
+833. firebase-tools
+834. firecrawl-aisdk
+835. firecrawl-cli
+836. firecrawl-fastmcp
+837. firecrawl-mcp
+838. firefox-devtools-mcp
+839. flightradar-mcp-server
+840. fmea-api-mcp-server
+841. freee-mcp
+842. froggo-mission-control
+843. functional-models-orm-mcp
+844. furnace-mcp
+845. gate-mcp
+846. gbstudio-claude-mcp
+847. gcp-mcp
+848. gemini-mcp-tool
+849. genjo-mcp-server
+850. genkitx-anthropic
+851. genkitx-mcp
+852. gezhe-mcp-server
+853. ghost-bridge
+854. git-mcp-server
+855. gitnexus
+856. gm-cc
+857. godot-mcp-server
+858. google-docs-mcp
+859. goto-assistant
+860. grafana-cursor-mcp
+861. graphlit-mcp-server
+862. greptile-mcp-server
+863. hackernews-mcp
+864. happy-coder
+865. happy-mcp-server
+866. harmony-mcp
+867. hermes-paperclip-adapter
+868. hevy-mcp
+869. hlims-mcp
+870. hono-mcp-server-sse-transport
+871. hookdeck-cli
+872. hooklaw
+873. hostinger-api-mcp
+874. howtocook-mcp
+875. hud-mcp
+876. hud-sdk
+877. hyper-mcp-shell
+878. hyperbrowser-mcp
+879. icloud-mcp
+880. ifconfig-mcp
+881. iflow-mcp-tsai1030-ziwei-mcp-server
+882. imgx-mcp
+883. indelible-mcp
+884. intercept-mcp
+885. ios-simulator-mcp
+886. isc-transforms-mcp
+887. jira-mcp
+888. jira-mcp-server
+889. joplin-mcp-server
+890. js-sandbox-mcp-server
+891. jsonresume-mcp
+892. kagi-mcp-server
+893. kaito-mcp-server
+894. klasto-cli
+895. kolide-mcp-server
+896. krisspy-ai
+897. kubernetes-mcp-server
+898. kubernetes-mcp-server-darwin-arm64
+899. kubernetes-mcp-server-linux-amd64
+900. kusto-mcp
+901. kyxhiagent123
+902. kyxserver-everything
+903. lambda-cloud-cli
+904. langsmith-mcp-server
+905. learn-mcp
+906. lhwapi-mcp-server
+907. linear-mcp-server
+908. lithic
+909. llm-advisor-mcp
+910. llmz
+911. lovewc3
+912. malicious-mcp-server
+913. mayar-mcp
+914. mcp-asana-minimal
+915. mcp-atlassian
+916. mcp-auth
+917. mcp-claw
+918. mcp-client
+919. mcp-client-capabilities
+920. mcp-confluence-server
+921. mcp-cron
+922. mcp-dataverse
+923. mcp-deepwiki
+924. mcp-demo-example
+925. mcp-discord
+926. mcp-doppelganger
+927. mcp-doppelganger-beta
+928. mcp-echo-server
+929. mcp-erps
+930. mcp-evals
+931. mcp-fetch-node
+932. mcp-framework
+933. mcp-from-openapi
+934. mcp-gen-ui
+935. mcp-google-drive
+936. mcp-graphql
+937. mcp-graphql-schema
+938. mcp-gsheets
+939. mcp-gsuite
+940. mcp-hacker-news
+941. mcp-handler
+942. mcp-hello-world
+943. mcp-http-server
+944. mcp-http-webhook
+945. mcp-image
+946. mcp-jest
+947. mcp-jira-stdio
+948. mcp-linear
+949. mcp-lite
+950. mcp-local-rag
+951. mcp-mermaid
+952. mcp-mongo-server
+953. mcp-oauth-server
+954. mcp-obsidian
+955. mcp-playwright
+956. mcp-postgres
+957. mcp-postgres-server
+958. mcp-proxy
+959. mcp-registry-spec-sdk
+960. mcp-remote
+961. mcp-rime
+962. mcp-ripgrep
+963. mcp-s-oauth
+964. mcp-sanitizer
+965. mcp-sdk-client-ssejs
+966. mcp-searxng
+967. mcp-server
+968. mcp-server-code-runner
+969. mcp-server-commands
+970. mcp-server-docker
+971. mcp-server-gsc
+972. mcp-server-insumer
+973. mcp-server-kubernetes
+974. mcp-server-onenote
+975. mcp-server-sqlite
+976. mcp-server-sqlite-npx
+977. mcp-servers
+978. mcp-smart-crawler
+979. mcp-sqlite
+980. mcp-ssh-manager
+981. mcp-starter
+982. mcp-swiss
+983. mcp-tap
+984. mcp-test-client
+985. mcp-testing-kit
+986. mcp-ts-template
+987. mcp-use
+988. mcp-web-content-pick
+989. mcp-wisdom
+990. mcp.do
+991. mcpblox
+992. mcpbrowser
+993. mcpcosmosdb
+994. mcpman
+995. mcporter
+996. mcpvals
+997. md-feedback
+998. merkl-mcp
+999. mermaid-mcp-server
+1000. meta-ads-mcp
+1001. metheus-governance-mcp-cli
+1002. metorial
+1003. metrillm-mcp
+1004. middy-mcp
+1005. mizu-kage
+1006. mizu-wizard
+1007. mlflow-anthropic
+1008. model-context-protocol
+1009. modelcontextprotocol-cjs
+1010. modelcontextprotocol-eval
+1011. modelcontextprotocol-gemini
+1012. modelcontextprotocol-server-postgres
+1013. modern-treasury
+1014. modern-treasury-mcp
+1015. moltiverse-mcp
+1016. mongodb-atlas-api-client
+1017. mongodb-mcp-server
+1018. mr-magic-mcp-server
+1019. msw-auto-mock
+1020. mvagnon-agents
+1021. my-mcp-server
+1022. myoperator-mcp
+1023. mysql-mcp-server
+1024. n8n-mcp
+1025. n8n-nodes-mcp
+1026. narrarium-mcp-server
+1027. neon-init
+1028. nerve-rpc-mcp
+1029. newrelic-mcp
+1030. newsnow-mcp-server
+1031. next-devtools-mcp
+1032. node-red-contrib-mcp
+1033. notebooklm-mcp
+1034. notebooklm-mcp-server
+1035. notion-mcp-server
+1036. nx-mcp
+1037. obsidian-mcp
+1038. oclif-plugin-mcp-server
+1039. octocode-mcp
+1040. oh-my-aegis
+1041. ollama-mcp
+1042. omnifocus-mcp
+1043. onestep-puppeteer-mcp-server
+1044. open-meteo-mcp-server
+1045. openapi-mcp-generator
+1046. openapi-mcp-server
+1047. openclaw-mcp
+1048. opencode-swarm-plugin
+1049. openregister
+1050. openrpc-mcp-server-updated
+1051. orange-orm
+1052. paygate-mcp
+1053. pg-cursor
+1054. phantom-voices-mcp
+1055. pi-mcp-adapter
+1056. playwright-mcp
+1057. playwright-mcp-advanced
+1058. playwright-mcp-server
+1059. pocketbase-cursor-mcp
+1060. pointsyeah-mcp-server
+1061. polaris-mcp-server
+1062. polydev-ai
+1063. powerplatform-mcp
+1064. profound-mcp
+1065. prometheus-mcp
+1066. prosemirror-dropcursor
+1067. prosemirror-gapcursor
+1068. prosemirror-virtual-cursor
+1069. pulsemcp-cms-admin-mcp-server
+1070. pulsemcp-server
+1071. puppeteer
+1072. puppeteer-core
+1073. puppeteer-mcp-server
+1074. puppeteer-mcp-server-ws
+1075. puppeteer-plus-martech
+1076. qingflow-mcp
+1077. raijinlabs-mcp
+1078. rally-mcp
+1079. react-grab
+1080. react-native-ai-debugger
+1081. react-native-mcp-client
+1082. reddit-mcp-buddy
+1083. ref-mcp-cli
+1084. ref-tools-mcp
+1085. replicate-mcp
+1086. resend-mcp
+1087. restore-cursor
+1088. retell-sdk
+1089. rime-mcp
+1090. rpg-encoder
+1091. ruflo
+1092. satgate-proxy
+1093. scorecard-ai
+1094. scorecard-ai-mcp
+1095. scrapeless-mcp-server
+1096. search-mcp-server
+1097. second-brain-health-check
+1098. secretless-ai
+1099. sendblue
+1100. serper-search-scrape-mcp-server
+1101. server-anthropic
+1102. serverless
+1103. shadcn-ui-mcp-server
+1104. signoz-mcp-server
+1105. simply-mcp
+1106. skiller
+1107. slack-mcp-server
+1108. slite-mcp-server
+1109. snow-flow
+1110. ssh-mcp
+1111. stitch-mcp
+1112. storybook-mcp
+1113. storybook-mcp-server
+1114. strapi-content-mcp
+1115. structurize-mcp
+1116. substack-article-mcp
+1117. supabase-mcp
+1118. supergateway
+1119. supermemory
+1120. tailwindcss-mcp-server
+1121. tavily-mcp
+1122. tea-color-to-vars-mcp-server
+1123. telegram-claude-mcp
+1124. telnyx
+1125. telnyx-mcp
+1126. terminator-mcp-agent
+1127. terraform-mcp-server
+1128. terry-mcp
+1129. things-mcp-server
+1130. think-mcp-server
+1131. time-mcp
+1132. tiny-cursor
+1133. todoist-mcp
+1134. token-tool-mcp
+1135. touchdesigner-mcp-server
+1136. tradingview-mcp-server
+1137. typescript-mcp
+1138. ucm-mcp-server
+1139. unstructured-client
+1140. use-mcp
+1141. user-postgresql-mcp
+1142. valjs-mcp-alpha
+1143. valjs-mcp-beta
+1144. vercel-mcp
+1145. vercel-mcp-server
+1146. vercel-minimax-ai-provider
+1147. vibe-collab
+1148. victory-cursor-container
+1149. video-context-mcp-server
+1150. vite-plugin-mcp
+1151. vite-plugin-vue-mcp
+1152. webflow-mcp-server
+1153. wechat-mcp-server
+1154. whazaa
+1155. workers-mcp
+1156. wp-mcp-gateway
+1157. wuying-agentbay-mcp-server
+1158. xcodebuildmcp
+1159. xiaohongshu-mcp
+1160. xmcp
+1161. ynab-mcp-server
+1162. youtube-data-mcp-server
+1163. yuque-mcp
+1164. zd-mcp-server
+1165. zero-mcp
+1166. zodown
+1167. zubeid-youtube-mcp-server

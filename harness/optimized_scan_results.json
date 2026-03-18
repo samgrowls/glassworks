@@ -1,0 +1,312 @@
+{
+  "scan_date": "2026-03-18T19:47:45.135487Z",
+  "total_packages": 34,
+  "scanned": 32,
+  "flagged": 9,
+  "errors": 2,
+  "results": [
+    {
+      "package": "@zereight/mcp-gitlab",
+      "status": "scanned",
+      "findings": 1,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "fastmcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@drawio/mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@vercel/mcp-adapter",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "hlims-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "mcp-server-code-runner",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@gleanwork/mcp-config-glean",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "mcp-searxng",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "openapi-mcp-generator",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "argocd-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@pandacss/mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@kimuson/modular-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "agentmail-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@roychri/mcp-server-asana",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "agentation-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "mcp-server-kubernetes",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "mcp-client",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@metorial/mcp-session",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@browserstack/mcp-server",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@cloudflare/playwright-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@railway/mcp-server",
+      "status": "scanned",
+      "findings": 11,
+      "critical": 7,
+      "error": null
+    },
+    {
+      "package": "@preply/ds-mcp",
+      "status": "scanned",
+      "findings": 6,
+      "critical": 6,
+      "error": null
+    },
+    {
+      "package": "@dynatrace-oss/dynatrace-mcp-server",
+      "status": "scanned",
+      "findings": 2,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@gleanwork/mcp-config-schema",
+      "status": "scanned",
+      "findings": 24,
+      "critical": 18,
+      "error": null
+    },
+    {
+      "package": "@siemens/element-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@agent-infra/mcp-shared",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@kubb/plugin-mcp",
+      "status": "scanned",
+      "findings": 4,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "vite-plugin-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@brightdata/mcp",
+      "status": "scanned",
+      "findings": 2,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@smartbear/mcp",
+      "status": "scanned",
+      "findings": 2,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@structured-world/gitlab-mcp",
+      "status": "scanned",
+      "findings": 0,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@azure/mcp-linux-x64",
+      "status": "timeout",
+      "findings": 0,
+      "critical": 0,
+      "error": "Scan timeout"
+    },
+    {
+      "package": "@launchdarkly/mcp-server",
+      "status": "scanned",
+      "findings": 1665,
+      "critical": 46,
+      "error": null
+    },
+    {
+      "package": "@sveltejs/mcp",
+      "status": "timeout",
+      "findings": 0,
+      "critical": 0,
+      "error": "Scan timeout"
+    }
+  ],
+  "flagged_packages": [
+    {
+      "package": "@zereight/mcp-gitlab",
+      "status": "scanned",
+      "findings": 1,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@railway/mcp-server",
+      "status": "scanned",
+      "findings": 11,
+      "critical": 7,
+      "error": null
+    },
+    {
+      "package": "@preply/ds-mcp",
+      "status": "scanned",
+      "findings": 6,
+      "critical": 6,
+      "error": null
+    },
+    {
+      "package": "@dynatrace-oss/dynatrace-mcp-server",
+      "status": "scanned",
+      "findings": 2,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@gleanwork/mcp-config-schema",
+      "status": "scanned",
+      "findings": 24,
+      "critical": 18,
+      "error": null
+    },
+    {
+      "package": "@kubb/plugin-mcp",
+      "status": "scanned",
+      "findings": 4,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@brightdata/mcp",
+      "status": "scanned",
+      "findings": 2,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@smartbear/mcp",
+      "status": "scanned",
+      "findings": 2,
+      "critical": 0,
+      "error": null
+    },
+    {
+      "package": "@launchdarkly/mcp-server",
+      "status": "scanned",
+      "findings": 1665,
+      "critical": 46,
+      "error": null
+    }
+  ]
+}

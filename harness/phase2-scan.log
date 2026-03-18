@@ -1,0 +1,208 @@
+/home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:79: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  print(f"Started: {datetime.utcnow().isoformat()}Z")
+=== MCP Phase 2 - Batch 1 ===
+Packages: 100
+Started: 2026-03-18T18:03:25.710359Z
+
+[1/100] @upstash/context7-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 7 findings (7 critical)
+[2/100] @playwright/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[3/100] @mcp-ui/server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 40 findings (38 critical)
+[4/100] chrome-devtools-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 1315 findings (107 critical)
+[5/100] @supabase/mcp-utils... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[6/100] @mcp-ui/client... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 34 findings (32 critical)
+[7/100] mcp-proxy... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 831 findings (23 critical)
+[8/100] @hono/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[9/100] n8n-nodes-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[10/100] @langchain/mcp-adapters... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[11/100] chrome-local-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 2 findings (0 critical)
+[12/100] @eslint/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[13/100] @notionhq/notion-mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 20 findings (18 critical)
+[14/100] @mcp-use/inspector... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+ERROR: Command '['/home/property.sightlines/samgrowls/gla
+[15/100] @expo/mcp-tunnel... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[16/100] @currents/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[17/100] @traceloop/instrumentation-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[18/100] @mobilenext/mobile-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[19/100] n8n-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 1 findings (1 critical)
+[20/100] @aikidosec/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 22 findings (11 critical)
+[21/100] @ui5/mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 4 findings (4 critical)
+[22/100] @modelcontextprotocol/ext-apps... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 32 findings (30 critical)
+[23/100] @salesforce/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[24/100] mcp-handler... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[25/100] @storybook/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[26/100] @azure-devops/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 2 findings (2 critical)
+[27/100] @azure/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[28/100] @gongrzhe/server-gmail-autoauth-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[29/100] @fast-kit/spec-kit... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[30/100] @rekog/mcp-nest... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[31/100] next-devtools-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[32/100] @browsermcp/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[33/100] mcp-hello-world... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[34/100] @metorial/mcp-sdk-utils... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[35/100] @shortcut/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[36/100] mcp-evals... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[37/100] mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[38/100] @larksuiteoapi/lark-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 56 findings (56 critical)
+[39/100] @modelcontextprotocol/server-filesystem... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[40/100] @composio/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 13 findings (12 critical)
+[41/100] @theia/ai-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[42/100] @clerk/mcp-tools... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 5 findings (1 critical)
+[43/100] @stripe/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[44/100] notion-mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[45/100] mcp-framework... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 2 findings (0 critical)
+[46/100] @google-cloud/cloud-run-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[47/100] @mapbox/mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[48/100] browser-devtools-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 7 findings (1 critical)
+[49/100] workers-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[50/100] @sap-ux/fiori-mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 62 findings (48 critical)
+[51/100] tavily-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 2 findings (2 critical)
+[52/100] expo-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[53/100] @circleci/mcp-server-circleci... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[54/100] @anthropic-ai/mcpb... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[55/100] @sentry/mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 18 findings (18 critical)
+[56/100] @hubspot/mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[57/100] @midscene/mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 3288 findings (72 critical)
+[58/100] @payloadcms/plugin-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 4 findings (0 critical)
+[59/100] @modelcontextprotocol/server-everything... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[60/100] @apify/actors-mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 345 findings (87 critical)
+[61/100] @inkeep/agents-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 10 findings (0 critical)
+[62/100] @heroku/mcp-server... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 1 findings (0 critical)
+[63/100] @codacy/codacy-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[64/100] mcp-use... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 6 findings (0 critical)
+[65/100] @winor30/mcp-server-datadog... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[66/100] todoist-mcp... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+✅ Clean
+[67/100] @zereight/mcp-gitlab... /home/property.sightlines/samgrowls/glassworks/harness/scan_phase2.py:35: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(tmpdir)
+⚠️ 1 findings (0 critical)
+[68/100] fastmcp... 

@@ -1,0 +1,65 @@
+/home/property.sightlines/samgrowls/glassworks/harness/optimized_scanner.py:97: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  print(f"Started: {datetime.utcnow().isoformat()}Z")
+/home/property.sightlines/samgrowls/glassworks/harness/optimized_scanner.py:157: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "scan_date": datetime.utcnow().isoformat() + "Z",
+============================================================
+MCP OPTIMIZED PARALLEL SCAN
+============================================================
+Scanning 34 packages with 10 workers...
+Started: 2026-03-18T19:46:22.405257Z
+
+[1/34] @zereight/mcp-gitlab ⚠️ (1 findings, 0 critical)
+[2/34] fastmcp ✅ (0 findings, 0 critical)
+[3/34] @drawio/mcp ✅ (0 findings, 0 critical)
+[4/34] @vercel/mcp-adapter ✅ (0 findings, 0 critical)
+[5/34] hlims-mcp ✅ (0 findings, 0 critical)
+[6/34] mcp-server-code-runner ✅ (0 findings, 0 critical)
+[7/34] @gleanwork/mcp-config-glean ✅ (0 findings, 0 critical)
+[8/34] mcp-searxng ✅ (0 findings, 0 critical)
+[9/34] openapi-mcp-generator ✅ (0 findings, 0 critical)
+[10/34] argocd-mcp ✅ (0 findings, 0 critical)
+[11/34] @pandacss/mcp ✅ (0 findings, 0 critical)
+[12/34] @kimuson/modular-mcp ✅ (0 findings, 0 critical)
+[13/34] agentmail-mcp ✅ (0 findings, 0 critical)
+[14/34] @roychri/mcp-server-asana ✅ (0 findings, 0 critical)
+[15/34] agentation-mcp ✅ (0 findings, 0 critical)
+[16/34] mcp-server-kubernetes ✅ (0 findings, 0 critical)
+[17/34] mcp-client ✅ (0 findings, 0 critical)
+[18/34] @metorial/mcp-session ✅ (0 findings, 0 critical)
+[19/34] @browserstack/mcp-server ✅ (0 findings, 0 critical)
+[20/34] @cloudflare/playwright-mcp ✅ (0 findings, 0 critical)
+[21/34] @railway/mcp-server ⚠️ (11 findings, 7 critical)
+[22/34] @preply/ds-mcp ⚠️ (6 findings, 6 critical)
+[23/34] @dynatrace-oss/dynatrace-mcp-server ⚠️ (2 findings, 0 critical)
+[24/34] @gleanwork/mcp-config-schema ⚠️ (24 findings, 18 critical)
+[25/34] @siemens/element-mcp ✅ (0 findings, 0 critical)
+[26/34] @agent-infra/mcp-shared ✅ (0 findings, 0 critical)
+[27/34] @kubb/plugin-mcp ⚠️ (4 findings, 0 critical)
+[28/34] vite-plugin-mcp ✅ (0 findings, 0 critical)
+[29/34] @brightdata/mcp ⚠️ (2 findings, 0 critical)
+[30/34] @smartbear/mcp ⚠️ (2 findings, 0 critical)
+[31/34] @structured-world/gitlab-mcp ✅ (0 findings, 0 critical)
+[32/34] @azure/mcp-linux-x64 ❌ (0 findings, 0 critical)
+[33/34] @launchdarkly/mcp-server ⚠️ (1665 findings, 46 critical)
+[34/34] @sveltejs/mcp ❌ (0 findings, 0 critical)
+
+============================================================
+SCAN SUMMARY
+============================================================
+Total packages: 34
+Scanned: 32
+Flagged: 9
+Errors: 2
+Results saved to: optimized_scan_results.json
+============================================================
+
+FLAGGED PACKAGES:
+  - @launchdarkly/mcp-server: 1665 findings (46 critical)
+  - @gleanwork/mcp-config-schema: 24 findings (18 critical)
+  - @railway/mcp-server: 11 findings (7 critical)
+  - @preply/ds-mcp: 6 findings (6 critical)
+  - @zereight/mcp-gitlab: 1 findings (0 critical)
+  - @dynatrace-oss/dynatrace-mcp-server: 2 findings (0 critical)
+  - @kubb/plugin-mcp: 4 findings (0 critical)
+  - @brightdata/mcp: 2 findings (0 critical)
+  - @smartbear/mcp: 2 findings (0 critical)
