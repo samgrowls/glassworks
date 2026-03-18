@@ -4,6 +4,29 @@
 
 glassware detects steganographic payloads, invisible Unicode characters, and bidirectional text attacks in source code. Built in Rust. Ships as a single binary.
 
+## Quick Start (For Agents)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/samgrowls/glassworm.git
+cd glassworm
+
+# 2. Build the project (debug mode for development)
+cargo build
+
+# 3. Run all tests (verify everything works)
+cargo test --features "full,llm"
+
+# 4. Build release binary (optimized)
+cargo build --release
+
+# 5. Scan a project
+./target/release/glassware /path/to/project
+
+# 6. (Optional) Install globally
+cargo install --path glassware-cli
+```
+
 ## Why
 
 In March 2026, the GlassWare campaign compromised 72+ VS Code extensions and 150+ GitHub repositories using invisible Unicode characters to hide malicious payloads in plain sight. The code looks normal in your editor. The payload is invisible. glassware makes it visible.
@@ -183,6 +206,28 @@ glassware temp/
 rm -rf temp/
 ```
 
+## npm Scanning Harness
+
+The `harness/` directory contains a Python-based scanning harness for automated npm package analysis:
+
+```bash
+cd harness
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Run Tier 1 scan (100 packages)
+python scan.py --max-packages 100 --days-back 30
+
+# View corpus statistics
+python scan.py --stats
+
+# Generate report
+python reporter.py <run_id> --save
+```
+
+See [harness/README.md](harness/README.md) for full documentation.
+
 ## The GlassWare Campaign
 
 glassware is named after the GlassWare threat campaign, active since October 2025. The campaign uses invisible Unicode steganography to hide malicious payloads in JavaScript/TypeScript files across npm packages, GitHub repositories, and VS Code extensions.
@@ -201,6 +246,17 @@ glassware is named after the GlassWare threat campaign, active since October 202
 | Semantic analysis | ✅ OXC-based flow tracking | ❌ |
 | LLM review | ✅ Optional | ❌ |
 | Install | `cargo install` / single binary | `npm install` |
+| Test corpus | 180+ tests | ~20 tests |
+
+## Test Corpus
+
+glassware includes **180+ tests** covering:
+
+- **Campaign fixtures**: Reconstructed patterns from real GlassWare attacks (Wave 1-5, Shai-Hulud)
+- **False positive fixtures**: Legitimate code that should NOT trigger (crypto, i18n, build scripts)
+- **Edge cases**: Obfuscation techniques documenting known limitations
+
+All tests pass under 4 feature combinations: `--no-default-features`, `--features semantic`, `--features llm`, `--features "full,llm"`.
 
 ## Related
 

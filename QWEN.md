@@ -228,11 +228,12 @@ cp .env.example .env
 ### Testing Practices
 
 - Unit tests in each module using `#[cfg(test)]`
-- Tests cover: variation selectors, homoglyphs, bidi overrides, clean content
+- Integration tests in `glassware-core/tests/` with 38 test fixtures
+- Test fixtures cover: GlassWare campaign patterns, false positives, edge cases
 - Decoder tests include round-trip encoding/decoding verification
 - Entropy analysis tests for payload classification
 - LLM tests use mocks (no network calls)
-- **All 114 tests must pass before merging** (with `full,llm` features)
+- **All 180 tests must pass before merging** (with `full,llm` features)
 
 ### Key Design Decisions
 
@@ -308,6 +309,36 @@ cargo test --features "full,llm"
 | L1 detection latency | O(n) single pass |
 | L2 detection latency | O(n²) worst case |
 | L3 detection latency | ~2-5 sec per file (API dependent) |
+
+## Test Corpus
+
+**180+ tests** across 4 feature combinations:
+
+| Category | Count |
+|----------|-------|
+| Unit tests (glassware-core) | 120 |
+| Campaign fixture tests | 12 (3 ignored) |
+| False positive tests | 13 |
+| Edge case tests | 14 (4 ignored) |
+| Scan directory tests | 6 |
+| Doc tests | 4 |
+
+**Test fixtures:** 38 files in `glassware-core/tests/fixtures/`
+- `glassworm/` (12): Reconstructed GlassWare campaign patterns
+- `false_positives/` (12): Legitimate code that should NOT trigger
+- `edge_cases/` (14): Obfuscation techniques documenting limitations
+
+## npm Scanning Harness
+
+The `harness/` directory contains a Python-based automated scanning system:
+
+- **selector.py**: Async npm registry queries with Tier 1 filtering
+- **scan.py**: Main orchestrator with progress tracking
+- **database.py**: SQLite corpus (runs, packages, findings tables)
+- **reporter.py**: Markdown report generation
+- **DISCLOSURE.md**: Responsible disclosure policy
+
+See `harness/README.md` for usage instructions.
 
 ## Related Projects
 

@@ -1,29 +1,52 @@
 # glassware — Developer Handoff
 
-**Last updated:** 2026-03-17  
+**Last updated:** 2026-03-18  
 **Version:** 0.1.0  
-**Status:** Production-ready
+**Status:** Production-ready  
+**Test corpus:** 180+ tests across 4 feature combinations
 
 ---
 
-## Quick Start
+## Quick Start (For Agents Cloning This Repo)
 
 ```bash
-# Clone and build
-git clone https://github.com/samgrowls/glassware.git
-cd glassware
-cargo build --release
+# 1. Clone
+git clone https://github.com/samgrowls/glassworm.git
+cd glassworm
 
-# Run tests
+# 2. Build (debug for development)
+cargo build
+
+# 3. Test (verify all 180 tests pass)
 cargo test --features "full,llm"
 
-# Scan a project
-./target/release/glassware /path/to/project
+# 4. Build release binary
+cargo build --release
 
-# Scan with LLM analysis (requires API key)
-cp .env.example .env
-# Edit .env with your API credentials
-./target/release/glassware --llm /path/to/project
+# 5. Run the scanner
+./target/release/glassware /path/to/scan
+
+# 6. (Optional) Install globally
+cargo install --path glassware-cli
+```
+
+### Python Harness (npm Scanning)
+
+```bash
+cd harness
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run Tier 1 scan
+python scan.py --max-packages 100 --days-back 30
+
+# View statistics
+python scan.py --stats
 ```
 
 ---
@@ -69,10 +92,26 @@ cp .env.example .env
 ### Workspace Structure
 
 ```
-glassware/
+glassworm/
 ├── Cargo.toml              # Workspace root
+├── harness/                # Python npm scanning harness
+│   ├── scan.py             # Main orchestrator
+│   ├── selector.py         # npm registry queries
+│   ├── database.py         # SQLite corpus
+│   ├── reporter.py         # Markdown reports
+│   ├── DISCLOSURE.md       # Responsible disclosure policy
+│   └── README.md           # Harness documentation
 ├── glassware-core/         # Core library
 │   ├── Cargo.toml
+│   ├── tests/              # Integration tests + fixtures
+│   │   ├── fixtures/
+│   │   │   ├── glassworm/      # Campaign patterns (12 files)
+│   │   │   ├── false_positives/# Legitimate code (12 files)
+│   │   │   └── edge_cases/     # Obfuscation tests (14 files)
+│   │   ├── integration_campaign_fixtures.rs
+│   │   ├── integration_false_positives.rs
+│   │   ├── integration_edge_cases.rs
+│   │   └── integration_scan_directory.rs
 │   └── src/
 │       ├── lib.rs                  # Public API re-exports
 │       ├── detector.rs             # Detector trait
@@ -158,29 +197,44 @@ cargo build --features "full,llm"
 
 ## Testing
 
-### Test Counts
+### Test Counts (as of 2026-03-18)
 
 | Feature Set | Test Count |
 |-------------|------------|
-| `--no-default-features` | 106 |
-| `--features "full"` | 114 |
-| `--features "full,llm"` | 114 |
+| `--no-default-features` | 141 |
+| `--features "full"` | 175 |
+| `--features "full,llm"` | 180 |
 
-### Run Tests
+### Run All Tests
 
 ```bash
-# All tests
+# Full test suite
 cargo test --features "full,llm"
 
 # Specific package
 cargo test -p glassware-core
 cargo test -p glassware-cli
 
-# Specific test
+# Specific test module
 cargo test gw006_semantic::tests::test_hardcoded_key_to_eval
 
-# LLM tests (require no network, use mocks)
+# Integration tests
+cargo test --test integration_campaign_fixtures
+cargo test --test integration_false_positives
+cargo test --test integration_edge_cases
+
+# LLM tests (use mocks, no network)
 cargo test --features llm llm::
+```
+
+### Test All Feature Combinations
+
+```bash
+# Verify all 4 combinations pass
+cargo test --no-default-features
+cargo test --features semantic
+cargo test --features llm
+cargo test --features "full,llm"
 ```
 
 ---
@@ -267,6 +321,24 @@ cp .env.example .env
 
 ---
 
+## Harness CLI Reference
+
+```bash
+python harness/scan.py [OPTIONS]
+
+Options:
+  --max-packages N          Maximum packages to scan (default: 100)
+  --days-back N             Only scan packages from last N days (default: 30)
+  --download-threshold N    Max weekly downloads for Tier 1 (default: 1000)
+  --tier 1                  Package selection tier (only Tier 1 implemented)
+  --resume                  Resume last interrupted scan
+  --rescan RUN_ID           Re-scan flagged packages from previous run
+  --with-llm                Enable LLM analysis on re-scan
+  --stats                   Show corpus statistics
+```
+
+---
+
 ## Adding a New Detector
 
 ### Step 1: Create Detector Module
@@ -341,6 +413,7 @@ mod tests {
 2. **LLM layer requires network access** — Falls back gracefully if unavailable
 3. **RC4 detection is heuristic** — May have false positives on legitimate crypto code
 4. **No multi-hop taint tracking** — Only one-hop transitive flows are tracked
+5. **Cross-file flows not tracked** — Each file scanned independently
 
 ---
 
@@ -395,6 +468,22 @@ curl -H "Authorization: Bearer $GLASSWARE_LLM_API_KEY" \
      "$GLASSWARE_LLM_BASE_URL/models"
 ```
 
+### Harness Issues
+
+```bash
+# Create fresh virtual environment
+cd harness
+rm -rf .venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Verify glassware is in PATH
+which glassware
+# Or add cargo bin to PATH
+export PATH="$HOME/.cargo/bin:$PATH"
+```
+
 ---
 
 ## Contributing
@@ -413,13 +502,27 @@ curl -H "Authorization: Bearer $GLASSWARE_LLM_API_KEY" \
 - **LLM layer is opt-in** — Requires explicit `--llm` flag
 - **API keys never logged** — Credentials handled securely
 - **Decoded payloads sanitized** — Hidden code displayed safely
+- **Harness vault archives** — Flagged packages stored for evidence
+
+---
+
+## Project Structure Summary
+
+| Directory | Purpose |
+|-----------|---------|
+| `glassware-core/` | Core detection library |
+| `glassware-core/tests/` | Integration tests + 38 test fixtures |
+| `glassware-cli/` | CLI binary |
+| `harness/` | Python npm scanning harness |
+| `harness/data/vault/` | Archived flagged packages |
+| `harness/reports/` | Generated markdown reports |
 
 ---
 
 ## Contact
 
-- **GitHub:** https://github.com/samgrowls/glassware
-- **Issues:** https://github.com/samgrowls/glassware/issues
+- **GitHub:** https://github.com/samgrowls/glassworm
+- **Issues:** https://github.com/samgrowls/glassworm/issues
 
 ---
 
