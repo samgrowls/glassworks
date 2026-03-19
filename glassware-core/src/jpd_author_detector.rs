@@ -1,0 +1,161 @@
+//! JPD Author Detector
+//!
+//! Detects npm packages authored by "JPD" - a signature of the PhantomRaven campaign.
+//! All 126+ PhantomRaven packages use this author name.
+//!
+//! ## Detection Logic
+//!
+//! Scans package.json for author field matching "JPD"
+//!
+//! ## Severity
+//!
+//! Critical - strong indicator of PhantomRaven campaign
+
+use crate::config::UnicodeConfig;
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::finding::{DetectionCategory, Finding, Severity};
+use serde_json::Value;
+use std::path::Path;
+
+/// Detector for JPD author signature
+pub struct JpdAuthorDetector;
+
+impl JpdAuthorDetector {
+    /// Create a new JPD author detector
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for JpdAuthorDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Detector for JpdAuthorDetector {
+    fn name(&self) -> &str {
+        "jpd_author"
+    }
+
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+        let mut findings = Vec::new();
+        let path = Path::new(&ctx.file_path);
+
+        // Only scan package.json files
+        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if file_name != "package.json" {
+            return findings;
+        }
+
+        // Parse package.json
+        let parsed: Value = match serde_json::from_str(&ctx.content) {
+            Ok(v) => v,
+            Err(_) => return findings,
+        };
+
+        // Check for "JPD" author in various formats
+        let author_matches = [
+            parsed.get("author").and_then(|a| a.get("name")).and_then(|n| n.as_str()),
+            parsed.get("author").and_then(|a| a.as_str()),
+            parsed.get("maintainers").and_then(|m| m.as_array()).and_then(|arr| {
+                arr.iter().find_map(|m| m.get("name").and_then(|n| n.as_str()))
+            }),
+        ];
+
+        for author_opt in author_matches.iter().flatten() {
+            if author_opt == &"JPD" || author_opt == &"jpd" || author_opt == &"Jpd" {
+                findings.push(
+                    Finding::new(
+                        &path.to_string_lossy(),
+                        1,
+                        1,
+                        0,
+                        '\0',
+                        DetectionCategory::JpdAuthor,
+                        Severity::Critical,
+                        "PhantomRaven campaign signature: 'JPD' author detected",
+                        "All 126+ PhantomRaven malicious packages use the 'JPD' author signature. This is a strong indicator of malicious intent. Immediate investigation required.",
+                    )
+                    .with_cwe_id("CWE-506")
+                    .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"),
+                );
+            }
+        }
+
+        findings
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "jpd_author".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects PhantomRaven campaign signature: 'JPD' author field in package.json".to_string().to_string(),
+        }
+    }
+}
+
+impl JpdAuthorDetector {
+    /// Backward compatibility method for tests
+    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
+        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
+        self.detect(&ctx)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detect_jpd_author_object() {
+        let detector = JpdAuthorDetector::new();
+        let content = r#"{
+            "name": "test-package",
+            "author": {
+                "name": "JPD"
+            }
+        }"#;
+
+        let findings = detector.scan(Path::new("package.json"), content, &UnicodeConfig::default());
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].category, DetectionCategory::JpdAuthor);
+        assert_eq!(findings[0].severity, Severity::Critical);
+    }
+
+    #[test]
+    fn test_detect_jpd_author_string() {
+        let detector = JpdAuthorDetector::new();
+        let content = r#"{
+            "name": "test-package",
+            "author": "JPD"
+        }"#;
+
+        let findings = detector.scan(Path::new("package.json"), content, &UnicodeConfig::default());
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].severity, Severity::Critical);
+    }
+
+    #[test]
+    fn test_no_detect_legitimate_author() {
+        let detector = JpdAuthorDetector::new();
+        let content = r#"{
+            "name": "legitimate-package",
+            "author": {
+                "name": "John Doe"
+            }
+        }"#;
+
+        let findings = detector.scan(Path::new("package.json"), content, &UnicodeConfig::default());
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_no_detect_non_package_json() {
+        let detector = JpdAuthorDetector::new();
+        let content = r#"{"author": "JPD"}"#;
+
+        let findings = detector.scan(Path::new("config.json"), content, &UnicodeConfig::default());
+        assert!(findings.is_empty());
+    }
+}

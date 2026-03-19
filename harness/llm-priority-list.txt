@@ -1,0 +1,10 @@
+@railway/mcp-server
+@gleanwork/mcp-config-schema
+@sentry/mcp-server
+@notionhq/notion-mcp-server
+@mcp-ui/server
+@mcp-ui/client
+mcp-proxy
+@composio/mcp
+@preply/ds-mcp
+@ui5/mcp-server

@@ -6,6 +6,7 @@
 //! - U+E0000-U+E007F: Tags (language tags, etc.)
 
 use crate::config::UnicodeConfig;
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 
 /// Detector for Unicode tag attacks
@@ -26,7 +27,16 @@ impl UnicodeTagDetector {
     }
 
     /// Scan content for Unicode tag attacks
-    pub fn detect(&self, content: &str, file_path: &str) -> Vec<Finding> {
+    pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
+        self.detect(&ScanContext::new(
+            file_path.to_string(),
+            content.to_string(),
+            self.config.clone(),
+        ))
+    }
+
+    /// Internal implementation of detection logic
+    fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
 
         for (line_num, line) in content.lines().enumerate() {
@@ -96,6 +106,24 @@ impl UnicodeTagDetector {
     }
 }
 
+impl Detector for UnicodeTagDetector {
+    fn name(&self) -> &str {
+        "unicode_tag"
+    }
+
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+        self.detect_impl(&ctx.content, &ctx.file_path)
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "unicode_tag".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects Unicode tag characters (U+E0000-U+E007F) used for metadata injection".to_string().to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -106,7 +134,7 @@ mod tests {
 
         // Language tag character
         let content = "const x = \"test\u{E0001}value\";";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(!findings.is_empty());
         assert_eq!(findings[0].code_point, 0xE0001);
@@ -118,7 +146,7 @@ mod tests {
         let detector = UnicodeTagDetector::with_default_config();
 
         let content = "const normal = 'hello world';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(findings.is_empty());
     }

@@ -10,6 +10,7 @@
 //! - U+E0000-U+E007F: Tags
 
 use crate::config::UnicodeConfig;
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::ranges::{
     get_bidi_name, get_zero_width_name, is_in_critical_range, is_in_invisible_range,
@@ -34,8 +35,39 @@ impl InvisibleCharDetector {
     }
 
     /// Scan content for invisible characters
-    pub fn detect(&self, content: &str, file_path: &str) -> Vec<Finding> {
+    pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
+        self.detect(&ScanContext::new(
+            file_path.to_string(),
+            content.to_string(),
+            self.config.clone(),
+        ))
+    }
+
+    /// Internal implementation of detection logic
+    fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
+
+        // Skip bundled/minified files (high FP rate)
+        let path_lower = file_path.to_lowercase();
+        let is_bundled = path_lower.contains("/dist/")
+            || path_lower.contains("/build/")
+            || path_lower.contains("/bin/")
+            || path_lower.contains("/out/")      // ClojureScript
+            || path_lower.contains("/gyp/")      // GYP build files
+            || path_lower.contains("/lib/")      // Compiled libraries
+            || path_lower.ends_with(".mjs")
+            || path_lower.ends_with(".cjs")
+            || path_lower.contains(".min.")
+            || path_lower.contains(".bundle.");
+        
+        if is_bundled {
+            return findings;
+        }
+
+        // Skip ClojureScript compiled output (cljs_deps.js marker)
+        if path_lower.contains("cljs_deps.js") || path_lower.contains("/com/cognitect/transit/") {
+            return findings;
+        }
 
         // Check if this is an i18n/translation file (legitimate use of ZWNJ/ZWJ)
         let is_i18n_context = self.is_i18n_file(file_path);
@@ -249,6 +281,24 @@ impl InvisibleCharDetector {
     }
 }
 
+impl Detector for InvisibleCharDetector {
+    fn name(&self) -> &str {
+        "invisible_char"
+    }
+
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+        self.detect_impl(&ctx.content, &ctx.file_path)
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "invisible_char".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects invisible Unicode characters including zero-width chars, variation selectors, and bidirectional overrides".to_string().to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,7 +308,7 @@ mod tests {
         let detector = InvisibleCharDetector::with_default_config();
 
         let content = "const secret\u{FE00}Key = 'value';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(!findings.is_empty());
         assert_eq!(findings[0].category, DetectionCategory::InvisibleCharacter);
@@ -271,7 +321,7 @@ mod tests {
         let detector = InvisibleCharDetector::with_default_config();
 
         let content = "const pass\u{200B}word = 'secret';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(!findings.is_empty());
         assert_eq!(findings[0].code_point, 0x200B);
@@ -282,7 +332,7 @@ mod tests {
         let detector = InvisibleCharDetector::with_default_config();
 
         let content = "const file = \"test\u{202E}txt\";";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(!findings.is_empty());
         assert_eq!(findings[0].code_point, 0x202E);
@@ -294,7 +344,7 @@ mod tests {
         let detector = InvisibleCharDetector::with_default_config();
 
         let content = "const normal = 'hello world';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(findings.is_empty());
     }

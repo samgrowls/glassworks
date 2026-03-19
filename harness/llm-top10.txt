@@ -1,0 +1,10 @@
+cypress@15.12.0
+moment@2.30.1
+dayjs@1.11.20
+vite@8.0.1
+svelte@5.54.0
+bcryptjs@3.0.3
+micromark-util-sanitize-uri@2.0.1
+@forge/node-runtime@0.15.0
+prettier-plugin-svelte@3.5.1
+@te-whatu-ora/anatomic@4.2.0

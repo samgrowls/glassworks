@@ -16,7 +16,7 @@
 //! High — indicates potential encrypted payload loader.
 
 use crate::config::UnicodeConfig;
-use crate::detector::Detector;
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -60,6 +60,12 @@ impl EncryptedPayloadDetector {
     pub fn new() -> Self {
         Self
     }
+
+    /// Backward compatibility method for tests
+    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
+        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
+        self.detect(&ctx)
+    }
 }
 
 impl Default for EncryptedPayloadDetector {
@@ -73,21 +79,37 @@ impl Detector for EncryptedPayloadDetector {
         "encrypted_payload"
     }
 
-    fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
         let mut findings = Vec::new();
+        let path = Path::new(&ctx.file_path);
+
+        // Skip bundled/minified files (high FP rate)
+        let path_str = path.to_string_lossy().to_lowercase();
+        let is_bundled = path_str.contains("/dist/")
+            || path_str.contains("/build/")
+            || path_str.contains("/bin/")
+            || path_str.ends_with(".mjs")
+            || path_str.ends_with(".cjs")
+            || path_str.contains(".min.")
+            || path_str.contains(".bundle.")
+            || path_str.contains(".umd.");
+
+        if is_bundled {
+            return findings;
+        }
 
         // Check for high-entropy blobs
-        let has_high_entropy_blob = self.detect_high_entropy_blob(content);
+        let has_high_entropy_blob = self.detect_high_entropy_blob(&ctx.content);
 
         // Check for decrypt→exec flow (not just any exec)
-        let has_decrypt_exec_flow = self.detect_decrypt_to_exec_flow(content);
+        let has_decrypt_exec_flow = self.detect_decrypt_to_exec_flow(&ctx.content);
 
         // Only emit finding if BOTH conditions are present:
         // 1. High-entropy blob
         // 2. Decryption pattern followed by dynamic execution
         if has_high_entropy_blob && has_decrypt_exec_flow {
             // Find the line with the high-entropy blob for the finding location
-            let blob_line = self.find_high_entropy_blob_line(content).unwrap_or(1);
+            let blob_line = self.find_high_entropy_blob_line(&ctx.content).unwrap_or(1);
 
             let finding = Finding::new(
                 &path.to_string_lossy(),
@@ -110,6 +132,14 @@ impl Detector for EncryptedPayloadDetector {
         }
 
         findings
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "encrypted_payload".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects encrypted payload patterns with high-entropy blobs and decrypt-to-exec flows".to_string().to_string(),
+        }
     }
 }
 

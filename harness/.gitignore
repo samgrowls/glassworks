@@ -1,28 +1,20 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
+*.pyo
+*.pyd
+
+# Virtual environment
 .venv/
 venv/
-env/
-ENV/
 
-# Harness data
-data/corpus.db
-data/corpus.db-wal
-data/corpus.db-shm
-data/vault/*.tgz
-data/vault/*/
-reports/*.md
+# Scan results
+*.json
+*.log
+*.tgz
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Evidence
+data/
 
-# OS
-.DS_Store
-Thumbs.db
+# Binaries
+glassware-scanner*

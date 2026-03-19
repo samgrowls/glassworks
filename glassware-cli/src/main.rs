@@ -9,13 +9,19 @@
 use clap::{Parser, ValueEnum};
 use colored::Colorize;
 use glassware_core::{
-    DecodedPayload, DetectionCategory, Finding, PayloadClass, ScanEngine, Severity,
+    DecodedPayload, DetectionCategory, Finding, PayloadClass, ScanConfig, ScanEngine, Severity,
 };
+use ignore::{overrides::OverrideBuilder, WalkBuilder};
+use rayon::prelude::*;
 use serde::Serialize;
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use walkdir::WalkDir;
+
+/// Maximum file size to scan (5MB)
+const MAX_FILE_SIZE: u64 = 5 * 1024 * 1024;
 
 /// GlassWare - Detect invisible Unicode attacks in source code
 #[derive(Parser, Debug)]
@@ -61,6 +67,18 @@ struct Args {
     #[cfg(feature = "llm")]
     #[arg(long, default_value = "false")]
     llm: bool,
+
+    /// Enable incremental scanning with caching
+    #[arg(long, default_value = ".glassware-cache.json")]
+    cache_file: PathBuf,
+
+    /// Cache TTL in days (default: 7)
+    #[arg(long, default_value = "7")]
+    cache_ttl: u64,
+
+    /// Disable caching
+    #[arg(long, default_value = "false")]
+    no_cache: bool,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -144,35 +162,149 @@ fn main() {
         std::process::exit(2);
     }
 
-    // Create scan engine with default detectors
+    // Create ScanConfig from CLI args
+    let extensions: Vec<String> = args.extensions.split(',').map(|s| s.to_string()).collect();
+    let exclude_patterns: Vec<String> = args.exclude.split(',').map(|s| s.to_string()).collect();
+    
+    let min_severity = match args.severity {
+        SeverityLevel::Critical => Severity::Critical,
+        SeverityLevel::High => Severity::High,
+        SeverityLevel::Medium => Severity::Medium,
+        SeverityLevel::Low => Severity::Low,
+        SeverityLevel::Info => Severity::Info,
+    };
+
+    let scan_config = ScanConfig {
+        extensions,
+        exclude_patterns,
+        max_file_size: MAX_FILE_SIZE,
+        enable_parallel: true,
+        parallel_workers: 10,
+        enable_dedup: true,
+        min_severity,
+        #[cfg(feature = "llm")]
+        enable_llm: args.llm,
+    };
+
+    // Create scan engine with config
+    let mut engine_builder = ScanEngine::default_detectors_with_config(scan_config.clone());
+
+    // Enable caching if not disabled
+    if !args.no_cache {
+        engine_builder = engine_builder.with_cache(args.cache_file.clone(), args.cache_ttl);
+    }
+
     #[cfg(feature = "llm")]
-    let engine = ScanEngine::default_detectors().with_llm(args.llm);
+    let engine = Arc::new(engine_builder.with_llm(args.llm));
     #[cfg(not(feature = "llm"))]
-    let engine = ScanEngine::default_detectors();
+    let engine = Arc::new(engine_builder);
 
     let start = Instant::now();
-    let mut all_findings = Vec::new();
+    
+    // Thread-safe collections for findings and errors
+    let all_findings = Arc::new(Mutex::new(Vec::new()));
     #[cfg(feature = "llm")]
-    let mut all_llm_verdicts = Vec::new();
+    let all_llm_verdicts = Arc::new(Mutex::new(Vec::new()));
+    
+    // Track scan errors with thread-safe counters
+    let files_scanned = Arc::new(Mutex::new(0usize));
+    let files_skipped = Arc::new(Mutex::new(0usize));
+    let read_errors = Arc::new(Mutex::new(Vec::new()));
 
-    // Scan each file
-    for file in &files {
-        if let Ok(content) = fs::read_to_string(file) {
-            #[cfg(feature = "llm")]
-            {
-                let result = engine.scan_with_llm(file, &content);
-                all_findings.extend(result.findings);
-                all_llm_verdicts.extend(result.llm_verdicts);
+    // Scan each file in parallel
+    files.par_iter().for_each(|file| {
+        // Check file size
+        if let Ok(metadata) = fs::metadata(file) {
+            if metadata.len() > MAX_FILE_SIZE {
+                let mut skipped = files_skipped.lock().unwrap();
+                *skipped += 1;
+                if !args.quiet {
+                    eprintln!(
+                        "{}: Skipping {} ({}MB, exceeds {}MB limit)",
+                        "⊘".yellow(),
+                        file.display(),
+                        metadata.len() / 1024 / 1024,
+                        MAX_FILE_SIZE / 1024 / 1024
+                    );
+                }
+                return;
             }
-            #[cfg(not(feature = "llm"))]
-            {
-                let findings = engine.scan(file, &content);
-                all_findings.extend(findings);
+        }
+
+        // Read file content
+        match fs::read_to_string(file) {
+            Ok(content) => {
+                let mut scanned = files_scanned.lock().unwrap();
+                *scanned += 1;
+
+                #[cfg(feature = "llm")]
+                {
+                    let result = engine.scan_with_llm(file, &content);
+                    let mut findings = all_findings.lock().unwrap();
+                    findings.extend(result.findings);
+                    let mut llm_verdicts = all_llm_verdicts.lock().unwrap();
+                    llm_verdicts.extend(result.llm_verdicts);
+                }
+                #[cfg(not(feature = "llm"))]
+                {
+                    let result = engine.scan_with_stats(file, &content);
+                    let mut findings = all_findings.lock().unwrap();
+                    findings.extend(result.findings);
+                }
             }
+            Err(e) => {
+                let mut errors = read_errors.lock().unwrap();
+                errors.push((file.clone(), e.to_string()));
+                if !args.quiet {
+                    eprintln!(
+                        "{}: Failed to read {}: {}",
+                        "✗".red(),
+                        file.display(),
+                        e
+                    );
+                }
+            }
+        }
+    });
+
+    // Extract results from Arc<Mutex<>>
+    let all_findings = Arc::try_unwrap(all_findings)
+        .unwrap()
+        .into_inner()
+        .unwrap();
+    
+    #[cfg(feature = "llm")]
+    let all_llm_verdicts = Arc::try_unwrap(all_llm_verdicts)
+        .unwrap()
+        .into_inner()
+        .unwrap();
+    
+    let files_scanned = Arc::try_unwrap(files_scanned)
+        .unwrap()
+        .into_inner()
+        .unwrap();
+    
+    let files_skipped = Arc::try_unwrap(files_skipped)
+        .unwrap()
+        .into_inner()
+        .unwrap();
+    
+    let read_errors = Arc::try_unwrap(read_errors)
+        .unwrap()
+        .into_inner()
+        .unwrap();
+
+    let duration = start.elapsed();
+
+    // Save cache to disk (if enabled)
+    if !args.no_cache {
+        if let Err(e) = engine.save_cache() {
+            eprintln!("Warning: Failed to save cache: {}", e);
         }
     }
 
-    let duration = start.elapsed();
+    // Get cache statistics (if enabled)
+    let cache_stats = engine.cache_stats();
 
     // Filter by severity
     let filtered_findings: Vec<_> = all_findings
@@ -198,15 +330,19 @@ fn main() {
                         &files,
                         duration,
                         &filtered_llm_verdicts,
+                        files_scanned,
+                        files_skipped,
+                        &read_errors,
+                        cache_stats.as_ref(),
                     );
                 }
                 #[cfg(not(feature = "llm"))]
                 {
-                    output_pretty(&filtered_findings, &files, duration);
+                    output_pretty(&filtered_findings, &files, duration, files_scanned, files_skipped, &read_errors, cache_stats.as_ref());
                 }
             }
-            OutputFormat::Json => output_json(&filtered_findings, &files, duration),
-            OutputFormat::Sarif => output_sarif(&filtered_findings, &files, duration),
+            OutputFormat::Json => output_json(&filtered_findings, &files, duration, files_scanned, files_skipped, &read_errors),
+            OutputFormat::Sarif => output_sarif(&filtered_findings, &files, duration, files_scanned, files_skipped, &read_errors),
         }
     }
 
@@ -220,45 +356,56 @@ fn main() {
 
 /// Collect files to scan from the provided paths
 fn collect_files(args: &Args) -> Vec<PathBuf> {
-    let extensions: Vec<&str> = args.extensions.split(',').collect();
+    let extensions: HashSet<&str> = args.extensions.split(',').collect();
     let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
+    
+    // Build overrides for file extensions using OverrideBuilder
+    let mut override_builder = OverrideBuilder::new(".");
+    for ext in &extensions {
+        let _ = override_builder.add(&format!("**/*.{}", ext));
+    }
+    
+    // Add exclude patterns (supports glob patterns like **/node_modules, **/dist, etc.)
+    // Note: OverrideBuilder uses gitignore semantics where ! means exclude
+    for exclude in &exclude_dirs {
+        let _ = override_builder.add(&format!("!{}", exclude));
+        let _ = override_builder.add(&format!("!**/{}", exclude));
+    }
+    
+    let overrides = override_builder.build().unwrap();
+    
     let mut files = Vec::new();
-
+    
     for path in &args.paths {
         if path.is_file() {
+            // For individual files, check extension directly
             if should_scan_file(path, &extensions) {
                 files.push(path.clone());
             }
         } else if path.is_dir() {
-            for entry in WalkDir::new(path)
-                .into_iter()
-                .filter_entry(|e| !should_exclude_dir(e.path(), &exclude_dirs))
-                .filter_map(|e| e.ok())
-            {
-                let entry_path = entry.path();
-                if entry_path.is_file() && should_scan_file(entry_path, &extensions) {
-                    files.push(entry_path.to_path_buf());
+            let walker = WalkBuilder::new(path)
+                .standard_filters(true)  // Respects .gitignore and other standard ignores
+                .hidden(false)  // Don't skip hidden files
+                .overrides(overrides.clone())
+                .build();
+            
+            for result in walker {
+                if let Ok(entry) = result {
+                    if entry.file_type().map_or(false, |ft| ft.is_file()) {
+                        files.push(entry.path().to_path_buf());
+                    }
                 }
             }
         }
     }
-
+    
     files
 }
 
 /// Check if a file should be scanned based on extension
-fn should_scan_file(path: &Path, extensions: &[&str]) -> bool {
+fn should_scan_file(path: &Path, extensions: &HashSet<&str>) -> bool {
     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-        extensions.contains(&ext)
-    } else {
-        false
-    }
-}
-
-/// Check if a directory should be excluded
-fn should_exclude_dir(path: &Path, exclude_dirs: &[&str]) -> bool {
-    if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-        exclude_dirs.contains(&name)
+        extensions.contains(ext)
     } else {
         false
     }
@@ -268,17 +415,39 @@ fn should_exclude_dir(path: &Path, exclude_dirs: &[&str]) -> bool {
 #[cfg(feature = "llm")]
 fn output_pretty_with_llm(
     findings: &[Finding],
-    files: &[PathBuf],
+    _files: &[PathBuf],
     duration: std::time::Duration,
     llm_verdicts: &[glassware_core::llm::LlmFileResult],
+    files_scanned: usize,
+    files_skipped: usize,
+    read_errors: &[(PathBuf, String)],
+    cache_stats: Option<&glassware_core::CacheStats>,
 ) {
-    if findings.is_empty() {
+    if findings.is_empty() && read_errors.is_empty() {
         println!("{}", "✓ No Unicode attacks detected".green().bold());
         println!(
             "Scanned {} files in {:.2}s",
-            files.len(),
+            files_scanned,
             duration.as_secs_f64()
         );
+        if files_skipped > 0 {
+            println!(
+                "{} {} files skipped (size >5MB)",
+                "⊘".yellow(),
+                files_skipped
+            );
+        }
+        // Display cache stats
+        if let Some(stats) = cache_stats {
+            println!();
+            println!("{}", "━".repeat(60).dimmed());
+            println!("{}", "Cache Statistics".bold().cyan());
+            println!("{}", "━".repeat(60).dimmed());
+            println!("  Hits:       {} ({:.1}%)", stats.hits, stats.hit_rate());
+            println!("  Misses:     {}", stats.misses);
+            println!("  Expired:    {}", stats.expired);
+            println!("  Loaded:     {}", stats.loaded);
+        }
         return;
     }
 
@@ -351,7 +520,7 @@ fn output_pretty_with_llm(
     println!(
         "{} in {} files ({} critical, {} high, {} medium, {} low)",
         format!("{} findings", findings.len()).bold(),
-        files.len(),
+        files_scanned,
         critical.len().to_string().red(),
         high.len().to_string().yellow(),
         medium.len().to_string().blue(),
@@ -359,21 +528,73 @@ fn output_pretty_with_llm(
     );
     println!(
         "Scanned {} files in {:.2}s",
-        files.len(),
+        files_scanned,
         duration.as_secs_f64()
     );
+    if files_skipped > 0 {
+        println!(
+            "{} {} files skipped (size >5MB)",
+            "⊘".yellow(),
+            files_skipped
+        );
+    }
+    if !read_errors.is_empty() {
+        println!(
+            "{} {} read errors",
+            "✗".red(),
+            read_errors.len()
+        );
+    }
+
+    // Display cache stats
+    if let Some(stats) = cache_stats {
+        println!();
+        println!("{}", "━".repeat(60).dimmed());
+        println!("{}", "Cache Statistics".bold().cyan());
+        println!("{}", "━".repeat(60).dimmed());
+        println!("  Hits:       {} ({:.1}%)", stats.hits, stats.hit_rate());
+        println!("  Misses:     {}", stats.misses);
+        if stats.expired > 0 {
+            println!("  Expired:    {}", stats.expired);
+        }
+        if stats.loaded > 0 {
+            println!("  Loaded:     {}", stats.loaded);
+        }
+    }
 }
 
 /// Output results in pretty format (without LLM)
 #[cfg(not(feature = "llm"))]
-fn output_pretty(findings: &[Finding], files: &[PathBuf], duration: std::time::Duration) {
-    if findings.is_empty() {
+fn output_pretty(
+    findings: &[Finding],
+    _files: &[PathBuf],
+    duration: std::time::Duration,
+    files_scanned: usize,
+    files_skipped: usize,
+    read_errors: &[(PathBuf, String)],
+    cache_stats: Option<&glassware_core::CacheStats>,
+) {
+    if findings.is_empty() && read_errors.is_empty() {
         println!("{}", "✓ No Unicode attacks detected".green().bold());
         println!(
             "Scanned {} files in {:.2}s",
-            files.len(),
+            files_scanned,
             duration.as_secs_f64()
         );
+        if files_skipped > 0 {
+            println!("{} {} files skipped (size >5MB)", "⊘".yellow(), files_skipped);
+        }
+        // Display cache stats
+        if let Some(stats) = cache_stats {
+            println!();
+            println!("{}", "━".repeat(60).dimmed());
+            println!("{}", "Cache Statistics".bold().cyan());
+            println!("{}", "━".repeat(60).dimmed());
+            println!("  Hits:       {} ({:.1}%)", stats.hits, stats.hit_rate());
+            println!("  Misses:     {}", stats.misses);
+            println!("  Expired:    {}", stats.expired);
+            println!("  Loaded:     {}", stats.loaded);
+        }
         return;
     }
 
@@ -540,7 +761,7 @@ fn print_decoded_payload(payload: &DecodedPayload) {
 }
 
 /// Output results in JSON format
-fn output_json(findings: &[Finding], files: &[PathBuf], duration: std::time::Duration) {
+fn output_json(findings: &[Finding], _files: &[PathBuf], duration: std::time::Duration, files_scanned: usize, _files_skipped: usize, _read_errors: &[(PathBuf, String)]) {
     let json_findings: Vec<JsonFinding> = findings
         .iter()
         .map(|f| JsonFinding {
@@ -564,7 +785,7 @@ fn output_json(findings: &[Finding], files: &[PathBuf], duration: std::time::Dur
         version: env!("CARGO_PKG_VERSION").to_string(),
         findings: json_findings,
         summary: JsonSummary {
-            files_scanned: files.len(),
+            files_scanned,
             findings_count: findings.len(),
             duration_ms: duration.as_millis() as u64,
         },
@@ -574,7 +795,7 @@ fn output_json(findings: &[Finding], files: &[PathBuf], duration: std::time::Dur
 }
 
 /// Output results in SARIF format
-fn output_sarif(findings: &[Finding], _files: &[PathBuf], _duration: std::time::Duration) {
+fn output_sarif(findings: &[Finding], _files: &[PathBuf], _duration: std::time::Duration, _files_scanned: usize, _files_skipped: usize, _read_errors: &[(PathBuf, String)]) {
     let sarif = SarifOutput {
         schema: "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json".to_string(),
         version: "2.1.0".to_string(),
@@ -614,6 +835,42 @@ fn output_sarif(findings: &[Finding], _files: &[PathBuf], _duration: std::time::
                             name: "BidiOverride".to_string(),
                             short_description: SarifMessage {
                                 text: "Bidirectional text override (Trojan Source)".to_string(),
+                            },
+                            default_configuration: SarifConfig { level: "error".to_string() },
+                        },
+                        // GW005: EncryptedPayload
+                        SarifRule {
+                            id: "GW005".to_string(),
+                            name: "EncryptedPayload".to_string(),
+                            short_description: SarifMessage {
+                                text: "High-entropy encrypted payload combined with dynamic code execution".to_string(),
+                            },
+                            default_configuration: SarifConfig { level: "error".to_string() },
+                        },
+                        // GW006: HardcodedKeyDecryption
+                        SarifRule {
+                            id: "GW006".to_string(),
+                            name: "HardcodedKeyDecryption".to_string(),
+                            short_description: SarifMessage {
+                                text: "Cryptographic decryption with hardcoded key leading to code execution".to_string(),
+                            },
+                            default_configuration: SarifConfig { level: "error".to_string() },
+                        },
+                        // GW007: Rc4Pattern
+                        SarifRule {
+                            id: "GW007".to_string(),
+                            name: "Rc4Pattern".to_string(),
+                            short_description: SarifMessage {
+                                text: "Hand-rolled RC4-like cipher implementation with dynamic execution".to_string(),
+                            },
+                            default_configuration: SarifConfig { level: "warning".to_string() },
+                        },
+                        // GW008: HeaderC2
+                        SarifRule {
+                            id: "GW008".to_string(),
+                            name: "HeaderC2".to_string(),
+                            short_description: SarifMessage {
+                                text: "HTTP header extraction used for C2 communication and payload decryption".to_string(),
                             },
                             default_configuration: SarifConfig { level: "error".to_string() },
                         },

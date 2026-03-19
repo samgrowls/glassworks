@@ -6,6 +6,7 @@ use crate::config::UnicodeConfig;
 use crate::confusables::data::{
     get_base_char, get_confusable_script, get_similarity, is_confusable,
 };
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::script_detector::{
     extract_identifiers, find_identifier_at_position, has_mixed_scripts, is_pure_non_latin,
@@ -34,8 +35,22 @@ impl HomoglyphDetector {
     }
 
     /// Scan content for homoglyph attacks
-    pub fn detect(&self, content: &str, file_path: &str) -> Vec<Finding> {
+    pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
+        self.detect(&ScanContext::new(
+            file_path.to_string(),
+            content.to_string(),
+            self.config.clone(),
+        ))
+    }
+
+    /// Internal implementation of detection logic
+    fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
+
+        // Skip homoglyph detection for large files (likely minified bundles)
+        if content.len() > 100_000 {
+            return findings;
+        }
 
         for (line_num, line) in content.lines().enumerate() {
             // Skip comment lines entirely
@@ -139,6 +154,24 @@ impl HomoglyphDetector {
     }
 }
 
+impl Detector for HomoglyphDetector {
+    fn name(&self) -> &str {
+        "homoglyph"
+    }
+
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+        self.detect_impl(&ctx.content, &ctx.file_path)
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "homoglyph".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects confusable characters from different scripts used in spoofing attacks".to_string().to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,7 +182,7 @@ mod tests {
 
         // Cyrillic 'а' (U+0430) vs Latin 'a'
         let content = "const pаssword = 'secret';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(!findings.is_empty());
         assert_eq!(findings[0].category, DetectionCategory::Homoglyph);
@@ -162,7 +195,7 @@ mod tests {
 
         // Greek 'ο' (U+03BF) vs Latin 'o'
         let content = "const lοgin = 'user';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(!findings.is_empty());
         assert_eq!(findings[0].code_point, 0x03BF);
@@ -173,7 +206,7 @@ mod tests {
         let detector = HomoglyphDetector::with_default_config();
 
         let content = "const password = 'secret';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(findings.is_empty());
     }
@@ -184,7 +217,7 @@ mod tests {
 
         // Pure Cyrillic - should be allowed
         let content = "let сообщение = 'test';";
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(findings.is_empty());
     }

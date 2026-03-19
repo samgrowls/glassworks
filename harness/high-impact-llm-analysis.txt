@@ -1,0 +1,7 @@
+webpack
+claude-dev
+prettier
+moment
+underscore
+openai
+@anthropic-ai/sdk

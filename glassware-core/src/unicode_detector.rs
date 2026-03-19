@@ -3,7 +3,7 @@
 //! Wraps the existing Unicode scanning logic to implement the Detector trait.
 
 use crate::config::UnicodeConfig;
-use crate::detector::Detector;
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
 use crate::finding::Finding;
 use crate::scanner::UnicodeScanner;
 use std::path::Path;
@@ -23,11 +23,18 @@ impl Detector for UnicodeDetector {
         "unicode"
     }
 
-    fn scan(&self, path: &Path, content: &str, config: &UnicodeConfig) -> Vec<Finding> {
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
         // Use the existing UnicodeScanner to perform the scan
-        let scanner = UnicodeScanner::new(config.clone());
-        let file_path = path.to_string_lossy().to_string();
-        scanner.scan(content, &file_path)
+        let scanner = UnicodeScanner::new(ctx.config.clone());
+        scanner.scan(&ctx.content, &ctx.file_path)
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "unicode".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects Unicode-based attacks including invisible characters, homoglyphs, and bidirectional overrides".to_string().to_string(),
+        }
     }
 }
 
@@ -41,5 +48,11 @@ impl UnicodeDetector {
     /// Create a new Unicode detector
     pub fn new() -> Self {
         Self
+    }
+
+    /// Backward compatibility method for tests
+    pub fn scan(&self, path: &Path, content: &str, config: &UnicodeConfig) -> Vec<Finding> {
+        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), config.clone());
+        self.detect(&ctx)
     }
 }

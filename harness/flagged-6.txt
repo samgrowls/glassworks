@@ -1,0 +1,6 @@
+autogypi@0.2.2
+@vue/compiler-sfc@3.5.30
+react-smooth@4.0.4
+vue@3.5.30
+node-gyp@12.2.0
+npm-force-resolutions@0.0.10

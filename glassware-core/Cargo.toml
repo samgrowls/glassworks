@@ -1,6 +1,6 @@
 [package]
 name = "glassware-core"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Unicode attack detection library for GlassWare-style trojan source attacks"
@@ -10,6 +10,7 @@ categories = ["security", "text-processing"]
 [dependencies]
 # Core dependencies - minimal
 unicode-script = "0.5"  # Essential for homoglyph/script detection
+num_cpus = "1.16"  # For detecting number of CPU cores
 
 # Optional dependencies
 regex = { version = "1.10", optional = true }  # For GlassWare pattern detection
@@ -17,6 +18,7 @@ serde = { version = "1.0", features = ["derive"], optional = true }  # For seria
 serde_json = { version = "1.0", optional = true }  # For JSON serialization
 lazy_static = { version = "1.4", optional = true }  # For static pattern initialization
 once_cell = { version = "1.19", optional = true }  # For lazy regex compilation
+sha2 = { version = "0.10", optional = true }  # For content hashing in cache
 
 # OXC semantic analysis (optional, JS/TS only)
 oxc_allocator = { version = "0.40", optional = true }
@@ -32,13 +34,14 @@ dotenvy = { version = "0.15", optional = true }
 
 [features]
 default = ["full"]
-full = ["regex", "serde", "serde_json", "lazy_static", "once_cell", "semantic"]
+full = ["regex", "serde", "serde_json", "lazy_static", "once_cell", "semantic", "cache"]
 minimal = []  # Minimal: invisible chars and bidi only (no regex needed)
 regex = ["dep:regex"]  # Enable regex-based pattern detection
 lazy_static = ["dep:lazy_static"]  # Enable lazy static initialization
 once_cell = ["dep:once_cell"]  # Enable once_cell for lazy regex
 serde = ["dep:serde"]  # Enable serialization support
 serde_json = ["dep:serde_json"]  # Enable JSON serialization
+cache = ["dep:sha2", "serde", "serde_json"]  # Enable hash-based caching
 semantic = [
     "dep:oxc_allocator",
     "dep:oxc_parser",

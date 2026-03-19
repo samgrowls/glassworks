@@ -97,6 +97,18 @@ pub enum DetectionCategory {
     HardcodedKeyDecryption,
     /// Hand-rolled RC4-like cipher pattern with dynamic execution
     Rc4Pattern,
+    /// Locale/timezone geofencing to skip specific regions (GlassWorm, SANDWORM_MODE)
+    LocaleGeofencing,
+    /// Time-delay sandbox evasion with CI/CD bypass
+    TimeDelaySandboxEvasion,
+    /// Blockchain-based C2 communication (Solana, Google Calendar)
+    BlockchainC2,
+    /// Remote Dynamic Dependencies (RDD) - URL-based npm dependencies
+    RddAttack,
+    /// ForceMemo Python repository injection
+    ForceMemoPython,
+    /// JPD author signature (PhantomRaven campaign)
+    JpdAuthor,
     /// Unknown category
     Unknown,
 }
@@ -119,6 +131,12 @@ impl DetectionCategory {
             DetectionCategory::HeaderC2 => "header_c2",
             DetectionCategory::HardcodedKeyDecryption => "hardcoded_key_decryption",
             DetectionCategory::Rc4Pattern => "rc4_pattern",
+            DetectionCategory::LocaleGeofencing => "locale_geofencing",
+            DetectionCategory::TimeDelaySandboxEvasion => "time_delay_sandbox_evasion",
+            DetectionCategory::BlockchainC2 => "blockchain_c2",
+            DetectionCategory::RddAttack => "rdd_attack",
+            DetectionCategory::ForceMemoPython => "forcememo_python",
+            DetectionCategory::JpdAuthor => "jpd_author",
             DetectionCategory::Unknown => "unknown",
         }
     }

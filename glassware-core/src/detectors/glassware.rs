@@ -12,6 +12,7 @@ use regex::Regex;
 
 use crate::config::UnicodeConfig;
 use crate::decoder::{decode_vs_stego, find_vs_runs, is_vs_codepoint};
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 
 /// Minimum run length of VS codepoints to consider as stego payload
@@ -94,8 +95,13 @@ impl GlasswareDetector {
         self
     }
 
-    #[cfg(feature = "regex")]
-    pub fn detect(&self, content: &str, file_path: &str) -> Vec<Finding> {
+    /// Backward compatibility method - wraps the trait interface
+    pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
+        self.detect_impl(content, file_path)
+    }
+
+    /// Internal implementation of detection logic
+    fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
 
         // 1. Detect dense VS codepoint runs (steganographic payloads)
@@ -461,6 +467,24 @@ impl GlasswareDetector {
     }
 }
 
+impl Detector for GlasswareDetector {
+    fn name(&self) -> &str {
+        "glassware"
+    }
+
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+        self.detect_impl(&ctx.content, &ctx.file_path)
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "glassware".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects Glassware attack patterns including steganographic payloads, decoder functions, and pipe delimiters".to_string().to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -475,7 +499,7 @@ mod tests {
         let vs_run = encode_vs_stego(b"test payload here!");
         let content = format!("visible code{}more code", vs_run);
 
-        let findings = detector.detect(&content, "test.js");
+        let findings = detector.detect_with_content(&content, "test.js");
 
         assert!(findings
             .iter()
@@ -491,7 +515,7 @@ mod tests {
         let vs_run = encode_vs_stego(b"hidden");
         let content = format!("some|{}data", vs_run);
 
-        let findings = detector.detect(&content, "test.js");
+        let findings = detector.detect_with_content(&content, "test.js");
 
         assert!(findings
             .iter()
@@ -511,7 +535,7 @@ mod tests {
             };
         "#;
 
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
 
         assert!(findings
             .iter()
@@ -522,7 +546,7 @@ mod tests {
     fn test_clean_content() {
         let detector = GlasswareDetector::with_default_config();
         let content = r#"const normal = 'hello world';"#;
-        let findings = detector.detect(content, "test.js");
+        let findings = detector.detect_with_content(content, "test.js");
         assert!(findings.is_empty());
     }
 }

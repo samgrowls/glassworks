@@ -6,6 +6,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
+use crate::finding::Severity;
+
 /// Unicode scanner configuration
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -149,6 +151,141 @@ impl Default for PerformanceConfig {
     }
 }
 
+/// Scan configuration for decoupling CLI from engine
+///
+/// This struct provides a unified configuration interface that can be used
+/// by both the CLI and programmatic embeddings of the scan engine.
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ScanConfig {
+    /// File extensions to include (e.g., "js", "ts", "py")
+    pub extensions: Vec<String>,
+
+    /// Directory/file patterns to exclude (e.g., ".git", "node_modules")
+    pub exclude_patterns: Vec<String>,
+
+    /// Maximum file size to scan in bytes
+    pub max_file_size: u64,
+
+    /// Enable parallel scanning
+    pub enable_parallel: bool,
+
+    /// Number of parallel workers (defaults to num_cpus::get())
+    pub parallel_workers: usize,
+
+    /// Enable deduplication of findings
+    pub enable_dedup: bool,
+
+    /// Minimum severity level to report
+    pub min_severity: Severity,
+
+    /// Enable LLM analysis (requires LLM feature and config)
+    #[cfg(feature = "llm")]
+    pub enable_llm: bool,
+}
+
+impl Default for ScanConfig {
+    fn default() -> Self {
+        Self {
+            extensions: vec![
+                "js".into(),
+                "mjs".into(),
+                "cjs".into(),
+                "ts".into(),
+                "tsx".into(),
+                "jsx".into(),
+                "py".into(),
+                "rs".into(),
+                "go".into(),
+                "java".into(),
+                "rb".into(),
+                "php".into(),
+                "sh".into(),
+                "bash".into(),
+                "zsh".into(),
+                "yml".into(),
+                "yaml".into(),
+                "toml".into(),
+                "json".into(),
+                "xml".into(),
+                "md".into(),
+                "txt".into(),
+            ],
+            exclude_patterns: vec![
+                ".git".into(),
+                "node_modules".into(),
+                "target".into(),
+                "__pycache__".into(),
+                ".venv".into(),
+                "vendor".into(),
+            ],
+            max_file_size: 5 * 1024 * 1024, // 5MB
+            enable_parallel: true,
+            parallel_workers: num_cpus::get(),
+            enable_dedup: true,
+            min_severity: Severity::Low,
+            #[cfg(feature = "llm")]
+            enable_llm: false,
+        }
+    }
+}
+
+impl ScanConfig {
+    /// Create a new ScanConfig with default values
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Builder method to set extensions
+    pub fn with_extensions(mut self, extensions: Vec<String>) -> Self {
+        self.extensions = extensions;
+        self
+    }
+
+    /// Builder method to set exclude patterns
+    pub fn with_exclude_patterns(mut self, exclude_patterns: Vec<String>) -> Self {
+        self.exclude_patterns = exclude_patterns;
+        self
+    }
+
+    /// Builder method to set max file size
+    pub fn with_max_file_size(mut self, max_file_size: u64) -> Self {
+        self.max_file_size = max_file_size;
+        self
+    }
+
+    /// Builder method to enable/disable parallel scanning
+    pub fn with_parallel(mut self, enable: bool) -> Self {
+        self.enable_parallel = enable;
+        self
+    }
+
+    /// Builder method to set number of parallel workers
+    pub fn with_parallel_workers(mut self, workers: usize) -> Self {
+        self.parallel_workers = workers;
+        self
+    }
+
+    /// Builder method to enable/disable deduplication
+    pub fn with_deduplication(mut self, enable: bool) -> Self {
+        self.enable_dedup = enable;
+        self
+    }
+
+    /// Builder method to set minimum severity
+    pub fn with_min_severity(mut self, severity: Severity) -> Self {
+        self.min_severity = severity;
+        self
+    }
+
+    /// Builder method to enable/disable LLM analysis
+    #[cfg(feature = "llm")]
+    pub fn with_llm(mut self, enable: bool) -> Self {
+        self.enable_llm = enable;
+        self
+    }
+}
+
 impl Default for UnicodeConfig {
     /// Create default configuration (enabled, high sensitivity, all detectors on)
     fn default() -> Self {
@@ -187,5 +324,66 @@ impl UnicodeConfig {
             },
             ..Default::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_scan_config_default() {
+        let config = ScanConfig::default();
+        
+        // Verify default extensions
+        assert!(config.extensions.contains(&"js".to_string()));
+        assert!(config.extensions.contains(&"ts".to_string()));
+        assert!(config.extensions.contains(&"py".to_string()));
+        
+        // Verify default exclude patterns
+        assert!(config.exclude_patterns.contains(&".git".to_string()));
+        assert!(config.exclude_patterns.contains(&"node_modules".to_string()));
+        
+        // Verify default settings
+        assert_eq!(config.max_file_size, 5 * 1024 * 1024);
+        assert!(config.enable_parallel);
+        assert!(config.enable_dedup);
+        assert_eq!(config.min_severity, Severity::Low);
+        #[cfg(feature = "llm")]
+        assert!(!config.enable_llm);
+    }
+
+    #[test]
+    fn test_scan_config_builder() {
+        let config = ScanConfig::default()
+            .with_extensions(vec!["js".to_string(), "ts".to_string()])
+            .with_exclude_patterns(vec!["dist".to_string()])
+            .with_max_file_size(1024 * 1024)
+            .with_parallel(false)
+            .with_parallel_workers(4)
+            .with_deduplication(false)
+            .with_min_severity(Severity::High);
+        
+        #[cfg(feature = "llm")]
+        let config = config.with_llm(true);
+        
+        assert_eq!(config.extensions, vec!["js".to_string(), "ts".to_string()]);
+        assert_eq!(config.exclude_patterns, vec!["dist".to_string()]);
+        assert_eq!(config.max_file_size, 1024 * 1024);
+        assert!(!config.enable_parallel);
+        assert_eq!(config.parallel_workers, 4);
+        assert!(!config.enable_dedup);
+        assert_eq!(config.min_severity, Severity::High);
+        #[cfg(feature = "llm")]
+        assert!(config.enable_llm);
+    }
+
+    #[test]
+    fn test_scan_config_new() {
+        let config1 = ScanConfig::new();
+        let config2 = ScanConfig::default();
+        
+        // Both should have the same extensions
+        assert_eq!(config1.extensions.len(), config2.extensions.len());
     }
 }

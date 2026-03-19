@@ -1,0 +1,1614 @@
+{
+  "version": 1,
+  "entries": {
+    "glassware-core/src/detectors/mod.rs": {
+      "hash": "65282cc37ef9d19c9d008708cc37c8c060a1ffea8550ea6a52df33e5a9d11979",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 384
+    },
+    "glassware-core/src/gw008_semantic.rs": {
+      "hash": "aa51117c11aa429cab62a80394327ada00da67e4d918495d0129ca741bf7ae42",
+      "findings": [
+        {
+          "file": "glassware-core/src/gw008_semantic.rs",
+          "line": 103,
+          "column": 49,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "medium",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 45%)",
+          "remediation": "MEDIUM: Some patterns associated with GlassWare attacks were detected.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            crate::taint::DynExecKind::Eval => \"eval()\","
+        },
+        {
+          "file": "glassware-core/src/gw008_semantic.rs",
+          "line": 104,
+          "column": 64,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "medium",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 45%)",
+          "remediation": "MEDIUM: Some patterns associated with GlassWare attacks were detected.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            crate::taint::DynExecKind::FunctionConstructor => \"Function()\","
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 8527
+    },
+    "glassware-core/src/confusables/data.rs": {
+      "hash": "0cb6d394ef3bf02c55a75dca72d7c3f9308cf94ee75746d430802dfb0a183fc6",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 11030
+    },
+    "glassware-core/src/gw007_semantic.rs": {
+      "hash": "85cdaf3446c70f9c5e5d4b3631c514e4d47457e2389803239ba3e5096ac2dce6",
+      "findings": [
+        {
+          "file": "glassware-core/src/gw007_semantic.rs",
+          "line": 232,
+          "column": 31,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: decoder_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    result += String.fromCharCode(data.charCodeAt(k) ^ S[(S[i] + S[j]) % 256]);"
+        },
+        {
+          "file": "glassware-core/src/gw007_semantic.rs",
+          "line": 236,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(rc4(key, payload));"
+        },
+        {
+          "file": "glassware-core/src/gw007_semantic.rs",
+          "line": 265,
+          "column": 31,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: decoder_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    output += String.fromCharCode(x);"
+        },
+        {
+          "file": "glassware-core/src/gw007_semantic.rs",
+          "line": 269,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(decode('secret', data));"
+        },
+        {
+          "file": "glassware-core/src/gw007_semantic.rs",
+          "line": 293,
+          "column": 31,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: decoder_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    result += String.fromCharCode(data.charCodeAt(i));"
+        },
+        {
+          "file": "glassware-core/src/gw007_semantic.rs",
+          "line": 295,
+          "column": 17,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                eval(result);"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 12577
+    },
+    "/tmp/package/README.md": {
+      "hash": "dc86bc0a3a449fd2141577ce656eb1051276794cbf7604a643c692d446ff4042",
+      "findings": [],
+      "timestamp": 1773954325,
+      "file_size": 6561
+    },
+    "glassware-core/src/llm/mod.rs": {
+      "hash": "1ed5b0875afc984bb537396b0d1ec94c6e0421bd566ef5464f3bdb41d0ef48a0",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 528
+    },
+    "glassware-core/src/cache.rs": {
+      "hash": "6260788bd7680c8036807c92e728b84d09133e5d090f877d6ccba4f48c05fe37",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 17561
+    },
+    "glassware-core/src/classify.rs": {
+      "hash": "e09dde2c27c62ab4d57ef96a0d15b8542c57ecb4275b2b445484c03d5bcbe6e6",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 1911
+    },
+    "glassware-core/src/detectors/homoglyph.rs": {
+      "hash": "5ba5e689273c8ddae0fbb01c198e7b740951efedd1fe3ec4d8daa73a5753480e",
+      "findings": [
+        {
+          "file": "glassware-core/src/detectors/homoglyph.rs",
+          "line": 184,
+          "column": 31,
+          "code_point": 1072,
+          "character": "а",
+          "raw_bytes": null,
+          "category": "homoglyph",
+          "severity": "critical",
+          "description": "Mixed script identifier: 'pаssword' contains 'а' (U+0430) from Cyrillic script confusable with 'a'",
+          "remediation": "Use pure Latin or pure non-Latin identifiers, not mixed scripts. Replace 'pаssword' with a consistent script. The character 'а' (Cyrillic script) appears to be intentionally mixed with Latin characters to create a deceptive identifier. Consider using 'a' instead.",
+          "cwe_id": "CWE-172",
+          "references": [
+            "https://docs.github.com/en/security"
+          ],
+          "context": "pаssword"
+        },
+        {
+          "file": "glassware-core/src/detectors/homoglyph.rs",
+          "line": 197,
+          "column": 31,
+          "code_point": 959,
+          "character": "ο",
+          "raw_bytes": null,
+          "category": "homoglyph",
+          "severity": "critical",
+          "description": "Mixed script identifier: 'lοgin' contains 'ο' (U+03BF) from Greek script confusable with 'o'",
+          "remediation": "Use pure Latin or pure non-Latin identifiers, not mixed scripts. Replace 'lοgin' with a consistent script. The character 'ο' (Greek script) appears to be intentionally mixed with Latin characters to create a deceptive identifier. Consider using 'o' instead.",
+          "cwe_id": "CWE-172",
+          "references": [
+            "https://docs.github.com/en/security"
+          ],
+          "context": "lοgin"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 7559
+    },
+    "glassware-core/src/detectors/glassware.rs": {
+      "hash": "d91bbef56f5b1de6a4b72fb854b56baa76d553f0bc49d8e631b190f7ac62d14c",
+      "findings": [
+        {
+          "file": "glassware-core/src/detectors/glassware.rs",
+          "line": 532,
+          "column": 39,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "medium",
+          "description": "GlassWare attack pattern detected: decoder_pattern (confidence: 45%)",
+          "remediation": "MEDIUM: Some patterns associated with GlassWare attacks were detected.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                return chars.map(c => String.fromCodePoint("
+        },
+        {
+          "file": "glassware-core/src/detectors/glassware.rs",
+          "line": 533,
+          "column": 23,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "medium",
+          "description": "GlassWare attack pattern detected: decoder_pattern (confidence: 45%)",
+          "remediation": "MEDIUM: Some patterns associated with GlassWare attacks were detected.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    c.codePointAt(0) - 0xFE00"
+        },
+        {
+          "file": "glassware-core/src/detectors/glassware.rs",
+          "line": 533,
+          "column": 40,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "decoder_function",
+          "severity": "high",
+          "description": "GlassWare-style decoder function detected: codePointAt with Variation Selector range constants (0xFE00/0xE0100)",
+          "remediation": "This file contains decoder logic for VS steganographic payloads. Review the file that contains the encoded payload.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    c.codePointAt(0) - 0xFE00"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 20392
+    },
+    "glassware-core/src/time_delay_detector.rs": {
+      "hash": "59b4034f796c14e7936c52d374eb7a26b35d32c37e78c2e4678e87d626275671",
+      "findings": [
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 11,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "low",
+          "description": "Long time delay detected (possible sandbox evasion)",
+          "remediation": "Review for sandbox evasion behavior. Malware often uses delays to exceed sandbox timeout limits.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 13,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "critical",
+          "description": "CI-aware time delay detected (sandbox evasion with CI bypass)",
+          "remediation": "CRITICAL: This code delays execution on developer machines but executes immediately in CI/CD. Common in Shai-Hulud and SANDWORM_MODE campaigns.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 40,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "critical",
+          "description": "CI-aware time delay detected (sandbox evasion with CI bypass)",
+          "remediation": "CRITICAL: This code delays execution on developer machines but executes immediately in CI/CD. Common in Shai-Hulud and SANDWORM_MODE campaigns.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 43,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "critical",
+          "description": "CI-aware time delay detected (sandbox evasion with CI bypass)",
+          "remediation": "CRITICAL: This code delays execution on developer machines but executes immediately in CI/CD. Common in Shai-Hulud and SANDWORM_MODE campaigns.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 92,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "low",
+          "description": "Long time delay detected (possible sandbox evasion)",
+          "remediation": "Review for sandbox evasion behavior. Malware often uses delays to exceed sandbox timeout limits.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 94,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "low",
+          "description": "Long time delay detected (possible sandbox evasion)",
+          "remediation": "Review for sandbox evasion behavior. Malware often uses delays to exceed sandbox timeout limits.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 199,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "low",
+          "description": "Long time delay detected (possible sandbox evasion)",
+          "remediation": "Review for sandbox evasion behavior. Malware often uses delays to exceed sandbox timeout limits.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 214,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "low",
+          "description": "Long time delay detected (possible sandbox evasion)",
+          "remediation": "Review for sandbox evasion behavior. Malware often uses delays to exceed sandbox timeout limits.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 226,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "critical",
+          "description": "CI-aware time delay detected (sandbox evasion with CI bypass)",
+          "remediation": "CRITICAL: This code delays execution on developer machines but executes immediately in CI/CD. Common in Shai-Hulud and SANDWORM_MODE campaigns.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 227,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "critical",
+          "description": "CI-aware time delay detected (sandbox evasion with CI bypass)",
+          "remediation": "CRITICAL: This code delays execution on developer machines but executes immediately in CI/CD. Common in Shai-Hulud and SANDWORM_MODE campaigns.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 230,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "low",
+          "description": "Long time delay detected (possible sandbox evasion)",
+          "remediation": "Review for sandbox evasion behavior. Malware often uses delays to exceed sandbox timeout limits.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/time_delay_detector.rs",
+          "line": 245,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "time_delay_sandbox_evasion",
+          "severity": "low",
+          "description": "Long time delay detected (possible sandbox evasion)",
+          "remediation": "Review for sandbox evasion behavior. Malware often uses delays to exceed sandbox timeout limits.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 10453
+    },
+    "glassware-core/src/detectors/bidi.rs": {
+      "hash": "2f7196156e5144322a8f340b517ec88f472c39de4eb31512b9b8d6717f6da2e0",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 6639
+    },
+    "glassware-core/src/unicode_detector.rs": {
+      "hash": "f568e8a60112dcb1f684f36fc3ce5a7783bcc6f96e85f0a764dc3b1f659046f5",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 1816
+    },
+    "glassware-core/src/gw005_semantic.rs": {
+      "hash": "684d43864c9128d720f21f672fade8f5cee794db50e514e765fe7cda0c2aba4b",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 6054
+    },
+    "glassware-core/src/finding.rs": {
+      "hash": "8ec25da27c06c06f2b56375237e514873bf2b41f2331a8293c65f4f9693997a5",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 9906
+    },
+    "glassware-core/src/llm/rate_limiter.rs": {
+      "hash": "c09af871bf08a919bff53af89c398b8ea5508002965516a756de7a0fe6486caa",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 6881
+    },
+    "glassware-core/src/locale_detector.rs": {
+      "hash": "0f7f1b1c816443c14ed4969d9f90949065c7a1340d549eb7fb8ce5ba67671cc1",
+      "findings": [
+        {
+          "file": "glassware-core/src/locale_detector.rs",
+          "line": 9,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "locale_geofencing",
+          "severity": "critical",
+          "description": "Active geofencing: locale check followed by early exit",
+          "remediation": "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/locale_detector.rs",
+          "line": 30,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "locale_geofencing",
+          "severity": "medium",
+          "description": "Russian locale/timezone check detected",
+          "remediation": "Review for geographic targeting behavior. Common in GlassWorm, PhantomRaven, and SANDWORM_MODE campaigns to avoid infecting Russian systems.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/locale_detector.rs",
+          "line": 149,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "locale_geofencing",
+          "severity": "critical",
+          "description": "Active geofencing: locale check followed by early exit",
+          "remediation": "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/locale_detector.rs",
+          "line": 166,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "locale_geofencing",
+          "severity": "medium",
+          "description": "Russian locale/timezone check detected",
+          "remediation": "Review for geographic targeting behavior. Common in GlassWorm, PhantomRaven, and SANDWORM_MODE campaigns to avoid infecting Russian systems.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/locale_detector.rs",
+          "line": 184,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "locale_geofencing",
+          "severity": "medium",
+          "description": "Russian locale/timezone check detected",
+          "remediation": "Review for geographic targeting behavior. Common in GlassWorm, PhantomRaven, and SANDWORM_MODE campaigns to avoid infecting Russian systems.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/locale_detector.rs",
+          "line": 200,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "locale_geofencing",
+          "severity": "critical",
+          "description": "Active geofencing: locale check followed by early exit",
+          "remediation": "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 8005
+    },
+    "glassware-core/src/risk_scorer.rs": {
+      "hash": "be4464cca0052f63cf62e1af5088c0a9578c4e8023374edde885e76a7886fdf8",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 2903
+    },
+    "glassware-core/src/ranges.rs": {
+      "hash": "a8a0ba535514882df1073fdb539e6a40df1f5ce55aec0e2f31c1de65e28bf3e9",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 7167
+    },
+    "glassware-core/src/detector.rs": {
+      "hash": "f4fec038743ae884523485469dde0aec7cd3a769f09d38dde5522ba80f501047",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 2790
+    },
+    "glassware-core/src/detectors/tags.rs": {
+      "hash": "c1ebe12ee7fed3636ce6a3c110a92d393edbded2a2b21ae40d26d3cef3d254a3",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 5077
+    },
+    "glassware-core/src/scanner.rs": {
+      "hash": "ac1d8d517c890ba2938657e7208391074bc39ae9083f936c2e65b1d82d8d8622",
+      "findings": [
+        {
+          "file": "glassware-core/src/scanner.rs",
+          "line": 341,
+          "column": 31,
+          "code_point": 1072,
+          "character": "а",
+          "raw_bytes": null,
+          "category": "homoglyph",
+          "severity": "critical",
+          "description": "Mixed script identifier: 'pаssword' contains 'а' (U+0430) from Cyrillic script confusable with 'a'",
+          "remediation": "Use pure Latin or pure non-Latin identifiers, not mixed scripts. Replace 'pаssword' with a consistent script. The character 'а' (Cyrillic script) appears to be intentionally mixed with Latin characters to create a deceptive identifier. Consider using 'a' instead.",
+          "cwe_id": "CWE-172",
+          "references": [
+            "https://docs.github.com/en/security"
+          ],
+          "context": "pаssword"
+        },
+        {
+          "file": "glassware-core/src/scanner.rs",
+          "line": 382,
+          "column": 51,
+          "code_point": 1072,
+          "character": "а",
+          "raw_bytes": null,
+          "category": "homoglyph",
+          "severity": "critical",
+          "description": "Mixed script identifier: 'pаssword' contains 'а' (U+0430) from Cyrillic script confusable with 'a'",
+          "remediation": "Use pure Latin or pure non-Latin identifiers, not mixed scripts. Replace 'pаssword' with a consistent script. The character 'а' (Cyrillic script) appears to be intentionally mixed with Latin characters to create a deceptive identifier. Consider using 'a' instead.",
+          "cwe_id": "CWE-172",
+          "references": [
+            "https://docs.github.com/en/security"
+          ],
+          "context": "pаssword"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 14016
+    },
+    "glassware-core/src/encrypted_payload_detector.rs": {
+      "hash": "274e19b4e09a483817c6bb993b2ae790686d7dc194d977935b118517ea4b09b6",
+      "findings": [
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 12,
+          "column": 32,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "//! 2. **Dynamic execution**: `eval(`, `new Function(`, `vm.runInNewContext`, etc."
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 12,
+          "column": 41,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "//! 2. **Dynamic execution**: `eval(`, `new Function(`, `vm.runInNewContext`, etc."
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 12,
+          "column": 45,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "//! 2. **Dynamic execution**: `eval(`, `new Function(`, `vm.runInNewContext`, etc."
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 279,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(atob(payload));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 279,
+          "column": 18,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(atob(payload));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 294,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            new Function(atob(data))();"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 294,
+          "column": 17,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            new Function(atob(data))();"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 294,
+          "column": 26,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            new Function(atob(data))();"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 307,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(x);"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 330,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "encrypted_payload",
+          "severity": "high",
+          "description": "High-entropy blob combined with decrypt→exec flow — potential encrypted payload loader",
+          "remediation": "Review this file for encrypted payload patterns. The combination of high-entropy encoded data with decryption followed by dynamic code execution is characteristic of encrypted loaders used in supply chain attacks. Decode the blob to understand the hidden payload.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 331,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(repeated);"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 355,
+          "column": 32,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            vm.runInNewContext(atob(code));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 367,
+          "column": 22,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            execSync(atob(cmd));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 379,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(atob(data));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 379,
+          "column": 18,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(atob(data));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 392,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(Buffer.from(payload, 'base64').toString('utf-8'));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 404,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(repeated);"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 417,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(atob(short));"
+        },
+        {
+          "file": "glassware-core/src/encrypted_payload_detector.rs",
+          "line": 417,
+          "column": 18,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(atob(short));"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 16860
+    },
+    "glassware-core/src/llm/analyzer.rs": {
+      "hash": "c4d1a4fa010beb3873fceb45e91aed18aefd3902afe0d46896755634177f4a5d",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 10334
+    },
+    "glassware-core/src/lib.rs": {
+      "hash": "4a2d9ecdfebc21ca62cdf94e7fb3310254b9d47bd798119c6e46334391096597",
+      "findings": [
+        {
+          "file": "glassware-core/src/lib.rs",
+          "line": 173,
+          "column": 31,
+          "code_point": 1072,
+          "character": "а",
+          "raw_bytes": null,
+          "category": "homoglyph",
+          "severity": "critical",
+          "description": "Mixed script identifier: 'pаssword' contains 'а' (U+0430) from Cyrillic script confusable with 'a'",
+          "remediation": "Use pure Latin or pure non-Latin identifiers, not mixed scripts. Replace 'pаssword' with a consistent script. The character 'а' (Cyrillic script) appears to be intentionally mixed with Latin characters to create a deceptive identifier. Consider using 'a' instead.",
+          "cwe_id": "CWE-172",
+          "references": [
+            "https://docs.github.com/en/security"
+          ],
+          "context": "pаssword"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 5723
+    },
+    "glassware-core/src/gw006_semantic.rs": {
+      "hash": "fbf480e8b382c81cb0e481fd1bc12141888e83b1bcb7697230c89808ee93b946",
+      "findings": [
+        {
+          "file": "glassware-core/src/gw006_semantic.rs",
+          "line": 114,
+          "column": 49,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "medium",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 45%)",
+          "remediation": "MEDIUM: Some patterns associated with GlassWare attacks were detected.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            crate::taint::DynExecKind::Eval => \"eval()\","
+        },
+        {
+          "file": "glassware-core/src/gw006_semantic.rs",
+          "line": 115,
+          "column": 64,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "medium",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 45%)",
+          "remediation": "MEDIUM: Some patterns associated with GlassWare attacks were detected.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            crate::taint::DynExecKind::FunctionConstructor => \"Function()\","
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 9381
+    },
+    "glassware-core/src/detectors/invisible.rs": {
+      "hash": "5eb65bc9f9a72df45f279d1fae90e4b8f68b140eb26f4bbcb2d143721b593197",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 12603
+    },
+    "glassware-core/src/decoder.rs": {
+      "hash": "0c2088d3fb1ea98d58df6ed57890fbdd35ff728ecd0ccc8384c2db5ab2a9cbe2",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 14114
+    },
+    "glassware-core/src/forcememo_detector.rs": {
+      "hash": "7901d57bf67cec8d85152c2a398b7833ce0be56ccbbbbacf33e5ddaf97d57c5b",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 10413
+    },
+    "/tmp/package/dist/index.cjs": {
+      "hash": "f8cbc1868c0b0e20ffcf1de4b83a993b741038ffb3fe28a579e9ec63466a9642",
+      "findings": [
+        {
+          "file": "/tmp/package/dist/index.cjs",
+          "line": 1097824,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "rc4_pattern",
+          "severity": "info",
+          "description": "RC4-like cipher implementation detected near dynamic execution (4/5 indicators: INIT_256, MOD_256, CHARCODE, XOR_OP). Hand-rolled stream ciphers in npm packages are highly unusual and consistent with GlassWare payload decryption.",
+          "remediation": "Review this file for hand-rolled cryptographic implementations. Legitimate packages use Node.js crypto module or Web Crypto API. Hand-rolled ciphers are commonly used to evade detection.",
+          "cwe_id": null,
+          "references": [],
+          "context": null,
+          "confidence": 0.7
+        }
+      ],
+      "timestamp": 1773954326,
+      "file_size": 1495885
+    },
+    "/tmp/package/package.json": {
+      "hash": "1e57101308f1f57968173e6f32301dbab1ad9319313ebf0b570de572263b69cd",
+      "findings": [],
+      "timestamp": 1773954325,
+      "file_size": 1280
+    },
+    "glassware-core/src/llm/config.rs": {
+      "hash": "bcfa1103920a12e5781db197cf30f59fa34a9388ee193cfde73c96fa2d4c8fc9",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 4367
+    },
+    "glassware-core/src/rdd_detector.rs": {
+      "hash": "c674fdf5b6993f99fabbd3749730647dc36d8ef4ef145d24e6ac2212c6dae969",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 9316
+    },
+    "glassware-core/src/config.rs": {
+      "hash": "4a2fdfdbcfae61487fc8635d2f48c65e60e58cfbe4ce6adf177ea892ea288f6c",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 11582
+    },
+    "glassware-core/src/confusables/mod.rs": {
+      "hash": "85afe0aef703829300514806cb204faad34e5ababfa690a696f66906aca4d396",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 252
+    },
+    "glassware-core/src/taint.rs": {
+      "hash": "8be2a28a2acc2b939fdc47cff2f00a5416b642101f24988e625db1e390158709",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 13582
+    },
+    "glassware-core/src/engine.rs": {
+      "hash": "ca0b4a50db2222ae874205edbceb51cc8ca18ad26f18fff4f74c31680ca81934",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 24850
+    },
+    "glassware-core/src/script_detector.rs": {
+      "hash": "45776f47495d4eb249e8fcdc5d71cfcd25e5ecbfed112437c5834b3bbaa82442",
+      "findings": [
+        {
+          "file": "glassware-core/src/script_detector.rs",
+          "line": 190,
+          "column": 37,
+          "code_point": 1072,
+          "character": "а",
+          "raw_bytes": null,
+          "category": "homoglyph",
+          "severity": "critical",
+          "description": "Mixed script identifier: 'pаssword' contains 'а' (U+0430) from Cyrillic script confusable with 'a'",
+          "remediation": "Use pure Latin or pure non-Latin identifiers, not mixed scripts. Replace 'pаssword' with a consistent script. The character 'а' (Cyrillic script) appears to be intentionally mixed with Latin characters to create a deceptive identifier. Consider using 'a' instead.",
+          "cwe_id": "CWE-172",
+          "references": [
+            "https://docs.github.com/en/security"
+          ],
+          "context": "pаssword"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 7016
+    },
+    "glassware-core/src/blockchain_c2_detector.rs": {
+      "hash": "ca32712062cefd5706167cdc6085522f7ca84c2c6587095acd26274a88e9df2c",
+      "findings": [
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 9,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "medium",
+          "description": "Solana blockchain API call detected",
+          "remediation": "Review for command-and-control behavior. GlassWorm uses Solana blockchain memos for decentralized C2 communication.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 10,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "medium",
+          "description": "Solana blockchain API call detected",
+          "remediation": "Review for command-and-control behavior. GlassWorm uses Solana blockchain memos for decentralized C2 communication.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 30,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "critical",
+          "description": "Known GlassWorm C2 wallet address detected",
+          "remediation": "CRITICAL: This is a confirmed GlassWorm command-and-control wallet. Immediate investigation and reporting required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 31,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "critical",
+          "description": "Known GlassWorm C2 wallet address detected",
+          "remediation": "CRITICAL: This is a confirmed GlassWorm command-and-control wallet. Immediate investigation and reporting required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 34,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "critical",
+          "description": "Known GlassWorm C2 wallet address detected",
+          "remediation": "CRITICAL: This is a confirmed GlassWorm command-and-control wallet. Immediate investigation and reporting required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 37,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "critical",
+          "description": "Known GlassWorm C2 wallet address detected",
+          "remediation": "CRITICAL: This is a confirmed GlassWorm command-and-control wallet. Immediate investigation and reporting required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 46,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "medium",
+          "description": "Solana blockchain API call detected",
+          "remediation": "Review for command-and-control behavior. GlassWorm uses Solana blockchain memos for decentralized C2 communication.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 157,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "critical",
+          "description": "5-second polling interval detected (GlassWorm C2 signature)",
+          "remediation": "CRITICAL: 5-second polling is the GlassWorm campaign signature for blockchain C2. Immediate investigation required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 206,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "critical",
+          "description": "Known GlassWorm C2 wallet address detected",
+          "remediation": "CRITICAL: This is a confirmed GlassWorm command-and-control wallet. Immediate investigation and reporting required.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 220,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "medium",
+          "description": "Solana blockchain API call detected",
+          "remediation": "Review for command-and-control behavior. GlassWorm uses Solana blockchain memos for decentralized C2 communication.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 248,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "medium",
+          "description": "Solana blockchain API call detected",
+          "remediation": "Review for command-and-control behavior. GlassWorm uses Solana blockchain memos for decentralized C2 communication.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/blockchain_c2_detector.rs",
+          "line": 261,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "blockchain_c2",
+          "severity": "medium",
+          "description": "Solana blockchain API call detected",
+          "remediation": "Review for command-and-control behavior. GlassWorm uses Solana blockchain memos for decentralized C2 communication.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 10683
+    },
+    "glassware-core/src/header_c2_detector.rs": {
+      "hash": "7ea9ae780f1e23d4bd9a263d5547f57a8a173cff37963b7df4df2f5ec9c94a7f",
+      "findings": [
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 10,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "header_c2",
+          "severity": "critical",
+          "description": "HTTP header data extraction combined with decryption and dynamic execution — potential C2 payload delivery (GlassWare Wave 4-5)",
+          "remediation": "CRITICAL: This code exhibits the GlassWare C2 pattern. HTTP response headers are being used as a covert channel to deliver encrypted payloads. The data is extracted from headers, decrypted, and executed dynamically. Review the network calls and decryption logic immediately.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 14,
+          "column": 32,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "//! 3. **Dynamic execution**: `eval(`, `new Function(`, `vm.runInNewContext`, etc."
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 14,
+          "column": 41,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "//! 3. **Dynamic execution**: `eval(`, `new Function(`, `vm.runInNewContext`, etc."
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 14,
+          "column": 45,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "//! 3. **Dynamic execution**: `eval(`, `new Function(`, `vm.runInNewContext`, etc."
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 262,
+          "column": 17,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                eval(decrypted);"
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 280,
+          "column": 31,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: decoder_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    result += String.fromCharCode(data.charCodeAt(i) ^ 0x42);"
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 282,
+          "column": 17,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                new Function(result)();"
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 282,
+          "column": 21,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                new Function(result)();"
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 323,
+          "column": 13,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "            eval(code);"
+        },
+        {
+          "file": "glassware-core/src/header_c2_detector.rs",
+          "line": 370,
+          "column": 17,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                eval(decrypted);"
+        }
+      ],
+      "timestamp": 1773954295,
+      "file_size": 15226
+    },
+    "glassware-core/src/jpd_author_detector.rs": {
+      "hash": "02b4619f78bc263a9b2c89ac9efaf2afd7787eb94fc53cab4c8d03e2cce3932f",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 5161
+    },
+    "glassware-core/src/semantic.rs": {
+      "hash": "7b5b223dd9d5898b61b0e8213040e2f2f41a4d3e290a5e77aaeeeef0136d66b2",
+      "findings": [],
+      "timestamp": 1773954295,
+      "file_size": 13612
+    }
+  },
+  "created_at": 1773954326
+}

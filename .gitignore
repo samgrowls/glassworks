@@ -1,2 +1,53 @@
-/target
+# Rust build
+/target/
+**/target/
+
+# Environment
 .env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scan results and logs
+*.log
+scan-*.json
+scan-*.log
+llm-*.json
+llm-*.log
+*-results.json
+*-results.log
+*.tgz
+
+# Test artifacts
+test-*/
+tmp-*/
+
+# GitHub scanner
+data/github-clones/
+data/github-clones-*/
+
+# Evidence data (large binary files)
+data/evidence/
+
+# Binary builds
+glassware-scanner
+glassware-scanner-*

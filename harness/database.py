@@ -88,12 +88,26 @@ def init_database(db_path: Path) -> None:
 
             -- Indexes for common queries
             CREATE INDEX IF NOT EXISTS idx_packages_run ON packages(scan_run_id);
-            CREATE INDEX IF NOT EXISTS idx_packages_flagged 
-                ON packages(scan_run_id, finding_count) 
+            CREATE INDEX IF NOT EXISTS idx_packages_flagged
+                ON packages(scan_run_id, finding_count)
                 WHERE finding_count > 0;
             CREATE INDEX IF NOT EXISTS idx_findings_package ON findings(package_id);
             CREATE INDEX IF NOT EXISTS idx_findings_severity ON findings(severity);
             CREATE INDEX IF NOT EXISTS idx_findings_triage ON findings(triage_status);
+            
+            -- LLM analyses cache
+            CREATE TABLE IF NOT EXISTS llm_analyses (
+                id              INTEGER PRIMARY KEY,
+                package_name    TEXT NOT NULL,
+                package_version TEXT NOT NULL,
+                tarball_sha256  TEXT NOT NULL,
+                analysis_result TEXT NOT NULL,  -- JSON blob
+                analyzed_at     TEXT NOT NULL,
+                UNIQUE(package_name, package_version, tarball_sha256)
+            );
+            
+            -- Index for faster LLM cache lookups
+            CREATE INDEX IF NOT EXISTS idx_llm_sha256 ON llm_analyses(tarball_sha256);
         """)
         conn.commit()
 
@@ -152,6 +166,145 @@ class Database:
                 (finished_at, packages_total, packages_flagged, run_id),
             )
             conn.commit()
+
+    def is_already_scanned(
+        self,
+        name: str,
+        version: str,
+        tarball_sha256: str,
+        max_age_days: int = 7,
+    ) -> bool:
+        """
+        Check if package with same hash was already scanned recently.
+        
+        Args:
+            name: Package name
+            version: Package version
+            tarball_sha256: SHA256 hash of tarball
+            max_age_days: Consider scans older than this as stale (default: 7 days)
+        
+        Returns:
+            True if package was already scanned with same hash, False otherwise
+        """
+        from datetime import datetime, timedelta
+        
+        cutoff = (datetime.utcnow() - timedelta(days=max_age_days)).isoformat()
+        
+        with get_connection(self.db_path) as conn:
+            cursor = conn.execute(
+                """
+                SELECT id, scanned_at, finding_count
+                FROM packages
+                WHERE name = ? AND version = ? AND tarball_sha256 = ?
+                AND scanned_at > ?
+                LIMIT 1
+            """,
+                (name, version, tarball_sha256, cutoff),
+            )
+            row = cursor.fetchone()
+            return row is not None
+    
+    def get_cached_scan_result(
+        self,
+        name: str,
+        version: str,
+        tarball_sha256: str,
+    ) -> Optional[dict]:
+        """
+        Get cached scan result for package.
+        
+        Returns:
+            dict with finding_count, scan_duration_ms, vault_path or None if not found
+        """
+        with get_connection(self.db_path) as conn:
+            cursor = conn.execute(
+                """
+                SELECT finding_count, scan_duration_ms, vault_path, scanned_at
+                FROM packages
+                WHERE name = ? AND version = ? AND tarball_sha256 = ?
+                ORDER BY scanned_at DESC
+                LIMIT 1
+            """,
+                (name, version, tarball_sha256),
+            )
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "finding_count": row[0],
+                    "scan_duration_ms": row[1],
+                    "vault_path": row[2],
+                    "scanned_at": row[3],
+                }
+            return None
+    
+    def add_llm_analysis(
+        self,
+        package_name: str,
+        package_version: str,
+        tarball_sha256: str,
+        analysis_result: dict,
+    ) -> int:
+        """Add LLM analysis result to cache"""
+        with get_connection(self.db_path) as conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO llm_analyses
+                (package_name, package_version, tarball_sha256, analysis_result, analyzed_at)
+                VALUES (?, ?, ?, ?, ?)
+            """,
+                (
+                    package_name,
+                    package_version,
+                    tarball_sha256,
+                    json.dumps(analysis_result),
+                    datetime.utcnow().isoformat(),
+                ),
+            )
+            conn.commit()
+            return cursor.lastrowid
+    
+    def get_cached_llm_analysis(
+        self,
+        package_name: str,
+        package_version: str,
+        tarball_sha256: str,
+        max_age_days: int = 7,
+    ) -> Optional[dict]:
+        """
+        Get cached LLM analysis for package.
+        
+        Args:
+            package_name: Package name
+            package_version: Package version
+            tarball_sha256: SHA256 hash of tarball
+            max_age_days: Consider analyses older than this as stale (default: 7 days)
+        
+        Returns:
+            dict with analysis result or None if not found/cached
+        """
+        from datetime import datetime, timedelta
+        
+        cutoff = (datetime.utcnow() - timedelta(days=max_age_days)).isoformat()
+        
+        with get_connection(self.db_path) as conn:
+            cursor = conn.execute(
+                """
+                SELECT analysis_result, analyzed_at
+                FROM llm_analyses
+                WHERE package_name = ? AND package_version = ? AND tarball_sha256 = ?
+                AND analyzed_at > ?
+                ORDER BY analyzed_at DESC
+                LIMIT 1
+            """,
+                (package_name, package_version, tarball_sha256, cutoff),
+            )
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "analysis": json.loads(row[0]),
+                    "analyzed_at": row[1],
+                }
+            return None
 
     def add_package(
         self,

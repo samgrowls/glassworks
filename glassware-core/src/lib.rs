@@ -11,6 +11,7 @@
 //! - **Bidirectional Override Detection**: Bidi control characters that reverse text
 //! - **Glassware Pattern Detection**: Decoder patterns, eval usage, encoding functions
 //! - **Unicode Tag Detection**: Tag characters for metadata injection
+//! - **Incremental Scanning**: Hash-based caching for 10x speedup on re-scans
 //!
 //! ## Example Usage
 //!
@@ -32,6 +33,7 @@
 //! - Time complexity: O(n) where n = number of characters
 //! - Space complexity: O(1) beyond input storage
 //! - Confusables lookup: O(1) using HashMap
+//! - Cache speedup: ~10x on re-scans (cache hits)
 
 pub mod classify;
 pub mod config;
@@ -39,6 +41,8 @@ pub mod confusables;
 pub mod decoder;
 pub mod detector;
 pub mod detectors;
+#[cfg(feature = "cache")]
+pub mod cache;
 pub mod encrypted_payload_detector;
 pub mod engine;
 pub mod finding;
@@ -51,6 +55,18 @@ pub mod gw007_semantic;
 #[cfg(feature = "semantic")]
 pub mod gw008_semantic;
 pub mod header_c2_detector;
+// NEW: Behavioral evasion detectors
+pub mod locale_detector;
+pub mod time_delay_detector;
+pub mod blockchain_c2_detector;
+// NEW: RDD detector
+pub mod rdd_detector;
+// NEW: ForceMemo Python detector
+pub mod forcememo_detector;
+// NEW: JPD author detector
+pub mod jpd_author_detector;
+// NEW: Risk scoring
+pub mod risk_scorer;
 #[cfg(feature = "llm")]
 pub mod llm;
 pub mod ranges;
@@ -68,7 +84,7 @@ pub use classify::{
     is_variation_selector, BidiChar, InvisibleRange, ZeroWidthChar,
 };
 
-pub use config::{DetectorConfig, SensitivityLevel, UnicodeConfig};
+pub use config::{DetectorConfig, SensitivityLevel, UnicodeConfig, ScanConfig};
 
 pub use confusables::data::{
     get_base_char, get_confusable_script, get_similarity, is_confusable, ConfusableEntry,
@@ -91,6 +107,9 @@ pub use detectors::{
 pub use encrypted_payload_detector::EncryptedPayloadDetector;
 
 pub use engine::{ScanEngine, ScanResult};
+
+#[cfg(feature = "cache")]
+pub use cache::{CacheStats, FileCacheEntry, ScanCache};
 
 pub use finding::{DetectionCategory, Severity, SourceLocation};
 

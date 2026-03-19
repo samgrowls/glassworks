@@ -56,30 +56,81 @@ impl UnicodeScanner {
             || path_lower.ends_with(".mdx")
             || path_lower.ends_with(".txt")
             || path_lower.ends_with(".rst");
+        
+        // Skip bundled/minified files for high-severity detections (reduce FPs)
+        let is_bundled = path_lower.contains(".min.")
+            || path_lower.contains(".bundle.")
+            || path_lower.contains(".umd.")
+            || path_lower.ends_with(".mjs")  // ES modules bundle
+            || path_lower.ends_with(".cjs")  // CommonJS bundle
+            || path_lower.ends_with("-dist.js")
+            || path_lower.ends_with("-prod.js")
+            || path_lower.contains("/dist/")  // Bundled output directory
+            || path_lower.contains("/build/") // Build output directory
+            || path_lower.contains("/bin/")   // Binary output directory
+            || path_lower.contains("/out/")   // ClojureScript compiled output
+            || path_lower.contains("/gyp/")   // GYP build files
+            || path_lower.contains("/lib/");  // Compiled libraries
+        
+        // Check file size (large files are often bundles)
+        let file_size = std::fs::metadata(file_path).map(|m| m.len()).unwrap_or(0);
+        let is_large_file = file_size > 500_000; // 500KB threshold
+        let is_very_large_file = file_size > 1_000_000; // 1MB threshold
+        
+        // Combined bundled check
+        let is_likely_bundled = is_bundled || is_large_file;
+        
+        // Skip test/fixture directories
+        let is_test_file = path_lower.contains("/test/")
+            || path_lower.contains("/tests/")
+            || path_lower.contains("/__tests__/")
+            || path_lower.contains("/fixtures/")
+            || path_lower.contains("/node_modules/");
 
         // Run all enabled detectors
-        if self.config.detectors.invisible_chars && !is_documentation {
-            let findings = self.invisible_detector.detect(content, file_path);
-            all_findings.extend(findings);
+        if self.config.detectors.invisible_chars && !is_documentation && !is_test_file {
+            let findings = self.invisible_detector.detect_with_content(content, file_path);
+
+            // For bundled files, only report critical severity (variation selectors, bidi)
+            if is_likely_bundled {
+                all_findings.extend(
+                    findings.into_iter()
+                        .filter(|f| f.severity == Severity::Critical)
+                );
+            // For very large files (>1MB), skip invisible chars entirely (almost certainly bundled)
+            } else if is_very_large_file {
+                // Skip entirely - too large to be source code
+            } else {
+                all_findings.extend(findings);
+            }
         }
 
-        if self.config.detectors.homoglyphs && !is_documentation {
-            let findings = self.homoglyph_detector.detect(content, file_path);
+        if self.config.detectors.homoglyphs && !is_documentation && !is_test_file {
+            let findings = self.homoglyph_detector.detect_with_content(content, file_path);
             all_findings.extend(findings);
         }
 
         if self.config.detectors.bidirectional {
-            let findings = self.bidi_detector.detect(content, file_path);
+            let findings = self.bidi_detector.detect_with_content(content, file_path);
             all_findings.extend(findings);
         }
 
-        if self.config.detectors.glassware {
-            let findings = self.glassware_detector.detect(content, file_path);
-            all_findings.extend(findings);
+        if self.config.detectors.glassware && !is_test_file && !is_documentation {
+            let findings = self.glassware_detector.detect_with_content(content, file_path);
+            
+            // For bundled files, skip glassware patterns (high FP rate)
+            if is_likely_bundled {
+                // Skip entirely
+            // For very large files (>1MB), skip entirely (almost certainly bundled)
+            } else if is_very_large_file {
+                // Skip entirely - too large to be source code
+            } else {
+                all_findings.extend(findings);
+            }
         }
 
         if self.config.detectors.unicode_tags {
-            let findings = self.tag_detector.detect(content, file_path);
+            let findings = self.tag_detector.detect_with_content(content, file_path);
             all_findings.extend(findings);
         }
 
@@ -96,27 +147,27 @@ impl UnicodeScanner {
 
     /// Scan only for invisible characters
     pub fn scan_invisible(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.invisible_detector.detect(content, file_path)
+        self.invisible_detector.detect_with_content(content, file_path)
     }
 
     /// Scan only for homoglyph attacks
     pub fn scan_homoglyphs(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.homoglyph_detector.detect(content, file_path)
+        self.homoglyph_detector.detect_with_content(content, file_path)
     }
 
     /// Scan only for bidirectional overrides
     pub fn scan_bidi(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.bidi_detector.detect(content, file_path)
+        self.bidi_detector.detect_with_content(content, file_path)
     }
 
     /// Scan only for Glassware patterns
     pub fn scan_glassware(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.glassware_detector.detect(content, file_path)
+        self.glassware_detector.detect_with_content(content, file_path)
     }
 
     /// Scan only for Unicode tags
     pub fn scan_tags(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.tag_detector.detect(content, file_path)
+        self.tag_detector.detect_with_content(content, file_path)
     }
 
     /// Get the configuration

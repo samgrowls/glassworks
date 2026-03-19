@@ -18,7 +18,7 @@
 //! Critical — indicates potential C2 payload delivery (GlassWare Wave 4-5).
 
 use crate::config::UnicodeConfig;
-use crate::detector::Detector;
+use crate::detector::{Detector, DetectorMetadata, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -75,6 +75,12 @@ impl HeaderC2Detector {
     pub fn new() -> Self {
         Self
     }
+
+    /// Backward compatibility method for tests
+    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
+        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
+        self.detect(&ctx)
+    }
 }
 
 impl Default for HeaderC2Detector {
@@ -88,18 +94,19 @@ impl Detector for HeaderC2Detector {
         "header_c2"
     }
 
-    fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
+    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
         let mut findings = Vec::new();
+        let path = Path::new(&ctx.file_path);
 
         // Check for all three conditions
-        let has_http_header = self.detect_http_header_extraction(content);
-        let has_decryption = self.detect_decryption(content);
-        let has_dynamic_exec = self.detect_dynamic_execution(content);
+        let has_http_header = self.detect_http_header_extraction(&ctx.content);
+        let has_decryption = self.detect_decryption(&ctx.content);
+        let has_dynamic_exec = self.detect_dynamic_execution(&ctx.content);
 
         // Only emit finding if ALL THREE conditions are present
         if has_http_header && has_decryption && has_dynamic_exec {
             // Find the line with HTTP header access for the finding location
-            let header_line = self.find_http_header_line(content).unwrap_or(1);
+            let header_line = self.find_http_header_line(&ctx.content).unwrap_or(1);
 
             let finding = Finding::new(
                 &path.to_string_lossy(),
@@ -125,6 +132,14 @@ impl Detector for HeaderC2Detector {
         }
 
         findings
+    }
+
+    fn metadata(&self) -> DetectorMetadata {
+        DetectorMetadata {
+            name: "header_c2".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects HTTP header C2 patterns with header extraction, decryption, and dynamic execution".to_string().to_string(),
+        }
     }
 }
 
