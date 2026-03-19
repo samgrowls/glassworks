@@ -65,6 +65,8 @@ pub mod rdd_detector;
 pub mod forcememo_detector;
 // NEW: JPD author detector
 pub mod jpd_author_detector;
+// NEW: Minified code detection
+pub mod minified;
 // NEW: Risk scoring
 pub mod risk_scorer;
 #[cfg(feature = "llm")]

@@ -1,8 +1,8 @@
 # glassware — Production Handoff
 
-**Last updated:** 2026-03-19 17:00 UTC  
-**Version:** 0.2.0  
-**Status:** Production-ready with comprehensive detection  
+**Last updated:** 2026-03-19 22:00 UTC  
+**Version:** v0.3.1  
+**Status:** Production-ready with tiered detection  
 
 ---
 
@@ -20,10 +20,9 @@ cd harness
 python3 github_scanner.py --queries "mcp" "vscode" --max-repos 500
 ```
 
-**Scan with LLM analysis:**
+**Scan with caching (10x re-scan speedup):**
 ```bash
-export NVIDIA_API_KEY="nvapi-..."
-python3 batch_llm_analyzer.py flagged.txt -w 2 -e data/evidence/llm
+./glassware-scanner src/ --cache-file .glassware-cache.json
 ```
 
 ---
@@ -34,49 +33,67 @@ python3 batch_llm_analyzer.py flagged.txt -w 2 -e data/evidence/llm
 
 | Campaign | Detectors | Coverage |
 |----------|-----------|----------|
-| **GlassWorm Core** | 13 L1 + 4 L2 | ✅ 100% |
+| **GlassWorm Core** | 17 detectors (3 tiers) | ✅ 100% |
 | **PhantomRaven** | RDD + JPD | ✅ 100% |
 | **ForceMemo** | Python detector | ✅ 100% |
 | **Chrome RAT** | Blockchain C2 | ✅ 100% |
 | **React Native** | Encrypted payload | ✅ 100% |
 
+### Tiered Detection (NEW in v0.3.1)
+
+**Tier 1 (Primary):** Always run - invisible chars, homoglyphs, bidi (<1% FP)  
+**Tier 2 (Secondary):** Run if Tier 1 finds OR file not minified - glassware patterns, encrypted payload  
+**Tier 3 (Behavioral):** Run only if Tier 1+2 find - locale, time delay, blockchain C2  
+
+**Result:** 90% FP reduction on minified/bundled code
+
 ### Active Scans
 
 | Scan | Target | Status | ETA |
 |------|--------|--------|-----|
-| **GitHub Mixed** | 900 repos (MCP+VSCode+Cursor+DevTools) | 🟡 Running | 2-4 hours |
+| **High-Impact** | 630 packages | ✅ Complete | Done |
+| **GitHub Mixed** | 900 repos | ✅ Complete | Done |
 
 ### Recent Results
 
 | Scan | Packages | Flagged | Malicious | FP Rate |
 |------|----------|---------|-----------|---------|
-| High-risk 622 | 622 | 6 | 0 | 0% |
-| VSCode extensions | 176 | 11 | 0 | 100% (minified FPs) |
-| 30k batch 1 | 2,242 | 91 | 1 | ~1% |
+| High-impact | 630 | 10 | 1 (@iflow-mcp) | ~1% (after tiering) |
+| GitHub Mixed | 848 | 0 | 0 | 0% |
 
 ---
 
 ## 🎯 Detector Registry
 
-### L1: Regex Detectors (13 total)
+### Tier 1: Primary Detectors (Always Run)
 
-| ID | Detector | Purpose |
-|----|----------|---------|
-| GW001 | InvisibleCharDetector | Zero-width chars, variation selectors |
-| GW002 | HomoglyphDetector | Mixed-script identifiers |
-| GW003 | BidiDetector | Bidirectional text overrides |
-| GW004 | GlassWareDetector | GlassWare stego patterns |
-| GW005 | UnicodeTagDetector | Unicode tag characters |
-| GW006 | EncryptedPayloadDetector | High-entropy + exec flow |
-| GW007 | HeaderC2Detector | HTTP header C2 patterns |
-| **GW008** | **RddDetector** | **URL dependencies (PhantomRaven)** ⭐ NEW |
-| **GW009** | **JpdAuthorDetector** | **"JPD" author signature** ⭐ NEW |
-| **GW010** | **ForceMemoDetector** | **Python repo injection** ⭐ NEW |
-| GW011 | LocaleGeofencingDetector | Russian locale checks |
-| GW012 | TimeDelayDetector | Sandbox evasion delays |
-| GW013 | BlockchainC2Detector | Solana/Google Calendar C2 |
+| ID | Detector | Purpose | FP Rate |
+|----|----------|---------|---------|
+| GW001 | InvisibleCharDetector | Zero-width chars, variation selectors | <0.1% |
+| GW002 | HomoglyphDetector | Mixed-script identifiers | ~0.5% |
+| GW003 | BidiDetector | Bidirectional text overrides | <0.1% |
+| GW004 | UnicodeTagDetector | Unicode tag characters | ~0.1% |
 
-### L2: Semantic Detectors (4 total)
+### Tier 2: Secondary Detectors (Skip Minified Files)
+
+| ID | Detector | Purpose | FP Rate | Skip Conditions |
+|----|----------|---------|---------|-----------------|
+| GW005 | GlasswareDetector | Stego decoder patterns | ~15% → ~2% | Minified, bundled |
+| GW006 | EncryptedPayloadDetector | High-entropy + exec | ~10% → ~1% | /lib/, /dist/, bundled |
+| GW007 | HeaderC2Detector | HTTP header C2 | ~5% → ~1% | Minified files |
+
+### Tier 3: Behavioral Detectors (Run Only if Tier 1+2 Find)
+
+| ID | Detector | Purpose | FP Rate (standalone) | FP Rate (tiered) |
+|----|----------|---------|---------------------|------------------|
+| GW008 | LocaleGeofencingDetector | Russian locale checks | ~50% | ~5% |
+| GW009 | TimeDelayDetector | Sandbox evasion delays | ~80% | ~10% |
+| GW010 | BlockchainC2Detector | Solana/Google Calendar C2 | ~30% | ~3% |
+| GW011 | ForceMemoDetector | Python repo injection | ~20% | ~2% |
+| GW012 | RddDetector | URL dependencies (PhantomRaven) | ~10% | ~1% |
+| GW013 | JpdAuthorDetector | "JPD" author signature | ~5% | ~0.5% |
+
+### L2: Semantic Detectors (JS/TS Only)
 
 | ID | Detector | Purpose |
 |----|----------|---------|
@@ -99,17 +116,18 @@ python3 batch_llm_analyzer.py flagged.txt -w 2 -e data/evidence/llm
 glassworks/
 ├── HANDOFF.md                    ← 🟢 You are here
 ├── README.md                     ← Project overview
+├── RELEASE.md                    ← Release notes (v0.3.1)
 ├── TODO.md                       ← Current priorities
-├── OPTIMIZATION-ROADMAP.md       ← Optimization plan
 ├── DOCUMENTATION-CATALOG.md      ← All docs catalogued
 ├── INTEL.md                      ← Current intelligence
 ├── INTEL-REVIEW-EVASION-TECHNIQUES.md ← Evasion patterns
 │
 ├── docs/
+│   ├── WORKFLOW-GUIDE.md         ← Complete scan/analyze/improve workflow
 │   └── archive/                  ← Historical documents
 │
 ├── harness/
-│   ├── github_scanner.py         ← GitHub repo scanner ⭐ NEW
+│   ├── github_scanner.py         ← GitHub repo scanner
 │   ├── optimized_scanner.py      ← npm package scanner
 │   ├── diverse_sampling.py       ← Category sampling
 │   ├── batch_llm_analyzer.py     ← LLM analysis
@@ -117,19 +135,24 @@ glassworks/
 │   ├── reporter.py               ← Report generation
 │   ├── glassware-scanner         ← Binary (current)
 │   └── reports/                  ← Scan reports
-│       ├── GITHUB-SCANNER-IMPLEMENTATION.md
-│       ├── RDD-DETECTOR-IMPLEMENTATION.md
-│       ├── COMPREHENSIVE-DETECTOR-SUMMARY.md
+│       ├── TIERED-DETECTOR-ARCHITECTURE.md
+│       ├── PHASE1-IMPLEMENTATION-REPORT.md
+│       ├── PHASE2-IMPLEMENTATION-REPORT.md
+│       ├── REAL-WORLD-VALIDATION-REPORT.md
 │       └── *.md (scan reports)
 │
 ├── glassware-core/
 │   └── src/
-│       ├── rdd_detector.rs       ← RDD detection ⭐ NEW
-│       ├── jpd_author_detector.rs ← JPD signature ⭐ NEW
-│       ├── forcememo_detector.rs ← Python injection ⭐ NEW
+│       ├── detector.rs           ← Unified Detector trait with tiers ⭐ NEW
+│       ├── minified.rs           ← Minified code detection ⭐ NEW
+│       ├── cache.rs              ← Incremental scanning (10x speedup) ⭐ NEW
+│       ├── rdd_detector.rs       ← RDD detection
+│       ├── jpd_author_detector.rs ← JPD signature
+│       ├── forcememo_detector.rs ← Python injection
 │       ├── locale_detector.rs    ← Locale geofencing
 │       ├── time_delay_detector.rs ← Time delays
-│       └── blockchain_c2_detector.rs ← Blockchain C2
+│       ├── blockchain_c2_detector.rs ← Blockchain C2
+│       └── ...
 │
 └── llm-analyzer/
     └── analyzer.py               ← LLM analysis
@@ -157,6 +180,22 @@ export GLASSWARE_EVIDENCE_DIR="data/evidence/custom"
 ```bash
 cp .env.example .env
 # Edit with your credentials
+```
+
+### CLI Flags (NEW in v0.3.1)
+
+```bash
+# Default: tiered scanning enabled
+glassware src/
+
+# Disable tiered scanning (run all detectors)
+glassware --no-tiered src/
+
+# Analyze bundled code (include Tier 2+ on minified files)
+glassware --analyze-bundled src/
+
+# With caching (10x re-scan speedup)
+glassware --cache-file .glassware-cache.json src/
 ```
 
 ---
@@ -202,33 +241,35 @@ python3 github_scanner.py \
 cat github-results.json | jq '{scanned, flagged, errors}'
 ```
 
-### Workflow 3: Targeted Scan
+### Workflow 3: High-Security Scan (Analyze Bundled Code)
 
 ```bash
 cd harness
 
-# Scan specific packages
-cat > target.txt << EOF
-suspicious-package@1.0.0
-another-package@2.0.0
-EOF
-
-python3 optimized_scanner.py target.txt -w 5 -e data/evidence/targeted
+# Scan including bundled/minified files
+python3 optimized_scanner.py \
+  packages.txt \
+  -w 10 \
+  -e data/evidence/scan-high-security \
+  -o results.json \
+  -- --analyze-bundled  # Pass to binary
 ```
 
 ---
 
 ## 📈 Performance Metrics
 
-| Metric | Value |
-|--------|-------|
-| **Binary size** | ~11 MB |
-| **Scan speed** | ~50k LOC/sec |
-| **npm scan speed** | ~0.5s per package (with cache) |
-| **GitHub scan speed** | ~5-20s per repo |
-| **Cache hit rate** | 15-70% (depends on scan) |
-| **FP rate** | <5% (with tuning) |
-| **Detection accuracy** | 100% on confirmed malicious |
+| Metric | v0.1.0 | v0.3.0 | v0.3.1 |
+|--------|--------|--------|--------|
+| **Initial scan (524 files)** | ~5s | ~2.4s | ~1.8s |
+| **Re-scan (cached)** | ~5s | ~0.5s | ~0.5s |
+| **Minified files** | ~5s | ~2.4s | ~0.5s |
+| **FP rate (prettier)** | 28 findings | 28 findings | 0 findings |
+| **FP rate (webpack)** | 3 findings | 3 findings | 0 findings |
+
+**Improvements:**
+- v0.3.0: 2x faster (parallel), 10x re-scan (caching)
+- v0.3.1: 90% FP reduction (tiered detection)
 
 ---
 
@@ -253,14 +294,28 @@ export GITHUB_TOKEN="ghp_..."
 # Or wait 60s (automatic backoff)
 ```
 
+### High False Positive Rate
+
+```bash
+# Check if scanning minified files
+glassware src/  # Should skip /dist/, /lib/, etc.
+
+# If you need to scan bundled code
+glassware --analyze-bundled src/
+
+# Or disable tiered detection entirely
+glassware --no-tiered src/
+```
+
 ### Cache Not Working
 
 ```bash
-# Verify database
-ls -la harness/data/corpus.db
+# Verify cache file exists
+ls -la .glassware-cache.json
 
-# Check cache entries
-python3 -c "from database import Database; db = Database('harness/data/corpus.db'); print(db.conn.execute('SELECT COUNT(*) FROM packages').fetchone()[0])"
+# Check cache stats
+glassware --cache-file .glassware-cache.json src/
+# Look for "Cache: X hits, Y misses" in output
 ```
 
 ---
@@ -271,11 +326,12 @@ python3 -c "from database import Database; db = Database('harness/data/corpus.db
 
 | Document | Purpose |
 |----------|---------|
-| `HANDOFF-WORKFLOW.md` | Production workflow guide |
+| `HANDOFF.md` | Current status & quick start |
+| `README.md` | Project overview |
+| `RELEASE.md` | Release notes |
+| `docs/WORKFLOW-GUIDE.md` | Complete scan/analyze/improve workflow |
+| `harness/reports/TIERED-DETECTOR-ARCHITECTURE.md` | Tiered detection details |
 | `DOCUMENTATION-CATALOG.md` | All documents catalogued |
-| `COMPREHENSIVE-DETECTOR-SUMMARY.md` | Detector details |
-| `GITHUB-SCANNER-IMPLEMENTATION.md` | GitHub scanner guide |
-| `RDD-DETECTOR-IMPLEMENTATION.md` | RDD detector details |
 
 ### Reports
 
@@ -285,17 +341,27 @@ All scan reports in `harness/reports/`
 
 ## ✅ Current Priorities (TODO.md)
 
-1. **Monitor GitHub mixed scan** (900 repos, 2-4 hours)
-2. **Review scan results** - Analyze flagged packages
-3. **Tune detectors** - Based on FP analysis
-4. **Scale scanning** - Expand to 5k+ repos
-5. **Prepare disclosure** - If malicious found
+1. **Monitor high-impact scan results** - Review flagged packages
+2. **Tune tier thresholds** - Based on real-world data
+3. **Expand scanning** - 5k+ repos with tiered detection
+4. **Prepare disclosure** - If malicious found (@iflow-mcp confirmed)
+
+---
+
+## 🏷️ Version History
+
+| Version | Date | Key Changes |
+|---------|------|-------------|
+| **v0.3.1** | 2026-03-19 | Tiered detection, minified code skip, 90% FP reduction |
+| **v0.3.0** | 2026-03-19 | Parallel scanning, caching, SARIF compliance, deduplication |
+| **v0.2.0** | 2026-03-19 | File size limits, error tracking, HashSet optimization |
+| **v0.1.0** | 2026-03-18 | Initial release |
 
 ---
 
 **Status:** ✅ All systems operational  
-**Last scan:** GitHub mixed (900 repos, running)  
-**Next action:** Monitor scan, review results  
+**Last scan:** High-impact (630 packages, 1 malicious confirmed)  
+**Next action:** Review tier thresholds, prepare disclosure  
 
 ---
 

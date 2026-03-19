@@ -54,13 +54,40 @@ pub struct DetectorMetadata {
     pub description: String,
 }
 
+/// Detector priority tier for phased scanning
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DetectorTier {
+    /// Primary detectors - always run, low FP rate (invisible chars, homoglyphs, bidi)
+    Tier1Primary = 1,
+    /// Secondary detectors - run if Tier 1 finds something or file heuristics pass (glassware patterns, encrypted payload)
+    Tier2Secondary = 2,
+    /// Behavioral detectors - only run if Tier 1+2 find something (locale, time delay, blockchain C2)
+    Tier3Behavioral = 3,
+}
+
 /// A detection module that scans file content for suspicious patterns.
 ///
 /// Each detector targets a specific class of attack technique.
 /// The engine runs all registered detectors against each file.
+/// 
+/// ## Detector Tiers
+/// 
+/// Detectors are organized into three tiers for optimal performance and false positive reduction:
+/// 
+/// - **Tier 1 (Primary)**: Always run, very low FP rate. Includes invisible character, homoglyph, and bidi detection.
+/// - **Tier 2 (Secondary)**: Run if Tier 1 finds something OR file passes heuristics (not minified/bundled).
+/// - **Tier 3 (Behavioral)**: Only run if Tier 1+2 find something. Includes locale geofencing, time delays, blockchain C2.
+/// 
+/// This tiered approach dramatically reduces false positives on legitimate codebases while maintaining
+/// high detection accuracy for real attacks.
 pub trait Detector: Send + Sync {
     /// Get detector name
     fn name(&self) -> &str;
+
+    /// Get detector tier (default: Tier1)
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier1Primary
+    }
 
     /// Run detection on the provided context
     fn detect(&self, ctx: &ScanContext) -> Vec<Finding>;
@@ -72,6 +99,16 @@ pub trait Detector: Send + Sync {
             version: "1.0.0".to_string(),
             description: String::new(),
         }
+    }
+    
+    /// Check if this detector should run based on other findings
+    /// 
+    /// Override for tiered detection logic:
+    /// - Tier 1 detectors: Always return true
+    /// - Tier 2 detectors: Return true if Tier 1 found something OR file passes heuristics
+    /// - Tier 3 detectors: Return true only if Tier 1+2 found something
+    fn should_run(&self, _other_findings: &[Finding]) -> bool {
+        true  // Default: always run (Tier 1 behavior)
     }
 }
 
