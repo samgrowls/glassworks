@@ -393,3 +393,24 @@ All scan reports in `harness/reports/`
 ---
 
 **End of Handoff**
+
+### NEW in v0.7.0: Contextual Risk Scoring
+
+**Risk multipliers based on context:**
+- Ecosystem: npm (1.0x), PyPI (1.2x), GitHub (1.5x)
+- Package type: Library (1.0x), CLI (1.3x), Extension (1.5x)
+- Novelty: <7 days (1.5x), <30 days (1.2x), established (1.0x)
+- Reputation: Known publisher (0.8x), unknown (1.0x)
+- File type: Minified (0.5x), source (1.0x)
+
+**Example:**
+```rust
+let context = RiskContext::new()
+    .with_ecosystem(Ecosystem::GitHub)
+    .with_package_type(PackageType::Extension)
+    .with_package_age(2);  // 2 days old = 1.5x novelty multiplier
+
+let score = calculate_package_risk_with_context(&findings, &context);
+// GitHub extension, 2 days old: 1.5×1.5×1.5 = 3.375x multiplier
+```
+
