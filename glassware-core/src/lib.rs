@@ -195,6 +195,16 @@ pub use unicode_detector::UnicodeDetector;
 // Re-export Finding as the main type (aliased from UnicodeFinding for backwards compatibility)
 pub use finding::Finding;
 
+// NEW: Risk scoring with context
+pub use risk_scorer::{
+    RiskContext, Ecosystem, PackageType,
+    calculate_package_risk, calculate_package_risk_with_context,
+    finding_risk_score, risk_level, risk_level_f32,
+    should_flag, should_flag_f32,
+    recommended_action, recommended_action_f32,
+    RISK_THRESHOLD_LOW, RISK_THRESHOLD_MEDIUM, RISK_THRESHOLD_HIGH, RISK_THRESHOLD_CRITICAL,
+};
+
 /// Library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

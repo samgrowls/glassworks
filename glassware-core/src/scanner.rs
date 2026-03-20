@@ -48,6 +48,11 @@ impl UnicodeScanner {
 
     /// Scan content for all Unicode attacks
     pub fn scan(&self, content: &str, file_path: &str) -> Vec<Finding> {
+        // Use content length for file size to avoid race condition (file could change between metadata check and read)
+        let file_size = content.len() as u64;
+        let is_large_file = file_size > 500_000; // 500KB threshold
+        let is_very_large_file = file_size > 1_000_000; // 1MB threshold
+
         let mut all_findings = Vec::new();
 
         // Skip invisible character detection for documentation files (emoji false positives)
@@ -56,7 +61,7 @@ impl UnicodeScanner {
             || path_lower.ends_with(".mdx")
             || path_lower.ends_with(".txt")
             || path_lower.ends_with(".rst");
-        
+
         // Skip bundled/minified files for high-severity detections (reduce FPs)
         let is_bundled = path_lower.contains(".min.")
             || path_lower.contains(".bundle.")
@@ -71,11 +76,6 @@ impl UnicodeScanner {
             || path_lower.contains("/out/")   // ClojureScript compiled output
             || path_lower.contains("/gyp/")   // GYP build files
             || path_lower.contains("/lib/");  // Compiled libraries
-        
-        // Check file size (large files are often bundles)
-        let file_size = std::fs::metadata(file_path).map(|m| m.len()).unwrap_or(0);
-        let is_large_file = file_size > 500_000; // 500KB threshold
-        let is_very_large_file = file_size > 1_000_000; // 1MB threshold
         
         // Combined bundled check
         let is_likely_bundled = is_bundled || is_large_file;
