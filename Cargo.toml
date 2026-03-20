@@ -1,9 +1,59 @@
 [workspace]
-members = ["glassware-core", "glassware-cli"]
+members = [
+    "glassware-core",
+    "glassware-cli",
+    "glassware-orchestrator",
+]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.8.0"
 edition = "2021"
 license = "MIT"
 rust-version = "1.70"
+
+[workspace.dependencies]
+# Core
+glassware-core = { path = "./glassware-core", version = "0.5.0" }
+
+# Async
+tokio = { version = "1.35", features = ["full"] }
+tokio-retry = "0.3"
+
+# CLI
+clap = { version = "4.4", features = ["derive"] }
+
+# HTTP
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-rustls"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Utilities
+futures = "0.3"
+walkdir = "2.4"
+uuid = { version = "1.6", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# Concurrency
+parking_lot = "0.12"
+urlencoding = "2.1"
+rand = "0.8"
+
+[workspace.dependencies.tokio-test]
+version = "0.4"
+
+[workspace.dependencies.tempfile]
+version = "3.8"
