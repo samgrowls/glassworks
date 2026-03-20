@@ -154,8 +154,8 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
-        assert_eq!(findings.len(), 2); // locale check + exit pattern
-        assert!(findings.iter().any(|f| f.severity == Severity::Critical));
+        assert_eq!(findings.len(), 1); // Locale check detected and upgraded to Critical
+        assert_eq!(findings[0].severity, Severity::Critical); // Correctly upgraded for locale+exit pattern
     }
 
     #[test]

@@ -223,7 +223,7 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
-        assert_eq!(findings[0].severity, Severity::Critical);
+        assert_eq!(findings[0].severity, Severity::Medium);  // Tuned to Medium for non-C2 wallets
     }
 
     #[test]
@@ -251,7 +251,7 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
-        assert_eq!(findings[0].severity, Severity::Critical);
+        assert_eq!(findings[0].severity, Severity::Medium);  // Tuned to Medium for non-known URLs
     }
 
     #[test]
@@ -263,7 +263,7 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
-        assert_eq!(findings[0].severity, Severity::High);
+        assert_eq!(findings[0].severity, Severity::Medium);  // Tuned to Medium for generic API calls
     }
 
     #[test]

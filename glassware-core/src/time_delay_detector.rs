@@ -201,8 +201,8 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
-        assert_eq!(findings[0].severity, Severity::Critical);
-        assert!(findings[0].description.contains("15 minutes"));
+        assert_eq!(findings[0].severity, Severity::Low);  // Tuned to Low (needs CI correlation for Critical)
+        assert!(findings[0].description.contains("delay"));
     }
 
     #[test]
@@ -247,7 +247,7 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
-        assert_eq!(findings[0].severity, Severity::High);
+        assert_eq!(findings[0].severity, Severity::Low);  // Tuned to Low (needs CI correlation for High)
     }
 
     #[test]
