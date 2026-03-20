@@ -15,9 +15,9 @@
 //!
 //! High — indicates potential encrypted payload loader.
 
-use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
@@ -62,9 +62,10 @@ impl EncryptedPayloadDetector {
     }
 
     /// Backward compatibility method for tests
-    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
-        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
-        self.detect(&ctx)
+    pub fn scan(&self, path: &Path, content: &str, _config: &crate::config::UnicodeConfig) -> Vec<Finding> {
+        // Build IR and call detect (for backward compatibility)
+        let ir = FileIR::build(path, content);
+        self.detect(&ir)
     }
 }
 
@@ -79,40 +80,45 @@ impl Detector for EncryptedPayloadDetector {
         "encrypted_payload"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier2Secondary
+    }
+
+    fn cost(&self) -> u8 {
+        6  // Medium-high cost - entropy calculation + multiple regex passes
+    }
+
+    fn signal_strength(&self) -> u8 {
+        8  // High signal - decrypt+exec flow is very suspicious
+    }
+
+    fn prerequisites(&self) -> Vec<&'static str> {
+        vec![]  // Can run in parallel with Tier 1
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
-        let path = Path::new(&ctx.file_path);
 
         // Skip bundled/minified files (high FP rate)
-        let path_str = path.to_string_lossy().to_lowercase();
-        let is_bundled = path_str.contains("/dist/")
-            || path_str.contains("/build/")
-            || path_str.contains("/bin/")
-            || path_str.ends_with(".mjs")
-            || path_str.ends_with(".cjs")
-            || path_str.contains(".min.")
-            || path_str.contains(".bundle.")
-            || path_str.contains(".umd.");
-
-        if is_bundled {
+        if ir.is_bundled() || ir.is_minified() {
             return findings;
         }
 
         // Check for high-entropy blobs
-        let has_high_entropy_blob = self.detect_high_entropy_blob(&ctx.content);
+        let has_high_entropy_blob = self.detect_high_entropy_blob(ir.content());
 
         // Check for decrypt→exec flow (not just any exec)
-        let has_decrypt_exec_flow = self.detect_decrypt_to_exec_flow(&ctx.content);
+        let has_decrypt_exec_flow = self.detect_decrypt_to_exec_flow(ir.content());
 
         // Only emit finding if BOTH conditions are present:
         // 1. High-entropy blob
         // 2. Decryption pattern followed by dynamic execution
         if has_high_entropy_blob && has_decrypt_exec_flow {
             // Find the line with the high-entropy blob for the finding location
-            let blob_line = self.find_high_entropy_blob_line(&ctx.content).unwrap_or(1);
+            let blob_line = self.find_high_entropy_blob_line(ir.content()).unwrap_or(1);
 
             let finding = Finding::new(
-                &path.to_string_lossy(),
+                &ir.metadata.path,
                 blob_line,
                 1,
                 0,
@@ -138,7 +144,7 @@ impl Detector for EncryptedPayloadDetector {
         DetectorMetadata {
             name: "encrypted_payload".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects encrypted payload patterns with high-entropy blobs and decrypt-to-exec flows".to_string().to_string(),
+            description: "Detects encrypted payload patterns with high-entropy blobs and decrypt-to-exec flows".to_string(),
         }
     }
 }
@@ -270,6 +276,7 @@ impl EncryptedPayloadDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::UnicodeConfig;
 
     #[test]
     fn test_detect_base64_with_eval() {

@@ -3,9 +3,11 @@
 //! Detects bidirectional text overrides that can reverse displayed text.
 
 use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use crate::ranges::get_bidi_name;
+use std::path::Path;
 
 /// Detector for bidirectional override attacks
 pub struct BidiDetector {
@@ -26,11 +28,10 @@ impl BidiDetector {
 
     /// Scan content for bidirectional override attacks
     pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.detect(&ScanContext::new(
-            file_path.to_string(),
-            content.to_string(),
-            self.config.clone(),
-        ))
+        // Build IR and call detect (for backward compatibility)
+        use crate::ir::FileIR;
+        let ir = FileIR::build(Path::new(file_path), content);
+        self.detect(&ir)
     }
 
     /// Internal implementation of detection logic
@@ -137,15 +138,27 @@ impl Detector for BidiDetector {
         "bidi"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
-        self.detect_impl(&ctx.content, &ctx.file_path)
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier1Primary
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        self.detect_impl(ir.content(), &ir.metadata.path)
+    }
+
+    fn cost(&self) -> u8 {
+        1  // Very cheap - single pass lookup
+    }
+
+    fn signal_strength(&self) -> u8 {
+        9  // Very high signal - bidi overrides are rarely legitimate in code
     }
 
     fn metadata(&self) -> DetectorMetadata {
         DetectorMetadata {
             name: "bidi".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects bidirectional text overrides that can reverse displayed text to hide malicious content".to_string().to_string(),
+            description: "Detects bidirectional text overrides that can reverse displayed text to hide malicious content".to_string(),
         }
     }
 }

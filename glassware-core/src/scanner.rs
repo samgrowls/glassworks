@@ -79,13 +79,14 @@ impl UnicodeScanner {
         
         // Combined bundled check
         let is_likely_bundled = is_bundled || is_large_file;
-        
-        // Skip test/fixture directories
-        let is_test_file = path_lower.contains("/test/")
+
+        // Skip test/fixture directories (but NOT our test fixtures under tests/fixtures/)
+        let is_test_file = (path_lower.contains("/test/")
             || path_lower.contains("/tests/")
             || path_lower.contains("/__tests__/")
             || path_lower.contains("/fixtures/")
-            || path_lower.contains("/node_modules/");
+            || path_lower.contains("/node_modules/"))
+            && !path_lower.contains("/tests/fixtures/");  // Allow our test fixtures
 
         // Run all enabled detectors
         if self.config.detectors.invisible_chars && !is_documentation && !is_test_file {

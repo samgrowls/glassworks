@@ -14,9 +14,9 @@
 //!
 //! Critical - indicates ForceMemo attack injection
 
-use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
@@ -55,13 +55,11 @@ impl Detector for ForceMemoDetector {
         "forcememo_python"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
-        let path = Path::new(&ctx.file_path);
 
         // Only scan Python files
-        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if !file_name.ends_with(".py") {
+        if !ir.metadata.extension.eq("py") {
             return findings;
         }
 
@@ -69,7 +67,7 @@ impl Detector for ForceMemoDetector {
         let mut marker_count = 0;
         let mut matched_markers: Vec<&str> = Vec::new();
 
-        for (line_num, line) in ctx.content.lines().enumerate() {
+        for (line_num, line) in ir.content().lines().enumerate() {
             for (marker_idx, marker_pattern) in FORCEMO_MARKERS.iter().enumerate() {
                 if marker_pattern.is_match(line) {
                     marker_count += 1;
@@ -83,7 +81,7 @@ impl Detector for ForceMemoDetector {
 
                     findings.push(
                         Finding::new(
-                            &path.to_string_lossy(),
+                            &ir.metadata.path,
                             line_num + 1,
                             1,
                             0,
@@ -104,7 +102,7 @@ impl Detector for ForceMemoDetector {
                 if line.contains("idzextbcjbgkdih") || line.contains("xor") || line.contains("XOR") {
                     findings.push(
                         Finding::new(
-                            &path.to_string_lossy(),
+                            &ir.metadata.path,
                             line_num + 1,
                             1,
                             0,
@@ -122,15 +120,15 @@ impl Detector for ForceMemoDetector {
         }
 
         // Check for three-layer obfuscation pattern
-        let has_base64 = ctx.content.contains("base64");
-        let has_zlib = ctx.content.contains("zlib");
-        let has_xor = ctx.content.contains("xor") || ctx.content.contains("XOR") || ctx.content.contains("^");
+        let has_base64 = ir.content().contains("base64");
+        let has_zlib = ir.content().contains("zlib");
+        let has_xor = ir.content().contains("xor") || ir.content().contains("XOR") || ir.content().contains("^");
         let has_obfuscation = has_base64 && has_zlib && has_xor;
 
         if has_obfuscation && marker_count > 0 {
             findings.push(
                 Finding::new(
-                    &path.to_string_lossy(),
+                    &ir.metadata.path,
                     1,
                     1,
                     0,
@@ -146,15 +144,15 @@ impl Detector for ForceMemoDetector {
         }
 
         // Check for suspicious import pattern
-        let has_suspicious_imports = (ctx.content.contains("import base64") || ctx.content.contains("from base64"))
-            && (ctx.content.contains("import zlib") || ctx.content.contains("from zlib"))
-            && (ctx.content.contains("import os") || ctx.content.contains("from os"))
-            && (ctx.content.contains("import subprocess") || ctx.content.contains("from subprocess"));
+        let has_suspicious_imports = (ir.content().contains("import base64") || ir.content().contains("from base64"))
+            && (ir.content().contains("import zlib") || ir.content().contains("from zlib"))
+            && (ir.content().contains("import os") || ir.content().contains("from os"))
+            && (ir.content().contains("import subprocess") || ir.content().contains("from subprocess"));
 
         if has_suspicious_imports && marker_count > 0 {
             findings.push(
                 Finding::new(
-                    &path.to_string_lossy(),
+                    &ir.metadata.path,
                     1,
                     1,
                     0,
@@ -183,15 +181,17 @@ impl Detector for ForceMemoDetector {
 
 impl ForceMemoDetector {
     /// Backward compatibility method for tests
-    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
-        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
-        self.detect(&ctx)
+    pub fn scan(&self, path: &Path, content: &str, _config: &crate::config::UnicodeConfig) -> Vec<Finding> {
+        // Build IR and call detect (for backward compatibility)
+        let ir = FileIR::build(path, content);
+        self.detect(&ir)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::UnicodeConfig;
 
     #[test]
     fn test_detect_forcememo_markers() {

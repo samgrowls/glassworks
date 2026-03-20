@@ -17,9 +17,9 @@
 //! Critical when CI bypass pattern detected
 //! High when long delay detected without CI bypass
 
-use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
@@ -65,20 +65,40 @@ impl Detector for TimeDelayDetector {
         "time_delay_sandbox_evasion"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier3Behavioral
+    }
+
+    fn cost(&self) -> u8 {
+        3  // Low cost - simple regex matching
+    }
+
+    fn signal_strength(&self) -> u8 {
+        6  // Medium-high signal - delays can be legitimate
+    }
+
+    fn prerequisites(&self) -> Vec<&'static str> {
+        vec!["glassware", "encrypted_payload"]  // Run after Tier 2
+    }
+
+    fn should_short_circuit(&self, findings: &[Finding]) -> bool {
+        // Don't run Tier 3 if nothing found by Tier 1-2
+        findings.is_empty()
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
-        let path = Path::new(&ctx.file_path);
         let mut ci_check_lines: Vec<usize> = Vec::new();
 
         // First pass: find CI checks
-        for (line_num, line) in ctx.content.lines().enumerate() {
+        for (line_num, line) in ir.content().lines().enumerate() {
             if DELAY_PATTERNS[4].is_match(line) || DELAY_PATTERNS[5].is_match(line) {
                 ci_check_lines.push(line_num);
             }
         }
 
         // Second pass: find delays and correlate with CI checks
-        for (line_num, line) in ctx.content.lines().enumerate() {
+        for (line_num, line) in ir.content().lines().enumerate() {
             // Check for long delays
             for (i, pattern) in DELAY_PATTERNS.iter().enumerate().take(4) {
                 if pattern.is_match(line) {
@@ -103,7 +123,7 @@ impl Detector for TimeDelayDetector {
 
                     findings.push(
                         Finding::new(
-                            &path.to_string_lossy(),
+                            &ir.metadata.path,
                             line_num + 1,
                             1,
                             0,
@@ -125,7 +145,7 @@ impl Detector for TimeDelayDetector {
             if DELAY_PATTERNS[6].is_match(line) {
                 findings.push(
                     Finding::new(
-                        &path.to_string_lossy(),
+                        &ir.metadata.path,
                         line_num + 1,
                         1,
                         0,
@@ -172,22 +192,24 @@ impl Detector for TimeDelayDetector {
         DetectorMetadata {
             name: "time_delay_sandbox_evasion".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects time-delay sandbox evasion with long delays and CI/CD bypass patterns".to_string().to_string(),
+            description: "Detects time-delay sandbox evasion with long delays and CI/CD bypass patterns".to_string(),
         }
     }
 }
 
 impl TimeDelayDetector {
     /// Backward compatibility method for tests
-    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
-        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
-        self.detect(&ctx)
+    pub fn scan(&self, path: &Path, content: &str, _config: &crate::config::UnicodeConfig) -> Vec<Finding> {
+        // Build IR and call detect (for backward compatibility)
+        let ir = FileIR::build(path, content);
+        self.detect(&ir)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::UnicodeConfig;
 
     #[test]
     fn test_detect_15min_delay() {

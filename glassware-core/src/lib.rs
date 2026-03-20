@@ -50,9 +50,6 @@ pub mod finding;
 pub mod attack_graph;
 // NEW: Campaign intelligence layer
 pub mod campaign;
-// NEW: Module graph for cross-file analysis
-#[cfg(feature = "semantic")]
-pub mod module_graph;
 // NEW: Cross-file taint tracking
 #[cfg(feature = "semantic")]
 pub mod cross_file_taint;
@@ -65,6 +62,8 @@ pub mod gw007_semantic;
 #[cfg(feature = "semantic")]
 pub mod gw008_semantic;
 pub mod header_c2_detector;
+// NEW: Unified IR layer
+pub mod ir;
 // NEW: Behavioral evasion detectors
 pub mod locale_detector;
 pub mod time_delay_detector;
@@ -77,6 +76,9 @@ pub mod forcememo_detector;
 pub mod jpd_author_detector;
 // NEW: Minified code detection
 pub mod minified;
+// NEW: Module graph for cross-file analysis
+#[cfg(feature = "semantic")]
+pub mod module_graph;
 // NEW: Risk scoring
 pub mod risk_scorer;
 #[cfg(feature = "llm")]
@@ -139,6 +141,9 @@ pub use cache::{CacheStats, FileCacheEntry, ScanCache};
 pub use finding::{DetectionCategory, Severity, SourceLocation};
 
 pub use header_c2_detector::HeaderC2Detector;
+
+// NEW: Unified IR layer re-exports
+pub use ir::{FileIR, FileMetadata, JavaScriptAST, Language, UnicodeAnalysis};
 
 pub use ranges::{CRITICAL_RANGES, INVISIBLE_RANGES};
 

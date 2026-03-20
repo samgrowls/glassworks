@@ -6,11 +6,13 @@ use crate::config::UnicodeConfig;
 use crate::confusables::data::{
     get_base_char, get_confusable_script, get_similarity, is_confusable,
 };
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use crate::script_detector::{
     extract_identifiers, find_identifier_at_position, has_mixed_scripts, is_pure_non_latin,
 };
+use std::path::Path;
 
 /// Detector for homoglyph attacks
 pub struct HomoglyphDetector {
@@ -36,11 +38,10 @@ impl HomoglyphDetector {
 
     /// Scan content for homoglyph attacks
     pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.detect(&ScanContext::new(
-            file_path.to_string(),
-            content.to_string(),
-            self.config.clone(),
-        ))
+        // Build IR and call detect (for backward compatibility)
+        use crate::ir::FileIR;
+        let ir = FileIR::build(Path::new(file_path), content);
+        self.detect(&ir)
     }
 
     /// Internal implementation of detection logic
@@ -159,15 +160,27 @@ impl Detector for HomoglyphDetector {
         "homoglyph"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
-        self.detect_impl(&ctx.content, &ctx.file_path)
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier1Primary
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        self.detect_impl(ir.content(), &ir.metadata.path)
+    }
+
+    fn cost(&self) -> u8 {
+        2  // Cheap - single pass with script analysis
+    }
+
+    fn signal_strength(&self) -> u8 {
+        8  // High signal - mixed script identifiers are suspicious
     }
 
     fn metadata(&self) -> DetectorMetadata {
         DetectorMetadata {
             name: "homoglyph".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects confusable characters from different scripts used in spoofing attacks".to_string().to_string(),
+            description: "Detects confusable characters from different scripts used in spoofing attacks".to_string(),
         }
     }
 }

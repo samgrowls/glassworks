@@ -12,6 +12,7 @@ use crate::encrypted_payload_detector::EncryptedPayloadDetector;
 use crate::finding::Finding;
 use crate::forcememo_detector::ForceMemoDetector;
 use crate::header_c2_detector::HeaderC2Detector;
+use crate::ir::FileIR;
 use crate::jpd_author_detector::JpdAuthorDetector;
 use crate::rdd_detector::RddDetector;
 use crate::unicode_detector::UnicodeDetector;
@@ -85,6 +86,171 @@ impl DedupStats {
     }
 }
 
+/// Detector DAG (Directed Acyclic Graph) for optimized execution ordering.
+///
+/// This struct manages detector execution order based on:
+/// 1. Prerequisites (detectors that must run first)
+/// 2. Cost (cheaper detectors run first)
+/// 3. Signal strength (higher signal detectors run first)
+///
+/// The DAG enables short-circuit evaluation where expensive Tier 3 detectors
+/// only run if Tier 1-2 detectors find something.
+pub struct DetectorDAG {
+    /// All detector nodes
+    nodes: Vec<Box<dyn Detector>>,
+    /// Adjacency list: detector name -> list of detector names that depend on it
+    edges: std::collections::HashMap<String, Vec<String>>,
+    /// Execution order (topologically sorted indices)
+    execution_order: Vec<usize>,
+}
+
+impl DetectorDAG {
+    /// Create a new DAG from a list of detectors.
+    ///
+    /// The execution order is determined by:
+    /// 1. Prerequisites first (topological sort)
+    /// 2. Within same dependency level: sort by cost (ascending)
+    /// 3. Within same cost: sort by signal strength (descending)
+    pub fn new(detectors: Vec<Box<dyn Detector>>) -> Self {
+        let mut edges: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+        let mut in_degree: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+        
+        // Build detector name -> index mapping
+        let name_to_idx: std::collections::HashMap<&str, usize> = detectors
+            .iter()
+            .enumerate()
+            .map(|(i, d)| (d.name(), i))
+            .collect();
+        
+        // Initialize in-degree for all detectors
+        for detector in &detectors {
+            in_degree.insert(detector.name().to_string(), 0);
+        }
+        
+        // Build edges from prerequisites
+        for detector in &detectors {
+            let name = detector.name().to_string();
+            for prereq in detector.prerequisites() {
+                if name_to_idx.contains_key(prereq) {
+                    // prereq -> name (name depends on prereq)
+                    edges.entry(prereq.to_string()).or_default().push(name.clone());
+                    *in_degree.get_mut(&name).unwrap() += 1;
+                }
+            }
+        }
+        
+        // Kahn's algorithm for topological sort with priority
+        let mut execution_order = Vec::new();
+        let mut available: Vec<usize> = in_degree
+            .iter()
+            .filter(|(_, &deg)| deg == 0)
+            .map(|(name, _)| *name_to_idx.get(name.as_str()).unwrap())
+            .collect();
+        
+        // Sort available by (cost ASC, signal DESC)
+        available.sort_by(|&a, &b| {
+            let det_a = &detectors[a];
+            let det_b = &detectors[b];
+            det_a.cost()
+                .cmp(&det_b.cost())
+                .then_with(|| det_b.signal_strength().cmp(&det_a.signal_strength()))
+        });
+        
+        while !available.is_empty() {
+            // Take the highest priority detector
+            let current_idx = available.remove(0);
+            execution_order.push(current_idx);
+            
+            let current_name = detectors[current_idx].name().to_string();
+            
+            // Update in-degrees and add newly available detectors
+            if let Some(dependents) = edges.get(&current_name) {
+                for dependent_name in dependents {
+                    let deg = in_degree.get_mut(dependent_name).unwrap();
+                    *deg -= 1;
+                    if *deg == 0 {
+                        let dep_idx = *name_to_idx.get(dependent_name.as_str()).unwrap();
+                        available.push(dep_idx);
+                        // Re-sort to maintain priority order
+                        available.sort_by(|&a, &b| {
+                            let det_a = &detectors[a];
+                            let det_b = &detectors[b];
+                            det_a.cost()
+                                .cmp(&det_b.cost())
+                                .then_with(|| det_b.signal_strength().cmp(&det_a.signal_strength()))
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Check for cycles (should not happen with proper prerequisites)
+        if execution_order.len() != detectors.len() {
+            // Cycle detected - add remaining detectors in arbitrary order
+            let executed: std::collections::HashSet<usize> = execution_order.iter().copied().collect();
+            for (i, _) in detectors.iter().enumerate() {
+                if !executed.contains(&i) {
+                    execution_order.push(i);
+                }
+            }
+        }
+        
+        Self {
+            nodes: detectors,
+            edges,
+            execution_order,
+        }
+    }
+    
+    /// Execute all detectors in the optimized order.
+    ///
+    /// Returns all findings collected from all detectors.
+    /// May short-circuit if a detector returns true from should_short_circuit().
+    ///
+    /// # Arguments
+    /// * `ir` - The unified intermediate representation of the file
+    ///
+    /// # Returns
+    /// All findings detected in the file
+    pub fn execute(&self, ir: &FileIR) -> Vec<Finding> {
+        let mut all_findings = Vec::new();
+
+        for &idx in &self.execution_order {
+            let detector = &self.nodes[idx];
+
+            // Check if detector should run based on current findings
+            if !detector.should_run(&all_findings) {
+                continue;
+            }
+
+            let findings = detector.detect(ir);
+            all_findings.extend(findings);
+
+            // Check for short-circuit
+            if detector.should_short_circuit(&all_findings) {
+                break;
+            }
+        }
+
+        all_findings
+    }
+    
+    /// Get the execution order for inspection/testing
+    pub fn execution_order(&self) -> Vec<&str> {
+        self.execution_order
+            .iter()
+            .map(|&i| self.nodes[i].name())
+            .collect()
+    }
+    
+    /// Get detector by name
+    pub fn get_detector(&self, name: &str) -> Option<&dyn Detector> {
+        self.nodes.iter()
+            .find(|d| d.name() == name)
+            .map(|d| d.as_ref())
+    }
+}
+
 /// Orchestrates multiple detectors over files.
 ///
 /// The ScanEngine registers detectors and runs them against file content,
@@ -114,6 +280,10 @@ pub struct ScanEngine {
     /// Enable cross-file taint analysis
     #[cfg(feature = "semantic")]
     enable_cross_file_analysis: bool,
+    /// DAG-based detector execution (if enabled)
+    dag: Option<DetectorDAG>,
+    /// Enable DAG-based execution (default: false for backward compatibility)
+    enable_dag_execution: bool,
 }
 
 impl ScanEngine {
@@ -137,6 +307,8 @@ impl ScanEngine {
             cross_file_taint: None,
             #[cfg(feature = "semantic")]
             enable_cross_file_analysis: false,
+            dag: None,
+            enable_dag_execution: false,
         }
     }
 
@@ -164,6 +336,8 @@ impl ScanEngine {
             cross_file_taint: None,
             #[cfg(feature = "semantic")]
             enable_cross_file_analysis: false,
+            dag: None,
+            enable_dag_execution: false,
         }
     }
 
@@ -171,6 +345,34 @@ impl ScanEngine {
     #[cfg(feature = "llm")]
     pub fn with_llm(mut self, use_llm: bool) -> Self {
         self.use_llm = use_llm;
+        self
+    }
+
+    /// Enable or disable DAG-based detector execution.
+    ///
+    /// When enabled, detectors are executed in an optimized order based on:
+    /// 1. Prerequisites (detectors that must run first)
+    /// 2. Cost (cheaper detectors run first)
+    /// 3. Signal strength (higher signal detectors run first)
+    ///
+    /// This enables short-circuit evaluation where expensive Tier 3 detectors
+    /// only run if Tier 1-2 detectors find something.
+    ///
+    /// # Arguments
+    /// * `enabled` - Whether to enable DAG execution
+    ///
+    /// # Returns
+    /// Self with DAG execution enabled/disabled
+    pub fn with_dag_execution(mut self, enabled: bool) -> Self {
+        self.enable_dag_execution = enabled;
+        if enabled {
+            // Build the DAG from current detectors
+            let detectors: Vec<Box<dyn Detector>> = self.detectors
+                .drain(..)
+                .map(|d| -> Box<dyn Detector> { d })
+                .collect();
+            self.dag = Some(DetectorDAG::new(detectors));
+        }
         self
     }
 
@@ -279,16 +481,16 @@ impl ScanEngine {
         engine.register(Box::new(UnicodeDetector::new()));
         engine.register(Box::new(EncryptedPayloadDetector::new()));
         engine.register(Box::new(HeaderC2Detector::new()));
-        
+
         // NEW: RDD detector for PhantomRaven detection
         engine.register(Box::new(RddDetector::new()));
-        
+
         // NEW: JPD author detector (PhantomRaven signature)
         engine.register(Box::new(JpdAuthorDetector::new()));
-        
+
         // NEW: ForceMemo Python detector
         engine.register(Box::new(ForceMemoDetector::new()));
-        
+
         // NEW: Behavioral evasion detectors (GW009-GW011)
         engine.register(Box::new(LocaleGeofencingDetector::new()));
         engine.register(Box::new(TimeDelayDetector::new()));
@@ -325,6 +527,8 @@ impl ScanEngine {
             cross_file_taint: None,
             #[cfg(feature = "semantic")]
             enable_cross_file_analysis: false,
+            dag: None,
+            enable_dag_execution: false,
         }
     }
 
@@ -352,6 +556,8 @@ impl ScanEngine {
             cross_file_taint: None,
             #[cfg(feature = "semantic")]
             enable_cross_file_analysis: false,
+            dag: None,
+            enable_dag_execution: false,
         };
 
         engine.register(Box::new(UnicodeDetector::new()));
@@ -490,32 +696,45 @@ impl ScanEngine {
             }
         }
 
-        // Cache miss - run detectors
+        // Cache miss - build unified IR once
+        let ir = FileIR::build(path, content);
+
+        // Run detectors using DAG execution if enabled
         let mut findings: Vec<Finding> = Vec::new();
 
-        // Create scan context for unified trait interface
-        let ctx = ScanContext::from_path(
-            path,
-            content.to_string(),
-            self.config.clone(),
-        );
-
-        // Run regex-based detectors on all files
-        for detector in &self.detectors {
-            findings.extend(detector.detect(&ctx));
+        if self.enable_dag_execution {
+            if let Some(ref dag) = self.dag {
+                findings = dag.execute(&ir);
+            } else {
+                // Fallback to sequential if DAG not built
+                for detector in &self.detectors {
+                    findings.extend(detector.detect(&ir));
+                }
+            }
+        } else {
+            // Run detectors sequentially (all consume the same IR)
+            for detector in &self.detectors {
+                findings.extend(detector.detect(&ir));
+            }
         }
 
         // Run semantic detectors on JS/TS files only
         #[cfg(feature = "semantic")]
         if !self.semantic_detectors.is_empty() {
-            if let Some(analysis) = crate::semantic::build_semantic(content, path) {
-                let sources = crate::taint::find_sources(&analysis);
-                let sinks = crate::taint::find_sinks(&analysis);
-                let flows = crate::taint::check_flows(&analysis, &sources, &sinks);
+            // Use pre-parsed AST from IR if available
+            if let Some(ast) = ir.ast() {
+                if ast.is_valid() {
+                    // Build semantic analysis from AST
+                    if let Some(analysis) = crate::semantic::build_semantic(content, path) {
+                        let sources = crate::taint::find_sources(&analysis);
+                        let sinks = crate::taint::find_sinks(&analysis);
+                        let flows = crate::taint::check_flows(&analysis, &sources, &sinks);
 
-                for detector in &self.semantic_detectors {
-                    findings
-                        .extend(detector.detect_semantic(content, path, &flows, &sources, &sinks));
+                        for detector in &self.semantic_detectors {
+                            findings
+                                .extend(detector.detect_semantic(content, path, &flows, &sources, &sinks));
+                        }
+                    }
                 }
             }
         }
@@ -619,14 +838,10 @@ impl ScanEngine {
             file_contents.insert(path_str.clone(), content.clone());
             
             // Run regular detectors
-            let ctx = ScanContext::from_path(
-                file,
-                content.clone(),
-                self.config.clone(),
-            );
+            let ir = FileIR::build(file, &content);
 
             for detector in &self.detectors {
-                all_findings.extend(detector.detect(&ctx));
+                all_findings.extend(detector.detect(&ir));
             }
 
             // Run semantic detectors and extract taint sources/sinks
@@ -1187,6 +1402,176 @@ mod tests {
         // Should find invisible character
         assert!(!findings.is_empty());
         assert!(findings.iter().any(|f| f.severity >= Severity::High));
+    }
+
+    // DAG Execution Tests
+    #[test]
+    fn test_dag_construction() {
+        use crate::detectors::invisible::InvisibleCharDetector;
+        use crate::detectors::homoglyph::HomoglyphDetector;
+        use crate::detectors::glassware::GlasswareDetector;
+
+        let detectors: Vec<Box<dyn Detector>> = vec![
+            Box::new(InvisibleCharDetector::with_default_config()),
+            Box::new(HomoglyphDetector::with_default_config()),
+            Box::new(GlasswareDetector::with_default_config()),
+        ];
+
+        let dag = DetectorDAG::new(detectors);
+        let order = dag.execution_order();
+
+        // invisible_char and homoglyph should run before glassware (prerequisites)
+        let invisible_idx = order.iter().position(|&n| n == "invisible_char").unwrap();
+        let homoglyph_idx = order.iter().position(|&n| n == "homoglyph").unwrap();
+        let glassware_idx = order.iter().position(|&n| n == "glassware").unwrap();
+
+        assert!(invisible_idx < glassware_idx);
+        assert!(homoglyph_idx < glassware_idx);
+    }
+
+    #[test]
+    fn test_dag_execution_order_by_cost_and_signal() {
+        use crate::detectors::invisible::InvisibleCharDetector;
+        use crate::detectors::bidi::BidiDetector;
+        use crate::detectors::tags::UnicodeTagDetector;
+
+        // All Tier 1, should be ordered by cost (ascending) then signal (descending)
+        let detectors: Vec<Box<dyn Detector>> = vec![
+            Box::new(UnicodeTagDetector::with_default_config()),  // cost=1, signal=7
+            Box::new(InvisibleCharDetector::with_default_config()),  // cost=1, signal=9
+            Box::new(BidiDetector::with_default_config()),  // cost=1, signal=9
+        ];
+
+        let dag = DetectorDAG::new(detectors);
+        let order = dag.execution_order();
+
+        // invisible_char and bidi should come before unicode_tag (higher signal)
+        let invisible_idx = order.iter().position(|&n| n == "invisible_char").unwrap();
+        let bidi_idx = order.iter().position(|&n| n == "bidi").unwrap();
+        let tag_idx = order.iter().position(|&n| n == "unicode_tag").unwrap();
+
+        assert!(invisible_idx < tag_idx);
+        assert!(bidi_idx < tag_idx);
+    }
+
+    #[test]
+    fn test_dag_execution_produces_findings() {
+        use crate::detectors::invisible::InvisibleCharDetector;
+
+        let detectors: Vec<Box<dyn Detector>> = vec![
+            Box::new(InvisibleCharDetector::with_default_config()),
+        ];
+
+        let dag = DetectorDAG::new(detectors);
+        let ir = FileIR::build(Path::new("test.js"), "const secret\u{FE00}Key = 'value';");
+
+        let findings = dag.execute(&ir);
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| f.category == DetectionCategory::InvisibleCharacter));
+    }
+
+    #[test]
+    fn test_dag_short_circuit() {
+        use crate::detector::DetectorTier;
+        use crate::finding::{DetectionCategory, Finding, Severity};
+
+        // Create a mock detector that short-circuits
+        struct ShortCircuitDetector;
+        impl Detector for ShortCircuitDetector {
+            fn name(&self) -> &str { "short_circuit" }
+            fn tier(&self) -> DetectorTier { DetectorTier::Tier1Primary }
+            fn detect(&self, _ir: &FileIR) -> Vec<Finding> {
+                vec![Finding::new(
+                    "test", 1, 1, 0, '\0',
+                    DetectionCategory::Unknown, Severity::Low,
+                    "test", "test",
+                )]
+            }
+            fn cost(&self) -> u8 { 1 }
+            fn signal_strength(&self) -> u8 { 5 }
+            fn should_short_circuit(&self, findings: &[Finding]) -> bool {
+                !findings.is_empty()  // Short-circuit after first finding
+            }
+        }
+
+        // Create a detector that should be short-circuited
+        struct NeverRunDetector;
+        impl Detector for NeverRunDetector {
+            fn name(&self) -> &str { "never_run" }
+            fn tier(&self) -> DetectorTier { DetectorTier::Tier3Behavioral }
+            fn detect(&self, _ir: &FileIR) -> Vec<Finding> {
+                panic!("This should not be called due to short-circuit");
+            }
+            fn cost(&self) -> u8 { 10 }
+            fn signal_strength(&self) -> u8 { 5 }
+            fn prerequisites(&self) -> Vec<&'static str> {
+                vec!["short_circuit"]
+            }
+        }
+
+        let detectors: Vec<Box<dyn Detector>> = vec![
+            Box::new(ShortCircuitDetector),
+            Box::new(NeverRunDetector),
+        ];
+
+        let dag = DetectorDAG::new(detectors);
+        let ir = FileIR::build(Path::new("test.js"), "test content");
+
+        // Should not panic - NeverRunDetector should be short-circuited
+        let findings = dag.execute(&ir);
+        assert_eq!(findings.len(), 1);
+    }
+
+    #[test]
+    fn test_dag_vs_sequential_same_results() {
+        use crate::detectors::invisible::InvisibleCharDetector;
+        use crate::detectors::bidi::BidiDetector;
+
+        let ir = FileIR::build(Path::new("test.js"), "const secret\u{FE00}Key = 'value';");
+
+        // Create detectors for DAG
+        let dag_detectors: Vec<Box<dyn Detector>> = vec![
+            Box::new(InvisibleCharDetector::with_default_config()),
+            Box::new(BidiDetector::with_default_config()),
+        ];
+
+        // Create detectors for sequential
+        let seq_detectors: Vec<Box<dyn Detector>> = vec![
+            Box::new(InvisibleCharDetector::with_default_config()),
+            Box::new(BidiDetector::with_default_config()),
+        ];
+
+        let dag = DetectorDAG::new(dag_detectors);
+
+        // DAG execution
+        let dag_findings = dag.execute(&ir);
+
+        // Sequential execution
+        let mut sequential_findings = Vec::new();
+        for detector in &seq_detectors {
+            sequential_findings.extend(detector.detect(&ir));
+        }
+
+        // Same number of findings
+        assert_eq!(dag_findings.len(), sequential_findings.len());
+
+        // Same categories
+        let dag_categories: Vec<_> = dag_findings.iter().map(|f| &f.category).collect();
+        let seq_categories: Vec<_> = sequential_findings.iter().map(|f| &f.category).collect();
+        assert_eq!(dag_categories, seq_categories);
+    }
+
+    #[test]
+    fn test_engine_with_dag_execution() {
+        let mut engine = ScanEngine::default_detectors();
+        engine = engine.with_dag_execution(true);
+
+        let content = "const secret\u{FE00}Key = 'value';";
+        let findings = engine.scan(Path::new("test.js"), content);
+
+        // Should still find invisible character with DAG execution
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| f.category == DetectionCategory::InvisibleCharacter));
     }
 }
 

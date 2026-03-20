@@ -11,10 +11,9 @@
 //!
 //! Critical - strong indicator of PhantomRaven campaign
 
-use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata};
 use crate::finding::{DetectionCategory, Finding, Severity};
-use serde_json::Value;
+use crate::ir::FileIR;
 use std::path::Path;
 
 /// Convert byte offset to (line, column) position (1-indexed)
@@ -79,27 +78,25 @@ impl Detector for JpdAuthorDetector {
         "jpd_author"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
-        let path = Path::new(&ctx.file_path);
 
         // Only scan package.json files
-        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if file_name != "package.json" {
+        if !ir.is_package_json() {
             return findings;
         }
 
-        // Parse package.json
-        let parsed: Value = match serde_json::from_str(&ctx.content) {
-            Ok(v) => v,
-            Err(_) => return findings,
+        // Use pre-parsed JSON from IR
+        let json = match ir.json() {
+            Some(v) => v,
+            None => return findings,
         };
 
         // Check for "JPD" author in various formats
         let author_matches = [
-            parsed.get("author").and_then(|a| a.get("name")).and_then(|n| n.as_str()),
-            parsed.get("author").and_then(|a| a.as_str()),
-            parsed.get("maintainers").and_then(|m| m.as_array()).and_then(|arr| {
+            json.get("author").and_then(|a| a.get("name")).and_then(|n| n.as_str()),
+            json.get("author").and_then(|a| a.as_str()),
+            json.get("maintainers").and_then(|m| m.as_array()).and_then(|arr| {
                 arr.iter().find_map(|m| m.get("name").and_then(|n| n.as_str()))
             }),
         ];
@@ -107,13 +104,13 @@ impl Detector for JpdAuthorDetector {
         for author_opt in author_matches.iter().flatten() {
             if author_opt == &"JPD" || author_opt == &"jpd" || author_opt == &"Jpd" {
                 // Find the actual position of the author name in the content
-                let (line, column) = find_author_name_offset(&ctx.content, author_opt)
-                    .map(|offset| byte_offset_to_position(&ctx.content, offset))
+                let (line, column) = find_author_name_offset(ir.content(), author_opt)
+                    .map(|offset| byte_offset_to_position(ir.content(), offset))
                     .unwrap_or((1, 1));
 
                 findings.push(
                     Finding::new(
-                        &path.to_string_lossy(),
+                        &ir.metadata.path,
                         line,
                         column,
                         0,
@@ -143,15 +140,17 @@ impl Detector for JpdAuthorDetector {
 
 impl JpdAuthorDetector {
     /// Backward compatibility method for tests
-    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
-        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
-        self.detect(&ctx)
+    pub fn scan(&self, path: &Path, content: &str, _config: &crate::config::UnicodeConfig) -> Vec<Finding> {
+        // Build IR and call detect (for backward compatibility)
+        let ir = FileIR::build(path, content);
+        self.detect(&ir)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::UnicodeConfig;
 
     #[test]
     fn test_detect_jpd_author_object() {

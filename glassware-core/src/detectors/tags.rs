@@ -6,8 +6,10 @@
 //! - U+E0000-U+E007F: Tags (language tags, etc.)
 
 use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
+use std::path::Path;
 
 /// Detector for Unicode tag attacks
 pub struct UnicodeTagDetector {
@@ -28,11 +30,10 @@ impl UnicodeTagDetector {
 
     /// Scan content for Unicode tag attacks
     pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.detect(&ScanContext::new(
-            file_path.to_string(),
-            content.to_string(),
-            self.config.clone(),
-        ))
+        // Build IR and call detect (for backward compatibility)
+        use crate::ir::FileIR;
+        let ir = FileIR::build(Path::new(file_path), content);
+        self.detect(&ir)
     }
 
     /// Internal implementation of detection logic
@@ -111,15 +112,27 @@ impl Detector for UnicodeTagDetector {
         "unicode_tag"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
-        self.detect_impl(&ctx.content, &ctx.file_path)
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier1Primary
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        self.detect_impl(ir.content(), &ir.metadata.path)
+    }
+
+    fn cost(&self) -> u8 {
+        1  // Very cheap - single pass range check
+    }
+
+    fn signal_strength(&self) -> u8 {
+        7  // High signal - tag characters are rare in legitimate code
     }
 
     fn metadata(&self) -> DetectorMetadata {
         DetectorMetadata {
             name: "unicode_tag".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects Unicode tag characters (U+E0000-U+E007F) used for metadata injection".to_string().to_string(),
+            description: "Detects Unicode tag characters (U+E0000-U+E007F) used for metadata injection".to_string(),
         }
     }
 }

@@ -12,8 +12,9 @@ use regex::Regex;
 
 use crate::config::UnicodeConfig;
 use crate::decoder::{decode_vs_stego, find_vs_runs, is_vs_codepoint};
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 
 /// Minimum run length of VS codepoints to consider as stego payload
 const DEFAULT_MIN_RUN_LENGTH: usize = 16;
@@ -472,15 +473,31 @@ impl Detector for GlasswareDetector {
         "glassware"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
-        self.detect_impl(&ctx.content, &ctx.file_path)
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier2Secondary
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        self.detect_impl(ir.content(), &ir.metadata.path)
+    }
+
+    fn cost(&self) -> u8 {
+        5  // Medium cost - multiple regex passes + payload decoding
+    }
+
+    fn signal_strength(&self) -> u8 {
+        7  // High signal - Glassware patterns are specific
+    }
+
+    fn prerequisites(&self) -> Vec<&'static str> {
+        vec!["invisible_char", "homoglyph"]  // Run after Tier 1
     }
 
     fn metadata(&self) -> DetectorMetadata {
         DetectorMetadata {
             name: "glassware".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects Glassware attack patterns including steganographic payloads, decoder functions, and pipe delimiters".to_string().to_string(),
+            description: "Detects Glassware attack patterns including steganographic payloads, decoder functions, and pipe delimiters".to_string(),
         }
     }
 }

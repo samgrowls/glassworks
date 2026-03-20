@@ -14,9 +14,9 @@
 //! Critical when locale check + exit pattern detected together
 //! High when only locale check detected (may be legitimate i18n)
 
-use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
@@ -58,13 +58,33 @@ impl Detector for LocaleGeofencingDetector {
         "locale_geofencing"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier3Behavioral
+    }
+
+    fn cost(&self) -> u8 {
+        3  // Low cost - simple regex matching
+    }
+
+    fn signal_strength(&self) -> u8 {
+        6  // Medium-high signal - locale checks can be legitimate i18n
+    }
+
+    fn prerequisites(&self) -> Vec<&'static str> {
+        vec!["glassware", "encrypted_payload"]  // Run after Tier 2
+    }
+
+    fn should_short_circuit(&self, findings: &[Finding]) -> bool {
+        // Don't run Tier 3 if nothing found by Tier 1-2
+        findings.is_empty()
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
-        let path = Path::new(&ctx.file_path);
 
         // Collect lines into a vector for single-pass sliding window
-        let lines: Vec<&str> = ctx.content.lines().collect();
-        
+        let lines: Vec<&str> = ir.content().lines().collect();
+
         // Track locale checks and their line numbers
         let mut locale_check_lines: Vec<usize> = Vec::new();
 
@@ -77,7 +97,7 @@ impl Detector for LocaleGeofencingDetector {
 
                     findings.push(
                         Finding::new(
-                            &path.to_string_lossy(),
+                            &ir.metadata.path,
                             line_num + 1,
                             1,
                             0,
@@ -151,22 +171,24 @@ impl Detector for LocaleGeofencingDetector {
         DetectorMetadata {
             name: "locale_geofencing".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects geographic targeting behavior with Russian locale checks and early exit patterns".to_string().to_string(),
+            description: "Detects geographic targeting behavior with Russian locale checks and early exit patterns".to_string(),
         }
     }
 }
 
 impl LocaleGeofencingDetector {
     /// Backward compatibility method for tests
-    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
-        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
-        self.detect(&ctx)
+    pub fn scan(&self, path: &Path, content: &str, _config: &crate::config::UnicodeConfig) -> Vec<Finding> {
+        // Build IR and call detect (for backward compatibility)
+        let ir = FileIR::build(path, content);
+        self.detect(&ir)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::UnicodeConfig;
 
     #[test]
     fn test_detect_locale_check_with_exit() {

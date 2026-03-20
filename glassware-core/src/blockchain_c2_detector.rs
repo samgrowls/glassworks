@@ -17,9 +17,9 @@
 //! Critical for known C2 infrastructure (wallets, domains)
 //! High for polling patterns and blockchain API usage
 
-use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
@@ -74,17 +74,37 @@ impl Detector for BlockchainC2Detector {
         "blockchain_c2"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
-        let mut findings = Vec::new();
-        let path = Path::new(&ctx.file_path);
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier3Behavioral
+    }
 
-        for (line_num, line) in ctx.content.lines().enumerate() {
+    fn cost(&self) -> u8 {
+        4  // Low-medium cost - string matching + regex
+    }
+
+    fn signal_strength(&self) -> u8 {
+        9  // Very high signal for known C2 wallets, medium for generic patterns
+    }
+
+    fn prerequisites(&self) -> Vec<&'static str> {
+        vec!["glassware", "encrypted_payload"]  // Run after Tier 2
+    }
+
+    fn should_short_circuit(&self, findings: &[Finding]) -> bool {
+        // Don't run Tier 3 if nothing found by Tier 1-2
+        findings.is_empty()
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        let mut findings = Vec::new();
+
+        for (line_num, line) in ir.content().lines().enumerate() {
             // Check for known C2 wallet addresses
             for wallet in KNOWN_C2_WALLETS {
                 if line.contains(*wallet) {
                     findings.push(
                         Finding::new(
-                            &path.to_string_lossy(),
+                            &ir.metadata.path,
                             line_num + 1,
                             1,
                             0,
@@ -135,7 +155,7 @@ impl Detector for BlockchainC2Detector {
 
                     findings.push(
                         Finding::new(
-                            &path.to_string_lossy(),
+                            &ir.metadata.path,
                             line_num + 1,
                             1,
                             0,
@@ -157,7 +177,7 @@ impl Detector for BlockchainC2Detector {
             if line.contains("setInterval") && line.contains("5000") {
                 findings.push(
                     Finding::new(
-                        &path.to_string_lossy(),
+                        &ir.metadata.path,
                         line_num + 1,
                         1,
                         0,
@@ -182,22 +202,24 @@ impl Detector for BlockchainC2Detector {
         DetectorMetadata {
             name: "blockchain_c2".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects blockchain-based C2 communication patterns including Solana RPC usage and known C2 wallets".to_string().to_string(),
+            description: "Detects blockchain-based C2 communication patterns including Solana RPC usage and known C2 wallets".to_string(),
         }
     }
 }
 
 impl BlockchainC2Detector {
     /// Backward compatibility method for tests
-    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
-        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
-        self.detect(&ctx)
+    pub fn scan(&self, path: &Path, content: &str, _config: &crate::config::UnicodeConfig) -> Vec<Finding> {
+        // Build IR and call detect (for backward compatibility)
+        let ir = FileIR::build(path, content);
+        self.detect(&ir)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::UnicodeConfig;
 
     #[test]
     fn test_detect_known_wallet() {

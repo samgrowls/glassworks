@@ -14,10 +14,9 @@
 //!
 //! Critical - indicates potential PhantomRaven attack
 
-use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata};
 use crate::finding::{DetectionCategory, Finding, Severity};
-use serde_json::Value;
+use crate::ir::FileIR;
 use std::path::Path;
 
 /// Convert byte offset to (line, column) position (1-indexed)
@@ -93,33 +92,31 @@ impl Detector for RddDetector {
         "rdd_attack"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
-        let path = Path::new(&ctx.file_path);
 
         // Only scan package.json files
-        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if file_name != "package.json" {
+        if !ir.is_package_json() {
             return findings;
         }
 
-        // Parse package.json
-        let parsed: Value = match serde_json::from_str(&ctx.content) {
-            Ok(v) => v,
-            Err(_) => return findings, // Invalid JSON, skip
+        // Use pre-parsed JSON from IR
+        let json = match ir.json() {
+            Some(v) => v,
+            None => return findings, // Invalid or missing JSON
         };
 
         // Check for "JPD" author (PhantomRaven signature)
-        if let Some(author) = parsed.get("author").and_then(|a| a.get("name")).and_then(|n| n.as_str()) {
+        if let Some(author) = json.get("author").and_then(|a| a.get("name")).and_then(|n| n.as_str()) {
             if author == "JPD" {
                 // Find the actual position of the author name in the content
-                let (line, column) = find_author_name_offset(&ctx.content, author)
-                    .map(|offset| byte_offset_to_position(&ctx.content, offset))
+                let (line, column) = find_author_name_offset(ir.content(), author)
+                    .map(|offset| byte_offset_to_position(ir.content(), offset))
                     .unwrap_or((1, 1));
 
                 findings.push(
                     Finding::new(
-                        &path.to_string_lossy(),
+                        &ir.metadata.path,
                         line,
                         column,
                         0,
@@ -136,7 +133,7 @@ impl Detector for RddDetector {
         }
 
         // Check dependencies for URL-based dependencies
-        if let Some(deps) = parsed.get("dependencies").and_then(|d| d.as_object()) {
+        if let Some(deps) = json.get("dependencies").and_then(|d| d.as_object()) {
             for (name, value) in deps {
                 if let Some(url) = value.as_str() {
                     if url.starts_with("http://") || url.starts_with("https://") {
@@ -147,13 +144,13 @@ impl Detector for RddDetector {
                         };
 
                         // Find the actual position of the URL value in the content
-                        let (line, column) = find_dependency_value_offset(&ctx.content, name, url)
-                            .map(|offset| byte_offset_to_position(&ctx.content, offset))
+                        let (line, column) = find_dependency_value_offset(ir.content(), name, url)
+                            .map(|offset| byte_offset_to_position(ir.content(), offset))
                             .unwrap_or((1, 1));
 
                         findings.push(
                             Finding::new(
-                                &path.to_string_lossy(),
+                                &ir.metadata.path,
                                 line,
                                 column,
                                 0,
@@ -172,7 +169,7 @@ impl Detector for RddDetector {
         }
 
         // Check devDependencies for URL-based dependencies
-        if let Some(deps) = parsed.get("devDependencies").and_then(|d| d.as_object()) {
+        if let Some(deps) = json.get("devDependencies").and_then(|d| d.as_object()) {
             for (name, value) in deps {
                 if let Some(url) = value.as_str() {
                     if url.starts_with("http://") || url.starts_with("https://") {
@@ -183,13 +180,13 @@ impl Detector for RddDetector {
                         };
 
                         // Find the actual position of the URL value in the content
-                        let (line, column) = find_dependency_value_offset(&ctx.content, name, url)
-                            .map(|offset| byte_offset_to_position(&ctx.content, offset))
+                        let (line, column) = find_dependency_value_offset(ir.content(), name, url)
+                            .map(|offset| byte_offset_to_position(ir.content(), offset))
                             .unwrap_or((1, 1));
 
                         findings.push(
                             Finding::new(
-                                &path.to_string_lossy(),
+                                &ir.metadata.path,
                                 line,
                                 column,
                                 0,
@@ -221,15 +218,17 @@ impl Detector for RddDetector {
 
 impl RddDetector {
     /// Backward compatibility method for tests
-    pub fn scan(&self, path: &Path, content: &str, _config: &UnicodeConfig) -> Vec<Finding> {
-        let ctx = ScanContext::new(path.to_string_lossy().to_string(), content.to_string(), UnicodeConfig::default());
-        self.detect(&ctx)
+    pub fn scan(&self, path: &Path, content: &str, _config: &crate::config::UnicodeConfig) -> Vec<Finding> {
+        // Build IR and call detect (for backward compatibility)
+        let ir = FileIR::build(path, content);
+        self.detect(&ir)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::UnicodeConfig;
 
     #[test]
     fn test_detect_rdd_url_dependency() {

@@ -10,12 +10,14 @@
 //! - U+E0000-U+E007F: Tags
 
 use crate::config::UnicodeConfig;
-use crate::detector::{Detector, DetectorMetadata, ScanContext};
+use crate::detector::{Detector, DetectorMetadata, DetectorTier, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::ir::FileIR;
 use crate::ranges::{
     get_bidi_name, get_zero_width_name, is_in_critical_range, is_in_invisible_range,
     is_variation_selector,
 };
+use std::path::Path;
 
 /// Detector for invisible characters
 pub struct InvisibleCharDetector {
@@ -36,11 +38,10 @@ impl InvisibleCharDetector {
 
     /// Scan content for invisible characters
     pub fn detect_with_content(&self, content: &str, file_path: &str) -> Vec<Finding> {
-        self.detect(&ScanContext::new(
-            file_path.to_string(),
-            content.to_string(),
-            self.config.clone(),
-        ))
+        // Build IR and call detect (for backward compatibility)
+        use crate::ir::FileIR;
+        let ir = FileIR::build(Path::new(file_path), content);
+        self.detect(&ir)
     }
 
     /// Internal implementation of detection logic
@@ -286,15 +287,27 @@ impl Detector for InvisibleCharDetector {
         "invisible_char"
     }
 
-    fn detect(&self, ctx: &ScanContext) -> Vec<Finding> {
-        self.detect_impl(&ctx.content, &ctx.file_path)
+    fn tier(&self) -> DetectorTier {
+        DetectorTier::Tier1Primary
+    }
+
+    fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        self.detect_impl(ir.content(), &ir.metadata.path)
+    }
+
+    fn cost(&self) -> u8 {
+        1  // Very cheap - single pass regex
+    }
+
+    fn signal_strength(&self) -> u8 {
+        9  // Very high signal - invisible chars are almost always malicious
     }
 
     fn metadata(&self) -> DetectorMetadata {
         DetectorMetadata {
             name: "invisible_char".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects invisible Unicode characters including zero-width chars, variation selectors, and bidirectional overrides".to_string().to_string(),
+            description: "Detects invisible Unicode characters including zero-width chars, variation selectors, and bidirectional overrides".to_string(),
         }
     }
 }
