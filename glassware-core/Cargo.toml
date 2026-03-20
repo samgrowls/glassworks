@@ -11,6 +11,8 @@ categories = ["security", "text-processing"]
 # Core dependencies - minimal
 unicode-script = "0.5"  # Essential for homoglyph/script detection
 num_cpus = "1.16"  # For detecting number of CPU cores
+rand = "0.8"  # For mutation strategies in adversarial testing
+base64 = "0.21"  # For Base64 encoding in polymorphic templates
 
 # Optional dependencies
 regex = { version = "1.10", optional = true }  # For GlassWare pattern detection

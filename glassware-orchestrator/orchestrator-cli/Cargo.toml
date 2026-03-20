@@ -1,0 +1,39 @@
+[package]
+name = "glassware-orchestrator"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "CLI tool for orchestrating glassware security scans across npm and GitHub"
+readme = "README.md"
+
+[[bin]]
+name = "glassware-orchestrator"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+orchestrator-core = { path = "../orchestrator-core" }
+
+# Async runtime
+tokio = { workspace = true }
+
+# CLI
+clap = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Utilities
+chrono = { workspace = true }
+
+# Internal
+glassware-core = { workspace = true }

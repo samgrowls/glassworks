@@ -44,6 +44,8 @@ pub mod detector;
 pub mod detectors;
 #[cfg(feature = "cache")]
 pub mod cache;
+// NEW: Adversarial testing framework
+pub mod adversarial;
 pub mod encrypted_payload_detector;
 pub mod engine;
 pub mod finding;
@@ -204,6 +206,12 @@ pub use risk_scorer::{
     recommended_action, recommended_action_f32,
     RISK_THRESHOLD_LOW, RISK_THRESHOLD_MEDIUM, RISK_THRESHOLD_HIGH, RISK_THRESHOLD_CRITICAL,
 };
+
+// Re-export adversarial testing framework
+pub use adversarial::{MaliciousPayload, MutationEngine};
+pub use adversarial::strategies::UnicodeSubstitutionStrategy;
+// NEW: Test generator types
+pub use adversarial::{EvasionSeverity, EvasionTestCase, TestGenerator, TestGeneratorStats};
 
 /// Library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

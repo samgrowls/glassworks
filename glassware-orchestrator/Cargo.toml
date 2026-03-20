@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = [
+    "orchestrator-core",
+    "orchestrator-cli",
+    "orchestrator-benches",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["glassware contributors"]
+license = "Apache-2.0"
+repository = "https://github.com/glassware/glassworks"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json"] }
+
+# Database
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "1"
+anyhow = "1"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+regex = "1"
+once_cell = "1"
+
+# Internal
+glassware-core = { path = "../glassware-core", version = "0.5" }
