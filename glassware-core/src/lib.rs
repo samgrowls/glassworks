@@ -38,6 +38,7 @@
 pub mod classify;
 pub mod config;
 pub mod confusables;
+pub mod correlation;
 pub mod decoder;
 pub mod detector;
 pub mod detectors;
@@ -46,6 +47,15 @@ pub mod cache;
 pub mod encrypted_payload_detector;
 pub mod engine;
 pub mod finding;
+pub mod attack_graph;
+// NEW: Campaign intelligence layer
+pub mod campaign;
+// NEW: Module graph for cross-file analysis
+#[cfg(feature = "semantic")]
+pub mod module_graph;
+// NEW: Cross-file taint tracking
+#[cfg(feature = "semantic")]
+pub mod cross_file_taint;
 #[cfg(feature = "semantic")]
 pub mod gw005_semantic;
 #[cfg(feature = "semantic")]
@@ -92,6 +102,19 @@ pub use confusables::data::{
     get_base_char, get_confusable_script, get_similarity, is_confusable, ConfusableEntry,
 };
 
+pub use correlation::{
+    AttackChain, AttackGraphEngine, AttackLocation, AttackType,
+};
+
+pub use attack_graph::{AttackGraphResult, ScanEngineAttackGraphExt};
+
+// NEW: Campaign intelligence re-exports
+pub use campaign::{
+    Campaign, CampaignIntelligence, CampaignType, CodeCluster, Infrastructure,
+    InfrastructureCluster, InfrastructureStats, InfrastructureTracker, PackageInfo,
+    AnalyzedPackage, TimeRange,
+};
+
 pub use decoder::{
     count_vs_codepoints, decode_vs_stego, find_vs_runs, is_vs_codepoint, shannon_entropy,
     DecodedPayload, PayloadClass,
@@ -134,6 +157,21 @@ pub use taint::{
     calculate_entropy, check_flows, find_sinks, find_sources, DynExecKind, FlowKind, TaintFlow,
     TaintSink, TaintSource,
 };
+
+#[cfg(feature = "semantic")]
+pub use taint::{
+    CrossFileTaintFlow, CrossFileTaintSink, CrossFileTaintSource, CrossFileSinkType,
+    CrossFileSourceType, ImportEdge,
+};
+
+#[cfg(feature = "semantic")]
+pub use module_graph::{
+    EdgeType, Export, ExportType, Import, ImportType, Module,
+    ModuleEdge, ModuleGraph, ModuleType,
+};
+
+#[cfg(feature = "semantic")]
+pub use cross_file_taint::{CrossFileTaintTracker, SplitPayloadDetector};
 
 #[cfg(feature = "semantic")]
 pub use gw005_semantic::Gw005SemanticDetector;

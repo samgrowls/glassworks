@@ -2,9 +2,13 @@
 //!
 //! Defines source and sink types for supply chain attack detection,
 //! and implements flow checking between them.
+//!
+//! Supports both intra-file taint tracking (within a single file) and
+//! cross-file taint tracking (across module boundaries via imports/exports).
 
 #[cfg(feature = "semantic")]
 use crate::semantic::SemanticAnalysis;
+use crate::finding::Severity;
 
 /// Taint source types
 #[derive(Debug, Clone)]
@@ -82,6 +86,127 @@ pub struct TaintFlow {
     pub source: TaintSource,
     pub sink: TaintSink,
     pub flow_kind: FlowKind,
+}
+
+/// Cross-file taint source - extends TaintSource with file and symbol info
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct CrossFileTaintSource {
+    /// File path containing the source
+    pub file: String,
+    /// Line number (1-indexed)
+    pub line: usize,
+    /// Symbol name (e.g., function name, variable name)
+    pub symbol: String,
+    /// The underlying taint source type
+    pub source_type: CrossFileSourceType,
+}
+
+/// Type of cross-file taint source
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum CrossFileSourceType {
+    /// Steganographic decoder function output
+    StegoDecoder {
+        /// Decoder function name
+        decoder_name: String,
+    },
+    /// High-entropy string constant
+    EncryptedPayload {
+        /// Entropy value
+        entropy: f64,
+    },
+    /// HTTP header extraction
+    HttpHeader,
+    /// Crypto/decryption output
+    CryptoOutput {
+        /// Crypto method used
+        method: String,
+    },
+}
+
+/// Cross-file taint sink - extends TaintSink with file and symbol info
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct CrossFileTaintSink {
+    /// File path containing the sink
+    pub file: String,
+    /// Line number (1-indexed)
+    pub line: usize,
+    /// Symbol name (e.g., function being called)
+    pub symbol: String,
+    /// The underlying sink type
+    pub sink_type: CrossFileSinkType,
+}
+
+/// Type of cross-file taint sink
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum CrossFileSinkType {
+    /// Dynamic code execution (eval, Function, etc.)
+    DynamicExecution {
+        kind: DynExecKind,
+    },
+    /// Process execution
+    ProcessSpawn,
+    /// Network request with dynamic URL
+    NetworkRequest,
+}
+
+/// A cross-file taint flow from source to sink
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct CrossFileTaintFlow {
+    /// The source of the taint
+    pub source: CrossFileTaintSource,
+    /// The sink where taint is consumed
+    pub sink: CrossFileTaintSink,
+    /// Files traversed in the flow (including source and sink files)
+    pub files_traversed: Vec<String>,
+    /// Import chain showing how data flows across modules
+    pub import_chain: Vec<ImportEdge>,
+    /// Confidence score (0.0-1.0)
+    pub confidence: f64,
+}
+
+/// An edge in the import graph
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ImportEdge {
+    /// Source file (exporter)
+    pub from_file: String,
+    /// Target file (importer)
+    pub to_file: String,
+    /// Symbol being imported/exported
+    pub symbol: String,
+    /// Import type (e.g., "default", "named", "namespace")
+    pub import_type: String,
+}
+
+impl CrossFileTaintFlow {
+    /// Check if this flow crosses file boundaries
+    pub fn is_cross_file(&self) -> bool {
+        self.files_traversed.len() > 1
+    }
+
+    /// Get the severity based on flow characteristics
+    pub fn severity(&self) -> Severity {
+        // Cross-file flows are more suspicious (deliberate obfuscation)
+        if self.is_cross_file() {
+            Severity::Critical
+        } else {
+            match self.sink.sink_type {
+                CrossFileSinkType::DynamicExecution { ref kind } => match kind {
+                    DynExecKind::Eval => Severity::High,
+                    DynExecKind::FunctionConstructor => Severity::High,
+                    DynExecKind::ChildProcessExec => Severity::Critical,
+                    DynExecKind::VmRunInContext => Severity::Critical,
+                },
+                CrossFileSinkType::ProcessSpawn => Severity::Critical,
+                CrossFileSinkType::NetworkRequest => Severity::High,
+            }
+        }
+    }
 }
 
 impl TaintSource {

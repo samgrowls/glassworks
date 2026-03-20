@@ -1,8 +1,8 @@
 # glassware — Production Handoff
 
-**Last updated:** 2026-03-19 22:00 UTC  
-**Version:** v0.3.1  
-**Status:** Production-ready with tiered detection  
+**Last updated:** 2026-03-20 00:30 UTC  
+**Version:** v0.4.0 (planned)  
+**Status:** Threat intelligence system with attack correlation  
 
 ---
 
@@ -20,9 +20,9 @@ cd harness
 python3 github_scanner.py --queries "mcp" "vscode" --max-repos 500
 ```
 
-**Scan with caching (10x re-scan speedup):**
+**Scan with attack correlation:**
 ```bash
-./glassware-scanner src/ --cache-file .glassware-cache.json
+./glassware-scanner src/ --attack-graph --campaign-intelligence
 ```
 
 ---
@@ -33,13 +33,40 @@ python3 github_scanner.py --queries "mcp" "vscode" --max-repos 500
 
 | Campaign | Detectors | Coverage |
 |----------|-----------|----------|
-| **GlassWorm Core** | 17 detectors (3 tiers) | ✅ 100% |
-| **PhantomRaven** | RDD + JPD | ✅ 100% |
-| **ForceMemo** | Python detector | ✅ 100% |
-| **Chrome RAT** | Blockchain C2 | ✅ 100% |
-| **React Native** | Encrypted payload | ✅ 100% |
+| **GlassWorm Core** | 17 detectors (3 tiers) + attack graphs | ✅ 100% |
+| **PhantomRaven** | RDD + JPD + campaign tracking | ✅ 100% |
+| **ForceMemo** | Python detector + campaign tracking | ✅ 100% |
+| **Chrome RAT** | Blockchain C2 + campaign tracking | ✅ 100% |
+| **React Native** | Encrypted payload + attack chains | ✅ 100% |
 
-### Tiered Detection (NEW in v0.3.1)
+### NEW in v0.5.0: Cross-File Analysis
+
+**Multi-File Taint Tracking:**
+- Module graph construction (ES6, CommonJS, TypeScript)
+- Cross-file taint propagation
+- Split payload detection (decoder in file A, exec in file B)
+- Import chain tracking
+- Confidence scoring for deliberate obfuscation
+
+**Module Systems Supported:**
+- ES6 modules (`import/export`)
+- CommonJS (`require/module.exports`)
+- TypeScript (`import type/export type`)
+- Dynamic imports (`import()`)
+
+### NEW in v0.4.0: Threat Intelligence
+
+**Attack Graph Engine:**
+- Correlates findings into attack chains
+- 6 attack chain types (GlassWareStego, EncryptedExec, HeaderC2Chain, etc.)
+- Threat score: 0.0-10.0
+
+**Campaign Intelligence:**
+- Tracks infrastructure reuse (domains, wallets, authors)
+- Clusters packages into campaigns (GlassWorm, PhantomRaven, ForceMemo, etc.)
+- Code similarity clustering (MinHash-based)
+
+### Tiered Detection (v0.3.1)
 
 **Tier 1 (Primary):** Always run - invisible chars, homoglyphs, bidi (<1% FP)  
 **Tier 2 (Secondary):** Run if Tier 1 finds OR file not minified - glassware patterns, encrypted payload  

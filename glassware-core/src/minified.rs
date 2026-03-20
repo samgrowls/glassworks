@@ -145,10 +145,10 @@ mod tests {
             function add(a, b) {
                 return a + b;
             }
-            
+
             console.log(add(1, 2));
         "#.repeat(10);
-        assert!(!is_minified_content(normal));
+        assert!(!is_minified_content(&normal));
     }
 
     #[test]

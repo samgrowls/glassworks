@@ -2,6 +2,7 @@
 //!
 //! Orchestrates multiple detectors over files, merging and sorting findings.
 
+use crate::attack_graph::AttackGraphEngine;
 use crate::cache::{CacheStats, ScanCache};
 use crate::config::{ScanConfig, UnicodeConfig};
 use crate::detector::{Detector, ScanContext};
@@ -18,6 +19,13 @@ use crate::unicode_detector::UnicodeDetector;
 use crate::locale_detector::LocaleGeofencingDetector;
 use crate::time_delay_detector::TimeDelayDetector;
 use crate::blockchain_c2_detector::BlockchainC2Detector;
+// NEW: Campaign intelligence
+use crate::campaign::{CampaignIntelligence, AnalyzedPackage};
+// NEW: Cross-file taint tracking
+#[cfg(feature = "semantic")]
+use crate::module_graph::ModuleGraph;
+#[cfg(feature = "semantic")]
+use crate::cross_file_taint::CrossFileTaintTracker;
 #[cfg(feature = "llm")]
 use std::collections::HashMap;
 use std::collections::BTreeMap;
@@ -33,6 +41,26 @@ pub struct ScanResult {
     pub dedup_stats: Option<DedupStats>,
     /// Statistics about cache performance (if caching is enabled)
     pub cache_stats: Option<CacheStats>,
+    /// Correlated attack chains (if attack graph is enabled)
+    pub attack_chains: Vec<crate::attack_graph::AttackChain>,
+    /// Overall threat score based on attack chains (0.0-10.0)
+    pub threat_score: f32,
+    /// Campaign intelligence (if campaign tracking is enabled)
+    pub campaign_info: Option<CampaignInfo>,
+    /// Cross-file taint flows (if cross-file analysis is enabled)
+    #[cfg(feature = "semantic")]
+    pub cross_file_flows: Vec<crate::taint::CrossFileTaintFlow>,
+}
+
+/// Campaign information in scan results
+#[derive(Debug, Clone)]
+pub struct CampaignInfo {
+    /// Campaign ID if package belongs to a known campaign
+    pub campaign_id: Option<String>,
+    /// Related packages in the same campaign
+    pub related_packages: Vec<String>,
+    /// Shared infrastructure indicators
+    pub shared_infrastructure: Vec<String>,
 }
 
 /// Statistics about deduplication performed during scanning
@@ -73,6 +101,19 @@ pub struct ScanEngine {
     enable_dedup: bool,
     /// Optional cache for incremental scanning
     cache: Option<ScanCache>,
+    /// Attack graph engine for correlating findings into chains
+    attack_graph: Option<AttackGraphEngine>,
+    /// Campaign intelligence tracker
+    campaign_intelligence: Option<CampaignIntelligence>,
+    /// Module graph for cross-file analysis (JS/TS only)
+    #[cfg(feature = "semantic")]
+    module_graph: Option<ModuleGraph>,
+    /// Cross-file taint tracker
+    #[cfg(feature = "semantic")]
+    cross_file_taint: Option<CrossFileTaintTracker>,
+    /// Enable cross-file taint analysis
+    #[cfg(feature = "semantic")]
+    enable_cross_file_analysis: bool,
 }
 
 impl ScanEngine {
@@ -88,6 +129,14 @@ impl ScanEngine {
             use_llm: false,
             enable_dedup: true, // Enable deduplication by default
             cache: None,
+            attack_graph: None,
+            campaign_intelligence: None,
+            #[cfg(feature = "semantic")]
+            module_graph: None,
+            #[cfg(feature = "semantic")]
+            cross_file_taint: None,
+            #[cfg(feature = "semantic")]
+            enable_cross_file_analysis: false,
         }
     }
 
@@ -107,6 +156,14 @@ impl ScanEngine {
             use_llm,
             enable_dedup,
             cache: None,
+            attack_graph: None,
+            campaign_intelligence: None,
+            #[cfg(feature = "semantic")]
+            module_graph: None,
+            #[cfg(feature = "semantic")]
+            cross_file_taint: None,
+            #[cfg(feature = "semantic")]
+            enable_cross_file_analysis: false,
         }
     }
 
@@ -139,6 +196,63 @@ impl ScanEngine {
     /// Disable caching
     pub fn without_cache(mut self) -> Self {
         self.cache = None;
+        self
+    }
+
+    /// Enable or disable attack graph correlation
+    ///
+    /// When enabled, the engine correlates individual findings into unified attack chains,
+    /// providing a higher-level view of multi-stage attacks.
+    ///
+    /// # Arguments
+    /// * `enabled` - Whether to enable attack graph correlation
+    ///
+    /// # Returns
+    /// Self with attack graph enabled/disabled
+    pub fn with_attack_graph(mut self, enabled: bool) -> Self {
+        if enabled {
+            self.attack_graph = Some(AttackGraphEngine::new());
+        }
+        self
+    }
+
+    /// Enable or disable campaign intelligence tracking
+    ///
+    /// When enabled, the engine tracks infrastructure reuse across packages,
+    /// clusters packages by code similarity, and detects coordinated attack campaigns.
+    ///
+    /// # Arguments
+    /// * `enabled` - Whether to enable campaign intelligence
+    ///
+    /// # Returns
+    /// Self with campaign intelligence enabled/disabled
+    pub fn with_campaign_intelligence(mut self, enabled: bool) -> Self {
+        if enabled {
+            self.campaign_intelligence = Some(CampaignIntelligence::new());
+        }
+        self
+    }
+
+    /// Enable or disable cross-file taint analysis
+    ///
+    /// When enabled, the engine builds a module graph of all JS/TS files in the package
+    /// and tracks taint flows across file boundaries. This enables detection of split
+    /// payloads where the decoder is in one file and the payload execution is in another.
+    ///
+    /// Note: This feature requires the `semantic` feature to be enabled and only works
+    /// with JavaScript and TypeScript files.
+    ///
+    /// # Arguments
+    /// * `enabled` - Whether to enable cross-file analysis
+    ///
+    /// # Returns
+    /// Self with cross-file analysis enabled/disabled
+    #[cfg(feature = "semantic")]
+    pub fn with_cross_file_analysis(mut self, enabled: bool) -> Self {
+        self.enable_cross_file_analysis = enabled;
+        if enabled {
+            self.module_graph = Some(ModuleGraph::new());
+        }
         self
     }
 
@@ -203,6 +317,14 @@ impl ScanEngine {
             use_llm: false,
             enable_dedup: true,
             cache: None,
+            attack_graph: None,
+            campaign_intelligence: None,
+            #[cfg(feature = "semantic")]
+            module_graph: None,
+            #[cfg(feature = "semantic")]
+            cross_file_taint: None,
+            #[cfg(feature = "semantic")]
+            enable_cross_file_analysis: false,
         }
     }
 
@@ -222,6 +344,14 @@ impl ScanEngine {
             use_llm,
             enable_dedup,
             cache: None,
+            attack_graph: None,
+            campaign_intelligence: None,
+            #[cfg(feature = "semantic")]
+            module_graph: None,
+            #[cfg(feature = "semantic")]
+            cross_file_taint: None,
+            #[cfg(feature = "semantic")]
+            enable_cross_file_analysis: false,
         };
 
         engine.register(Box::new(UnicodeDetector::new()));
@@ -351,6 +481,11 @@ impl ScanEngine {
                     llm_verdicts: Vec::new(),
                     dedup_stats: None,
                     cache_stats: Some(cache.stats().clone()),
+                    attack_chains: Vec::new(),  // Attack chains not cached
+                    threat_score: 0.0,  // Threat score not cached
+                    campaign_info: None,  // Campaign info not cached
+                    #[cfg(feature = "semantic")]
+                    cross_file_flows: Vec::new(), // Cross-file flows not cached
                 };
             }
         }
@@ -409,13 +544,344 @@ impl ScanEngine {
             cache.set(path_str, content, findings_clone, file_size);
         }
 
+        // Run attack graph correlation if enabled
+        let (attack_chains, threat_score) = if let Some(graph_engine) = &self.attack_graph {
+            let mut engine = graph_engine.clone();
+            engine.add_findings(sorted_findings.clone());
+            let chains = engine.get_chains().to_vec();
+            let score = engine.get_threat_score();
+            (chains, score)
+        } else {
+            (Vec::new(), 0.0)
+        };
+
+        // Get campaign info if enabled
+        let campaign_info = self.get_campaign_info(path, &sorted_findings);
+
         ScanResult {
             findings: sorted_findings,
             #[cfg(feature = "llm")]
             llm_verdicts,
             dedup_stats: Some(dedup_stats),
             cache_stats: self.cache.as_ref().map(|c| c.stats().clone()),
+            attack_chains,
+            threat_score,
+            campaign_info,
+            #[cfg(feature = "semantic")]
+            cross_file_flows: Vec::new(), // Cross-file flows computed at package level
         }
+    }
+
+    /// Scan all files in a package with cross-file taint analysis
+    ///
+    /// This method builds a module graph of all JS/TS files in the package,
+    /// runs detectors on each file, and then analyzes cross-file taint flows.
+    ///
+    /// # Arguments
+    /// * `package_path` - Root directory of the package to scan
+    ///
+    /// # Returns
+    /// ScanResult with findings and cross-file flows
+    #[cfg(feature = "semantic")]
+    pub fn scan_package(&mut self, package_path: &Path) -> std::io::Result<ScanResult> {
+        use crate::cross_file_taint::{CrossFileTaintSource, CrossFileTaintSink};
+        use std::collections::HashMap;
+        
+        if !self.enable_cross_file_analysis {
+            // Fall back to regular scanning if cross-file analysis is disabled
+            return Ok(self.scan_package_simple(package_path)?);
+        }
+
+        // Collect all JS/TS files in the package
+        let files = self.collect_js_files(package_path)?;
+        
+        // Build module graph
+        if let Some(ref mut graph) = self.module_graph {
+            for file in &files {
+                if let Ok(content) = fs::read_to_string(file) {
+                    let path_str = file.to_string_lossy().to_string();
+                    graph.add_file(&path_str, &content);
+                }
+            }
+        }
+        
+        // Initialize cross-file taint tracker
+        if let Some(graph) = self.module_graph.clone() {
+            self.cross_file_taint = Some(CrossFileTaintTracker::new(graph));
+        }
+        
+        // Scan each file and collect taint sources/sinks
+        let mut all_findings: Vec<Finding> = Vec::new();
+        let mut file_contents: HashMap<String, String> = HashMap::new();
+        
+        for file in &files {
+            let content = fs::read_to_string(file)?;
+            let path_str = file.to_string_lossy().to_string();
+            file_contents.insert(path_str.clone(), content.clone());
+            
+            // Run regular detectors
+            let ctx = ScanContext::from_path(
+                file,
+                content.clone(),
+                self.config.clone(),
+            );
+
+            for detector in &self.detectors {
+                all_findings.extend(detector.detect(&ctx));
+            }
+
+            // Run semantic detectors and extract taint sources/sinks
+            if !self.semantic_detectors.is_empty() {
+                if let Some(analysis) = crate::semantic::build_semantic(&content, file) {
+                    let sources = crate::taint::find_sources(&analysis);
+                    let sinks = crate::taint::find_sinks(&analysis);
+                    let flows = crate::taint::check_flows(&analysis, &sources, &sinks);
+
+                    for detector in &self.semantic_detectors {
+                        all_findings.extend(
+                            detector.detect_semantic(&content, file, &flows, &sources, &sinks)
+                        );
+                    }
+
+                    // Add sources/sinks to cross-file tracker
+                    // First, extract all the data we need (to avoid borrow conflicts)
+                    let mut source_data: Vec<CrossFileTaintSource> = Vec::new();
+                    for source in &sources {
+                        let symbol = Self::extract_symbol_from_source_static(&analysis, source)
+                            .unwrap_or_else(|| "unknown".to_string());
+
+                        let cross_source: CrossFileTaintSource = (
+                            source,
+                            path_str.as_str(),
+                            byte_offset_to_line(&content, source.span().0),
+                            symbol.as_str(),
+                        ).into();
+                        source_data.push(cross_source);
+                    }
+
+                    let mut sink_data: Vec<CrossFileTaintSink> = Vec::new();
+                    for sink in &sinks {
+                        let symbol = Self::extract_symbol_from_sink_static(&analysis, sink)
+                            .unwrap_or_else(|| "unknown".to_string());
+
+                        let cross_sink: CrossFileTaintSink = (
+                            sink,
+                            path_str.as_str(),
+                            byte_offset_to_line(&content, sink.span().0),
+                            symbol.as_str(),
+                        ).into();
+                        sink_data.push(cross_sink);
+                    }
+
+                    // Now add to tracker
+                    if let Some(ref mut tracker) = self.cross_file_taint {
+                        for source in source_data {
+                            tracker.add_source(source);
+                        }
+                        for sink in sink_data {
+                            tracker.add_sink(sink);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Find cross-file flows
+        let cross_file_flows = if let Some(ref tracker) = self.cross_file_taint {
+            tracker.find_cross_file_flows().collect()
+        } else {
+            Vec::new()
+        };
+        
+        // Deduplicate findings
+        let (findings, dedup_stats) = self.deduplicate_findings(all_findings);
+        
+        // Sort by line, then column
+        let mut sorted_findings = findings;
+        sorted_findings.sort_by(|a, b| a.line.cmp(&b.line).then(a.column.cmp(&b.column)));
+        
+        // Run attack graph correlation if enabled
+        let (attack_chains, threat_score) = if let Some(graph_engine) = &self.attack_graph {
+            let mut engine = graph_engine.clone();
+            engine.add_findings(sorted_findings.clone());
+            let chains = engine.get_chains().to_vec();
+            let score = engine.get_threat_score();
+            (chains, score)
+        } else {
+            (Vec::new(), 0.0)
+        };
+        
+        // Get campaign info (use first file for package name extraction)
+        let campaign_info = if let Some(first_file) = files.first() {
+            self.get_campaign_info(first_file, &sorted_findings)
+        } else {
+            None
+        };
+        
+        Ok(ScanResult {
+            findings: sorted_findings,
+            #[cfg(feature = "llm")]
+            llm_verdicts: Vec::new(), // LLM not run in package scan
+            dedup_stats: Some(dedup_stats),
+            cache_stats: None, // Cache not used in package scan
+            attack_chains,
+            threat_score,
+            campaign_info,
+            cross_file_flows,
+        })
+    }
+    
+    /// Simple package scan without cross-file analysis
+    fn scan_package_simple(&self, package_path: &Path) -> std::io::Result<ScanResult> {
+        let files = self.collect_js_files(package_path)?;
+        let mut all_findings: Vec<Finding> = Vec::new();
+        
+        for file in &files {
+            let content = fs::read_to_string(file)?;
+            let result = self.scan_internal(file, &content);
+            all_findings.extend(result.findings);
+        }
+        
+        let (findings, dedup_stats) = self.deduplicate_findings(all_findings);
+        
+        Ok(ScanResult {
+            findings,
+            #[cfg(feature = "llm")]
+            llm_verdicts: Vec::new(),
+            dedup_stats: Some(dedup_stats),
+            cache_stats: None,
+            attack_chains: Vec::new(),
+            threat_score: 0.0,
+            campaign_info: None,
+            #[cfg(feature = "semantic")]
+            cross_file_flows: Vec::new(),
+        })
+    }
+    
+    /// Collect all JavaScript/TypeScript files in a directory
+    #[cfg(feature = "semantic")]
+    fn collect_js_files(&self, dir: &Path) -> std::io::Result<Vec<PathBuf>> {
+        let mut files = Vec::new();
+        
+        if dir.is_file() {
+            return Ok(vec![dir.to_path_buf()]);
+        }
+        
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            
+            if path.is_dir() {
+                // Skip node_modules, .git, etc.
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if matches!(name, "node_modules" | ".git" | "target" | "dist" | "build") {
+                        continue;
+                    }
+                }
+                files.extend(self.collect_js_files(&path)?);
+            } else if path.is_file() {
+                // Check if it's a JS/TS file
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if matches!(ext, "js" | "mjs" | "cjs" | "ts" | "tsx" | "jsx") {
+                        files.push(path);
+                    }
+                }
+            }
+        }
+        
+        Ok(files)
+    }
+    
+    /// Extract symbol name from a taint source
+    #[cfg(feature = "semantic")]
+    fn extract_symbol_from_source_static(
+        analysis: &crate::semantic::SemanticAnalysis,
+        source: &crate::taint::TaintSource,
+    ) -> Option<String> {
+        // Try to find the declaration associated with this source
+        if let Some(symbol_id) = source.assigned_to() {
+            if let Some(decl) = analysis.declarations.iter().find(|d| d.symbol_id == symbol_id) {
+                return Some(decl.name.clone());
+            }
+        }
+        None
+    }
+
+    /// Extract symbol name from a taint sink
+    #[cfg(feature = "semantic")]
+    fn extract_symbol_from_sink_static(
+        analysis: &crate::semantic::SemanticAnalysis,
+        sink: &crate::taint::TaintSink,
+    ) -> Option<String> {
+        // For dynamic exec sinks, use the callee name
+        // Note: Currently we only have DynamicExec sink type
+        let crate::taint::TaintSink::DynamicExec { .. } = sink;
+        
+        // Find the call site
+        if let Some(call) = analysis.call_sites.iter().find(|c| c.span == sink.span()) {
+            return Some(call.callee.clone());
+        }
+        None
+    }
+
+    /// Get campaign information for a scanned package
+    fn get_campaign_info(&self, path: &Path, _findings: &[Finding]) -> Option<CampaignInfo> {
+        // Extract package name from path
+        let package_name = Self::extract_package_name_from_path(path)?;
+
+        // Check if campaign intelligence is enabled
+        let intel = self.campaign_intelligence.as_ref()?;
+
+        // Check if package belongs to a campaign
+        let campaign = intel.get_package_campaign(&package_name)?;
+
+        // Build campaign info
+        Some(CampaignInfo {
+            campaign_id: Some(campaign.id.clone()),
+            related_packages: campaign.package_names().iter().map(|s| s.to_string()).collect(),
+            shared_infrastructure: {
+                let mut infra = Vec::new();
+                infra.extend(campaign.infrastructure.domains.iter().map(|d| format!("domain:{}", d)));
+                infra.extend(campaign.infrastructure.wallets.iter().map(|w| format!("wallet:{}", w)));
+                infra.extend(campaign.infrastructure.authors.iter().map(|a| format!("author:{}", a)));
+                infra
+            },
+        })
+    }
+
+    /// Extract package name from file path
+    fn extract_package_name_from_path(path: &Path) -> Option<String> {
+        // Try to extract npm package name (e.g., node_modules/@scope/pkg/file.js)
+        let components: Vec<_> = path.components().collect();
+        for (i, comp) in components.iter().enumerate() {
+            if let Some(name) = comp.as_os_str().to_str() {
+                if name == "node_modules" && i + 1 < components.len() {
+                    let mut pkg_name = components[i + 1]
+                        .as_os_str()
+                        .to_string_lossy()
+                        .to_string();
+
+                    // Handle scoped packages (@scope/pkg)
+                    if pkg_name.starts_with('@') && i + 2 < components.len() {
+                        let scope = &pkg_name;
+                        let pkg = components[i + 2]
+                            .as_os_str()
+                            .to_string_lossy()
+                            .to_string();
+                        pkg_name = format!("{}/{}", scope, pkg);
+                    }
+
+                    return Some(pkg_name);
+                }
+            }
+        }
+
+        // Fallback: use directory name or file stem
+        path.parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .map(|s| s.to_string())
+            .or_else(|| path.file_stem().and_then(|s| s.to_str()).map(|s| s.to_string()))
     }
 
     /// Run LLM analysis on flagged files
@@ -465,6 +931,39 @@ impl ScanEngine {
         }
 
         results
+    }
+
+    /// Add a package to campaign intelligence tracking
+    ///
+    /// This allows tracking packages across multiple scans for campaign detection.
+    /// Call this method for each package you want to track in campaign analysis.
+    ///
+    /// # Arguments
+    /// * `package` - The analyzed package to add
+    ///
+    /// # Returns
+    /// true if the package was added, false if campaign intelligence is not enabled
+    pub fn add_package_to_campaign(&mut self, package: AnalyzedPackage) -> bool {
+        if let Some(ref mut intel) = self.campaign_intelligence {
+            intel.add_package(package);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Get campaign intelligence statistics
+    ///
+    /// Returns infrastructure reuse statistics if campaign intelligence is enabled.
+    pub fn get_campaign_stats(&self) -> Option<crate::campaign::InfrastructureStats> {
+        self.campaign_intelligence.as_ref().map(|i| i.get_infrastructure_stats())
+    }
+
+    /// Get detected campaigns
+    ///
+    /// Returns a slice of detected campaigns if campaign intelligence is enabled.
+    pub fn get_campaigns(&self) -> Option<&[crate::campaign::Campaign]> {
+        self.campaign_intelligence.as_ref().map(|i| i.get_campaigns())
     }
 
     /// Get the number of registered detectors.
@@ -690,4 +1189,15 @@ mod tests {
         assert!(!findings.is_empty());
         assert!(findings.iter().any(|f| f.severity >= Severity::High));
     }
+}
+
+/// Convert byte offset to line number (1-indexed)
+#[cfg(feature = "semantic")]
+fn byte_offset_to_line(source: &str, offset: u32) -> usize {
+    source
+        .char_indices()
+        .enumerate()
+        .find(|(_, (idx, _))| *idx >= offset as usize)
+        .map(|(line, _)| line + 1)
+        .unwrap_or(1)
 }
