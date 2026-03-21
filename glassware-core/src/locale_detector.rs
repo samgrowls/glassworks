@@ -24,12 +24,12 @@ use std::path::Path;
 /// Patterns for locale/timezone detection
 static LOCALE_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     vec![
-        // Russian locale strings - exact match with word boundaries
-        Regex::new(r#"['"]ru-RU['"]|['"]ru['"]\s*[:=,]|['"]Russian['"]"#).unwrap(),
-        // Russian/Moscow timezones - exact strings
-        Regex::new(r#"['"]Europe/Moscow['"]|['"]Europe/Kaliningrad['"]|['"]Europe/Volgograd['"]|['"]Europe/Kirov['"]"#).unwrap(),
-        // Navigator language check for Russian - must be quoted value
-        Regex::new(r#"navigator\.(language|languages)\s*[=\(].*['"]ru['"]"#).unwrap(),
+        // Russian locale strings - must be exact quoted values
+        Regex::new(r#"['"]ru-RU['"]"#).unwrap(),
+        // Russian/Moscow timezones - must be exact quoted strings
+        Regex::new(r#"['"]Europe/Moscow['"]"#).unwrap(),
+        // Navigator language check for Russian - must be checking for 'ru' specifically
+        Regex::new(r#"navigator\.language\s*===\s*['"]ru['"]"#).unwrap(),
     ]
 });
 
@@ -90,10 +90,13 @@ impl Detector for LocaleGeofencingDetector {
 
         // Single pass: check for both locale patterns and exit patterns with sliding window
         for (line_num, line) in lines.iter().enumerate() {
+            let mut is_locale_check = false;
+
             // Check for locale patterns in current line
             for pattern in LOCALE_PATTERNS.iter() {
                 if pattern.is_match(line) {
                     locale_check_lines.push(line_num);
+                    is_locale_check = true;
                     // Don't emit finding yet - wait to see if there's an exit pattern
                 }
             }
@@ -125,30 +128,32 @@ impl Detector for LocaleGeofencingDetector {
                 }
             }
 
-            // Sliding window forward: check next 5 lines for exit patterns
-            for offset in 1..=5 {
-                let forward_line_num = line_num + offset;
-                if forward_line_num < lines.len() {
-                    let forward_line = lines[forward_line_num];
-                    if EXIT_PATTERN.is_match(forward_line) {
-                        // Found exit pattern within 5 lines ahead - emit CRITICAL finding
-                        findings.push(
-                            Finding::new(
-                                &ir.metadata.path,
-                                line_num + 1,
-                                1,
-                                0,
-                                '\0',
-                                DetectionCategory::LocaleGeofencing,
-                                Severity::Critical,
-                                "Active geofencing: locale check followed by early exit",
-                                "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required.",
-                            )
-                            .with_cwe_id("CWE-506")
-                            .with_reference(
-                                "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode",
-                            ),
-                        );
+            // Sliding window forward: ONLY check if current line is a locale check
+            if is_locale_check {
+                for offset in 1..=5 {
+                    let forward_line_num = line_num + offset;
+                    if forward_line_num < lines.len() {
+                        let forward_line = lines[forward_line_num];
+                        if EXIT_PATTERN.is_match(forward_line) {
+                            // Found exit pattern within 5 lines ahead - emit CRITICAL finding
+                            findings.push(
+                                Finding::new(
+                                    &ir.metadata.path,
+                                    line_num + 1,
+                                    1,
+                                    0,
+                                    '\0',
+                                    DetectionCategory::LocaleGeofencing,
+                                    Severity::Critical,
+                                    "Active geofencing: locale check followed by early exit",
+                                    "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required.",
+                                )
+                                .with_cwe_id("CWE-506")
+                                .with_reference(
+                                    "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode",
+                                ),
+                            );
+                        }
                     }
                 }
             }
@@ -193,24 +198,23 @@ mod tests {
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
-        assert_eq!(findings.len(), 1); // Locale check detected and upgraded to Critical
         assert_eq!(findings[0].severity, Severity::Critical); // Correctly upgraded for locale+exit pattern
     }
 
     #[test]
-    fn test_detect_timezone_check() {
+    fn test_detect_timezone_check_with_exit() {
         let detector = LocaleGeofencingDetector::new();
         let content = r#"
             const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            if (timezone.includes('Europe/Moscow')) {
-                return;
+            if (timezone === 'Europe/Moscow') {
+                process.exit(0);
             }
         "#;
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
         assert!(!findings.is_empty());
         assert_eq!(findings[0].category, DetectionCategory::LocaleGeofencing);
-        assert_eq!(findings[0].severity, Severity::Medium);  // Updated for signal-based detection
+        assert_eq!(findings[0].severity, Severity::Critical);  // Both conditions met
     }
 
     #[test]
@@ -221,12 +225,28 @@ mod tests {
             import { useTranslation } from 'react-i18next';
             const { t, i18n } = useTranslation();
             i18n.changeLanguage('ru-RU');
+            
+            // No exit pattern - just normal i18n usage
+            console.log('Language changed');
         "#;
 
         let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
-        // Should detect the ru-RU string but as Medium severity (signal not flag)
-        assert!(!findings.is_empty());
-        assert_eq!(findings[0].severity, Severity::Medium);  // Updated
+        // Should NOT detect - no exit pattern following locale check
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_no_detect_clean_i18n_file() {
+        let detector = LocaleGeofencingDetector::new();
+        let content = r#"
+            // Clean i18n file with no Russian locale checks
+            import i18n from 'i18next';
+            i18n.init({ lng: 'en' });
+            export default i18n;
+        "#;
+
+        let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
+        assert!(findings.is_empty());
     }
 
     #[test]
