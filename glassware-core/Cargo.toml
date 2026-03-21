@@ -34,9 +34,12 @@ oxc_index = { version = "2.0", optional = true }
 reqwest = { version = "0.12", features = ["blocking", "json", "rustls-tls"], optional = true }
 dotenvy = { version = "0.15", optional = true }
 
+# Binary analysis (optional, for .node file scanning)
+goblin = { version = "0.7", optional = true }  # PE/ELF/Mach-O parser
+
 [features]
 default = ["full"]
-full = ["regex", "serde", "serde_json", "lazy_static", "once_cell", "semantic", "cache"]
+full = ["regex", "serde", "serde_json", "lazy_static", "once_cell", "semantic", "cache", "binary"]
 minimal = []  # Minimal: invisible chars and bidi only (no regex needed)
 regex = ["dep:regex"]  # Enable regex-based pattern detection
 lazy_static = ["dep:lazy_static"]  # Enable lazy static initialization
@@ -55,6 +58,7 @@ semantic = [
     "once_cell",
 ]
 llm = ["dep:reqwest", "dep:dotenvy", "serde", "serde_json"]  # LLM analysis layer
+binary = ["dep:goblin"]  # Binary analysis (.node files)
 
 [dev-dependencies]
 tempfile = "3.9"

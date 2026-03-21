@@ -93,6 +93,9 @@ pub mod semantic;
 #[cfg(feature = "semantic")]
 pub mod taint;
 pub mod unicode_detector;
+// NEW: Binary scanning module (.node files)
+#[cfg(feature = "binary")]
+pub mod binary;
 
 // Re-export main types for convenience
 pub use classify::{

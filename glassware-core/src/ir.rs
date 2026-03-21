@@ -265,6 +265,9 @@ pub struct FileMetadata {
     pub is_bundled: bool,
     /// Detected language (JS, TS, JSON, etc.)
     pub language: Language,
+    /// Raw binary data (for .node files and other binaries)
+    #[cfg_attr(feature = "serde", serde(skip_serializing, default))]
+    pub data: Vec<u8>,
 }
 
 /// Programming language detection
@@ -338,7 +341,16 @@ impl FileMetadata {
             is_minified,
             is_bundled,
             language,
+            data: Vec::new(),
         }
+    }
+
+    /// Create metadata with binary data (for .node files)
+    pub fn with_data(path: &Path, content: &str, data: Vec<u8>) -> Self {
+        let mut metadata = Self::new(path, content);
+        metadata.size = data.len() as u64;
+        metadata.data = data;
+        metadata
     }
 
     /// Check if this file is a package.json
@@ -494,6 +506,51 @@ impl FileIR {
         }
     }
 
+    /// Build IR from file path, content, and binary data
+    ///
+    /// This is used for .node files and other binary formats.
+    ///
+    /// # Arguments
+    /// * `path` - Path to the file
+    /// * `content` - File content as string (may be empty for pure binaries)
+    /// * `data` - Raw binary data
+    ///
+    /// # Returns
+    /// A fully constructed FileIR instance with binary data
+    pub fn build_with_data(path: &Path, content: &str, data: Vec<u8>) -> Self {
+        // Split into lines (preserving original content)
+        let lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
+
+        // No JSON for binary files
+        #[cfg(feature = "serde_json")]
+        let json: Option<Arc<Value>> = None;
+
+        #[cfg(not(feature = "serde_json"))]
+        let json: Option<Arc<Value>> = None;
+
+        // No AST for binary files
+        #[cfg(feature = "semantic")]
+        let ast: Option<Arc<JavaScriptAST>> = None;
+
+        #[cfg(not(feature = "semantic"))]
+        let ast: Option<Arc<JavaScriptAST>> = None;
+
+        // Analyze Unicode (always)
+        let unicode = Arc::new(UnicodeAnalysis::analyze(content));
+
+        // Extract metadata with binary data
+        let metadata = FileMetadata::with_data(path, content, data);
+
+        Self {
+            content: Arc::new(content.to_string()),
+            lines,
+            json,
+            ast,
+            unicode,
+            metadata,
+        }
+    }
+
     /// Get the raw content as a string
     pub fn content(&self) -> &str {
         &self.content
@@ -524,6 +581,16 @@ impl FileIR {
     /// Get Unicode analysis
     pub fn unicode(&self) -> &UnicodeAnalysis {
         &self.unicode
+    }
+
+    /// Get binary data if available (for .node files)
+    pub fn data(&self) -> &[u8] {
+        &self.metadata.data
+    }
+
+    /// Check if this file has binary data
+    pub fn has_binary_data(&self) -> bool {
+        !self.metadata.data.is_empty()
     }
 
     /// Get file metadata

@@ -110,6 +110,14 @@ pub enum DetectionCategory {
     ForceMemoPython,
     /// JPD author signature (PhantomRaven campaign)
     JpdAuthor,
+    /// XorShift128 obfuscation (GlassWorm binary obfuscation)
+    XorShiftObfuscation,
+    /// IElevator COM interface usage (App-Bound key extraction)
+    IElevatorCom,
+    /// APC (Asynchronous Procedure Call) injection
+    ApcInjection,
+    /// memexec crate usage (fileless PE loading)
+    MemexecLoader,
     /// Unknown category
     Unknown,
 }
@@ -138,6 +146,10 @@ impl DetectionCategory {
             DetectionCategory::RddAttack => "rdd_attack",
             DetectionCategory::ForceMemoPython => "forcememo_python",
             DetectionCategory::JpdAuthor => "jpd_author",
+            DetectionCategory::XorShiftObfuscation => "xorshift_obfuscation",
+            DetectionCategory::IElevatorCom => "ielevator_com",
+            DetectionCategory::ApcInjection => "apc_injection",
+            DetectionCategory::MemexecLoader => "memexec_loader",
             DetectionCategory::Unknown => "unknown",
         }
     }

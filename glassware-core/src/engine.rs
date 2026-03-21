@@ -508,6 +508,21 @@ impl ScanEngine {
         // G5: Socket.IO C2 detector (GlassWorm transport pattern)
         engine.register(Box::new(crate::detectors::socketio_c2::SocketIOC2Detector::new()));
 
+        // Phase 2: Binary scanning detectors (.node files)
+        #[cfg(feature = "binary")]
+        {
+            // G6: XorShift128 obfuscation
+            engine.register(Box::new(crate::binary::XorShiftDetector::new()));
+            // G7: IElevator COM CLSID
+            engine.register(Box::new(crate::binary::IElevatorDetector::new()));
+            // G8: APC injection
+            engine.register(Box::new(crate::binary::ApcInjectionDetector::new()));
+            // G9: memexec loader
+            engine.register(Box::new(crate::binary::MemexecDetector::new()));
+            // G11: .node metadata
+            engine.register(Box::new(crate::binary::MetadataDetector::new()));
+        }
+
         #[cfg(feature = "semantic")]
         {
             engine.register_semantic(Box::new(crate::gw005_semantic::Gw005SemanticDetector::new()));
@@ -1206,7 +1221,12 @@ impl ScanEngine {
 
     /// Get the number of registered detectors.
     pub fn detector_count(&self) -> usize {
-        self.detectors.len()
+        let mut count = self.detectors.len();
+        #[cfg(feature = "semantic")]
+        {
+            count += self.semantic_detectors.len();
+        }
+        count
     }
 }
 
@@ -1225,13 +1245,18 @@ mod tests {
     #[test]
     fn test_engine_default_detectors() {
         let engine = ScanEngine::default_detectors();
-        // 3 original detectors + 3 behavioral evasion (GW009-GW011)
-        // + 1 browser-kill (E3) + 3 Phase 1 (G3, G4, G5) = 10 base
+        // 13 base detectors (Unicode, EncryptedPayload, HeaderC2, RDD, JPD, ForceMemo,
+        // Locale, TimeDelay, BlockchainC2, BrowserKill, TypoAttribution, ExfilSchema, SocketIOC2)
+        // + 5 binary detectors (G6, G7, G8, G9, G11) when binary feature is enabled
         // + 4 semantic detectors (GW005-GW008) when semantic feature is enabled
-        #[cfg(feature = "semantic")]
-        assert_eq!(engine.detector_count(), 14);
-        #[cfg(not(feature = "semantic"))]
-        assert_eq!(engine.detector_count(), 10);
+        #[cfg(all(feature = "semantic", feature = "binary"))]
+        assert_eq!(engine.detector_count(), 22);
+        #[cfg(all(feature = "semantic", not(feature = "binary")))]
+        assert_eq!(engine.detector_count(), 17);
+        #[cfg(all(not(feature = "semantic"), feature = "binary"))]
+        assert_eq!(engine.detector_count(), 18);
+        #[cfg(all(not(feature = "semantic"), not(feature = "binary")))]
+        assert_eq!(engine.detector_count(), 13);
     }
 
     #[test]
