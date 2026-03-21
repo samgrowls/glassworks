@@ -55,6 +55,314 @@
       "findings_count": 0,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "77f5491b-8d03-419b-935d-70676835d797",
+      "started_at": "2026-03-21T06:40:24.427156101Z",
+      "completed_at": "2026-03-21T06:40:24.708721854Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ai@0.0.0-02dba89b-20251009204516"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "aeb63c39-bc28-41ca-aeb7-8c36311844d1",
+      "started_at": "2026-03-21T06:40:24.727702802Z",
+      "completed_at": "2026-03-21T06:40:24.965493107Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ai@0.0.0-01d6317c-20260129172110"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "2c044732-090d-41ef-8938-27f300233c94",
+      "started_at": "2026-03-21T06:40:25.161012716Z",
+      "completed_at": "2026-03-21T06:40:25.412349490Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@ai-sdk/google@0.0.0-01d6317c-20260129172110"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1039f7a5-a94d-4ee7-afcb-f0fe7b0ddb03",
+      "started_at": "2026-03-21T06:40:25.432257700Z",
+      "completed_at": "2026-03-21T06:40:25.664473774Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@ai-sdk/google@0.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "f4ec950e-bb61-44cc-9c52-8f0af8f7e235",
+      "started_at": "2026-03-21T06:40:25.838880728Z",
+      "completed_at": null,
+      "status": "running",
+      "command": "scan-npm",
+      "packages": [
+        "@ai-sdk/react@0.0.0-02dba89b-20251009204516"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "2f111d6e-420a-4149-8e58-bcb09947e0da",
+      "started_at": "2026-03-21T06:40:25.842698433Z",
+      "completed_at": "2026-03-21T06:40:26.112572605Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@ai-sdk/react@0.0.0-0219f568-20260113124214"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "4a3c9088-62d4-4054-a5de-502744ac5758",
+      "started_at": "2026-03-21T06:40:26.121151172Z",
+      "completed_at": "2026-03-21T06:40:26.373472155Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@ai-sdk/react@0.0.0-01d6317c-20260129172110"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "644903f1-8ae3-4fb1-a5f8-8df919b784a9",
+      "started_at": "2026-03-21T06:40:26.504676051Z",
+      "completed_at": "2026-03-21T06:40:26.750785035Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@ai-sdk/gateway@0.0.0-02dba89b-20251009204516"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "8b85fed7-8935-4202-92ed-220b9a2f13f6",
+      "started_at": "2026-03-21T06:40:26.771687460Z",
+      "completed_at": "2026-03-21T06:40:27.007407035Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@ai-sdk/gateway@0.0.0-01d6317c-20260129172110"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "9e71f6cf-5109-409f-8ae7-4914e4ba3b1a",
+      "started_at": "2026-03-21T06:40:27.142621124Z",
+      "completed_at": "2026-03-21T06:40:27.399838009Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@firebase/ai@1.2.2-canary.799de5997"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "b78247cb-d52f-4a35-999e-e4caeac2fa0f",
+      "started_at": "2026-03-21T06:40:27.416914297Z",
+      "completed_at": "2026-03-21T06:40:27.660054605Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@firebase/ai@0.0.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "e2201e4a-8ada-4895-bfb2-5359f70957fc",
+      "started_at": "2026-03-21T06:40:27.791801108Z",
+      "completed_at": "2026-03-21T06:40:28.081588679Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@types/lodash@0.0.28"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "6103b560-7407-4529-acf8-9a92a137073d",
+      "started_at": "2026-03-21T06:40:28.109613473Z",
+      "completed_at": "2026-03-21T06:40:28.342141504Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@types/lodash@0.0.26-alpha"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "3ac796d9-4641-49e3-ae97-383728e93d34",
+      "started_at": "2026-03-21T06:40:28.435527718Z",
+      "completed_at": "2026-03-21T06:40:28.708451976Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "async-retry@0.2.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "aedfbc8e-c999-4bf4-8600-23c327439525",
+      "started_at": "2026-03-21T06:40:28.733274640Z",
+      "completed_at": "2026-03-21T06:40:28.972135912Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "async-retry@0.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "00088e78-958c-47d8-b025-34ee89415e56",
+      "started_at": "2026-03-21T06:40:29.085409028Z",
+      "completed_at": null,
+      "status": "running",
+      "command": "scan-npm",
+      "packages": [
+        "@babel/plugin-transform-async-to-generator@7.0.0-beta.31"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "bbcb76f2-5241-49b4-aa3b-d92e9f496a82",
+      "started_at": "2026-03-21T06:40:29.095744567Z",
+      "completed_at": "2026-03-21T06:40:29.355515214Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@babel/plugin-transform-async-to-generator@7.0.0-beta.32"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "ed178385-accc-416e-a0a7-e09a3f70842f",
+      "started_at": "2026-03-21T06:40:29.375653218Z",
+      "completed_at": "2026-03-21T06:40:29.606907819Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@babel/plugin-transform-async-to-generator@7.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "ec281422-278f-416e-835f-5e0532c9a09b",
+      "started_at": "2026-03-21T06:40:29.760241009Z",
+      "completed_at": "2026-03-21T06:40:30.015030344Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/material-moment-adapter@10.0.0-next.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "80f8b232-ef4d-42ea-ad47-f92b95929417",
+      "started_at": "2026-03-21T06:40:30.030608935Z",
+      "completed_at": "2026-03-21T06:40:30.275194309Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/material-moment-adapter@10.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "5ab78a5d-71f5-4532-9d02-bcfb7f67014d",
+      "started_at": "2026-03-21T06:40:30.413684064Z",
+      "completed_at": "2026-03-21T06:40:30.672539768Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dayjs@1.0.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "35eff013-8673-4b86-8c8c-8f46caf71f02",
+      "started_at": "2026-03-21T06:40:30.690460774Z",
+      "completed_at": "2026-03-21T06:40:30.945843261Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dayjs@1.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }
