@@ -152,6 +152,21 @@ pub enum Commands {
         clear: bool,
     },
 
+    /// Sample packages from npm by category.
+    SamplePackages {
+        /// Categories to sample from (ai-ml, native-build, install-scripts, etc.)
+        #[arg(long, required = true)]
+        category: Vec<String>,
+
+        /// Number of samples per category
+        #[arg(long, default_value = "50")]
+        samples: usize,
+
+        /// Output file to save package list
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+
     /// Clean up expired cache entries.
     CacheCleanup,
 

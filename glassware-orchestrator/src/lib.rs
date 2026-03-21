@@ -214,6 +214,7 @@ pub mod orchestrator;
 pub mod progress;
 pub mod rate_limiter;
 pub mod retry;
+pub mod sampler;
 pub mod scanner;
 pub mod scan_registry;
 pub mod streaming;

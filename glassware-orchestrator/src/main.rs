@@ -91,6 +91,9 @@ async fn main() -> Result<()> {
         Commands::CacheCleanup => {
             cmd_cache_cleanup(&cli).await?;
         }
+        Commands::SamplePackages { ref category, ref samples, ref output } => {
+            cmd_sample_packages(&cli, category.clone(), *samples, output.as_deref()).await?;
+        }
         Commands::ScanList { ref status, ref limit } => {
             cmd_scan_list(&cli, status.clone(), *limit).await?;
         }
@@ -370,6 +373,37 @@ async fn cmd_cache_stats(cli: &Cli, clear: bool) -> Result<()> {
         }
     } else {
         error!("Cache is not enabled");
+    }
+
+    Ok(())
+}
+
+/// Sample packages command.
+async fn cmd_sample_packages(
+    _cli: &Cli,
+    categories: Vec<String>,
+    samples: usize,
+    output: Option<&str>,
+) -> Result<()> {
+    use glassware_orchestrator::sampler::PackageSampler;
+    use std::path::Path;
+
+    info!("Sampling {} packages per category from {:?}", samples, categories);
+
+    let sampler = PackageSampler::new()?;
+    let category_refs: Vec<&str> = categories.iter().map(|s| s.as_str()).collect();
+    let packages: Vec<String> = sampler.sample(&category_refs, samples).await?;
+
+    // Save to file if specified
+    if let Some(output_path) = output {
+        sampler.save_to_file(&packages, Path::new(output_path))?;
+        println!("Saved {} packages to {}", packages.len(), output_path);
+    } else {
+        // Print to stdout
+        println!("# Sampled {} packages from categories: {}", packages.len(), categories.join(", "));
+        for package in &packages {
+            println!("{}", package);
+        }
     }
 
     Ok(())
