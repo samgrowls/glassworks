@@ -1,0 +1,141 @@
+# GlassWorm Wave Configurations
+#
+# Each wave defines a scanning campaign with specific targets and parameters.
+# Run with: python -m harness.core.orchestrator run-wave --wave 0
+
+[wave_0]
+# Calibration run - validate pipeline end-to-end
+name = "Wave 0: Calibration"
+description = "Validate scanning pipeline with known malicious + clean packages"
+packages_total = 50
+
+[wave_0.known_malicious]
+# Must detect these
+packages = [
+    "react-native-country-select@0.3.91",
+    "react-native-international-phone-number@0.11.8",
+]
+
+[wave_0.clean_baseline]
+# Should NOT flag (FP baseline)
+count = 20
+packages = [
+    "express@4.19.2",
+    "lodash@4.17.21",
+    "axios@1.6.7",
+    "chalk@5.3.0",
+    "debug@4.3.4",
+    "moment@2.30.1",
+    "uuid@9.0.1",
+    "async@3.2.5",
+    "request@2.88.2",
+    "commander@12.0.0",
+    "glob@10.3.10",
+    "mkdirp@3.0.1",
+    "semver@7.6.0",
+    "ws@8.16.0",
+    "yargs@17.7.2",
+    "dotenv@16.4.5",
+    "eslint@8.57.0",
+    "prettier@3.2.5",
+    "typescript@5.4.2",
+    "jest@29.7.0",
+]
+
+[wave_0.react_native_ecosystem]
+# Proximity hunting
+count = 15
+keywords = ["react-native-phone", "react-native-locale", "react-native-country"]
+
+[wave_0.recent_publishes]
+# Baseline noise
+count = 10
+days = 7
+
+
+[wave_1]
+# Targeted hunting - GlassWorm's active zones
+name = "Wave 1: Targeted Hunting"
+description = "Hunt in ecosystems where GlassWorm is actively operating"
+packages_total = 100
+
+[wave_1.react_native]
+count = 30
+keywords = [
+    "react-native-phone",
+    "react-native-country",
+    "react-native-locale",
+    "react-native-i18n",
+    "react-native-intl",
+]
+
+[wave_1.crypto_wallet]
+count = 30
+keywords = [
+    "solana",
+    "ethereum",
+    "web3",
+    "phantom",
+    "wallet",
+    "crypto",
+]
+
+[wave_1.typosquats]
+count = 25
+base_packages = [
+    "express",
+    "lodash",
+    "axios",
+    "chalk",
+    "moment",
+]
+
+[wave_1.new_publishers]
+count = 15
+days = 30
+max_downloads = 100
+
+
+[wave_2]
+# Broad sweep - statistical coverage
+name = "Wave 2: Broad Sweep"
+description = "Cast the net wide for novel discovery"
+packages_total = 500
+
+[wave_2.recent_publishes]
+count = 200
+days = 14
+
+[wave_2.native_addons]
+count = 50
+keywords = ["node-gyp", "native addon", "bindings", ".node"]
+
+[wave_2.install_scripts]
+count = 100
+has_install_script = true
+
+[wave_2.crypto_defi]
+count = 100
+keywords = [
+    "defi",
+    "swap",
+    "bridge",
+    "yield",
+    "staking",
+    "nft",
+    "metamask",
+]
+
+[wave_2.vscode_extensions]
+count = 50
+keywords = ["vscode", "vs code", "extension"]
+
+
+[defaults]
+# Default settings for all waves
+scan_severity = "info"
+use_llm = false
+llm_min_severity = "high"
+max_workers = 5
+rate_limit = 5.0
+checkpoint_interval = 10
