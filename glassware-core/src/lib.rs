@@ -96,6 +96,17 @@ pub mod unicode_detector;
 // NEW: Binary scanning module (.node files)
 #[cfg(feature = "binary")]
 pub mod binary;
+// NEW: Host forensics module
+#[cfg(feature = "serde")]
+pub mod host;
+// NEW: Blockchain C2 module
+#[cfg(feature = "serde")]
+pub mod blockchain;
+// NEW: Campaign matcher
+pub mod campaign_matcher;
+// NEW: Export module
+#[cfg(feature = "serde")]
+pub mod export;
 
 // Re-export main types for convenience
 pub use classify::{

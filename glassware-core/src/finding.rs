@@ -118,6 +118,10 @@ pub enum DetectionCategory {
     ApcInjection,
     /// memexec crate usage (fileless PE loading)
     MemexecLoader,
+    /// Exfil JSON schema detection (GlassWorm data exfiltration)
+    ExfilSchema,
+    /// Socket.IO C2 communication pattern
+    SocketIOC2,
     /// Unknown category
     Unknown,
 }
@@ -150,6 +154,8 @@ impl DetectionCategory {
             DetectionCategory::IElevatorCom => "ielevator_com",
             DetectionCategory::ApcInjection => "apc_injection",
             DetectionCategory::MemexecLoader => "memexec_loader",
+            DetectionCategory::ExfilSchema => "exfil_schema",
+            DetectionCategory::SocketIOC2 => "socketio_c2",
             DetectionCategory::Unknown => "unknown",
         }
     }
