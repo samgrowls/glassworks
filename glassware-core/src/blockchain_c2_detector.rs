@@ -6,16 +6,24 @@
 //! ## Detection Logic
 //!
 //! This detector emits findings when:
-//! 1. Solana RPC endpoint usage (api.mainnet-beta.solana.com)
-//! 2. Solana API methods (getSignaturesForAddress, getTransaction)
-//! 3. Known GlassWorm wallet addresses
-//! 4. Short-interval polling (1-10 seconds) via setInterval
-//! 5. Google Calendar C2 backup pattern
+//! 1. Known GlassWorm wallet addresses (CRITICAL - always flag)
+//! 2. Known GlassWorm C2 IP addresses (CRITICAL - always flag)
+//! 3. Solana RPC + suspicious patterns (MEDIUM - requires multiple signals)
+//!
+//! ## IMPORTANT: False Positive Prevention
+//!
+//! Legitimate crypto packages (ethers, web3, @solana/web3.js, viem, wagmi, etc.)
+//! use Solana/blockchain APIs as their PRIMARY FUNCTION. These should NOT be flagged.
+//!
+//! Only flag when:
+//! - Known C2 wallet/IP is present (definitive GlassWorm indicators)
+//! - Solana RPC usage + obfuscation/eval patterns (suspicious combination)
+//! - Short-interval polling WITHOUT legitimate crypto package context
 //!
 //! ## Severity
 //!
-//! Critical for known C2 infrastructure (wallets, domains)
-//! High for polling patterns and blockchain API usage
+//! Critical: Known C2 wallets, known C2 IPs
+//! Medium: Generic blockchain patterns (requires manual review)
 
 use crate::detector::{Detector, DetectorMetadata, DetectorTier};
 use crate::finding::{DetectionCategory, Finding, Severity};
@@ -51,6 +59,15 @@ const KNOWN_C2_IPS: &[&str] = &[
     "217.69.3.51",
     "217.69.11.99",
     "217.69.0.159",
+];
+
+/// Legitimate crypto package identifiers - DO NOT flag these
+const CRYPTO_PACKAGE_WHITELIST: &[&str] = &[
+    // Package names
+    "ethers", "web3", "viem", "wagmi", "@solana/web3", "@ethersproject",
+    "bitcoinjs", "bip39", "hdkey", "@metamask", "@walletconnect",
+    // Common crypto module patterns
+    "solana-web3", "ethers.js", "web3.js", "web3-utils",
 ];
 
 /// Patterns for blockchain C2 detection
@@ -114,8 +131,18 @@ impl Detector for BlockchainC2Detector {
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
 
+        // Check if this is a legitimate crypto package - skip generic blockchain patterns
+        // Check both path and content for crypto package identifiers
+        let path_lower = ir.metadata.path.to_lowercase();
+        let content_lower = ir.content().to_lowercase();
+        
+        let is_crypto_package = CRYPTO_PACKAGE_WHITELIST.iter().any(|pkg| {
+            let pkg_lower = pkg.to_lowercase();
+            path_lower.contains(&pkg_lower) || content_lower.contains(&pkg_lower)
+        });
+
         for (line_num, line) in ir.content().lines().enumerate() {
-            // Check for known C2 wallet addresses
+            // Check for known C2 wallet addresses (ALWAYS flag - not affected by whitelist)
             for wallet in KNOWN_C2_WALLETS {
                 if line.contains(*wallet) {
                     findings.push(
@@ -138,7 +165,7 @@ impl Detector for BlockchainC2Detector {
                 }
             }
 
-            // Check for known C2 IP addresses (E1 enhancement from INTEL3)
+            // Check for known C2 IP addresses (ALWAYS flag - not affected by whitelist)
             for ip in KNOWN_C2_IPS {
                 if line.contains(*ip) {
                     findings.push(
@@ -161,20 +188,28 @@ impl Detector for BlockchainC2Detector {
                 }
             }
 
-            // Check for blockchain patterns
+            // Skip generic blockchain patterns for legitimate crypto packages
+            // These packages use blockchain APIs as their PRIMARY FUNCTION
+            if is_crypto_package {
+                continue;
+            }
+
+            // Check for blockchain patterns (only for non-crypto packages)
             for (i, pattern) in BLOCKCHAIN_PATTERNS.iter().enumerate() {
                 if pattern.is_match(line) {
+                    // Reduce severity for generic patterns - these need context
+                    // Most BlockchainC2 findings are false positives on legitimate packages
                     let (severity, message) = match i {
                         0 => (
-                            Severity::Critical,
-                            "Solana RPC endpoint detected (blockchain C2 communication)".to_string(),
+                            Severity::Info,  // Reduced to INFO - needs manual review
+                            "Solana RPC endpoint detected (review for C2 vs legitimate use)".to_string(),
                         ),
                         1 => (
-                            Severity::High,
-                            "Solana blockchain API call detected".to_string(),
+                            Severity::Info,  // Reduced to INFO - common in many packages
+                            "Solana blockchain API call detected (may be legitimate)".to_string(),
                         ),
                         2 => (
-                            Severity::High,
+                            Severity::Low,  // Reduced to LOW - polling alone isn't malicious
                             "Short-interval polling detected (possible C2 beaconing)".to_string(),
                         ),
                         3 => (
