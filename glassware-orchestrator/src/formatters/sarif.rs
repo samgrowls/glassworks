@@ -247,14 +247,14 @@ impl SarifFormatter {
     /// Format scan results to SARIF.
     pub fn format(&self, results: &[PackageScanResult]) -> Result<String> {
         let sarif_log = self.create_sarif_log(results);
-        
+
         if self.pretty {
             serde_json::to_string_pretty(&sarif_log).map_err(|e| {
-                OrchestratorError::Cache(format!("Failed to serialize SARIF: {}", e))
+                OrchestratorError::cache_error(format!("Failed to serialize SARIF: {}", e))
             })
         } else {
             serde_json::to_string(&sarif_log).map_err(|e| {
-                OrchestratorError::Cache(format!("Failed to serialize SARIF: {}", e))
+                OrchestratorError::cache_error(format!("Failed to serialize SARIF: {}", e))
             })
         }
     }
@@ -263,7 +263,7 @@ impl SarifFormatter {
     pub fn format_to_file(&self, results: &[PackageScanResult], path: &std::path::Path) -> Result<()> {
         let sarif = self.format(results)?;
         std::fs::write(path, sarif).map_err(|e| {
-            OrchestratorError::Io(e)
+            OrchestratorError::io(e)
         })?;
         Ok(())
     }

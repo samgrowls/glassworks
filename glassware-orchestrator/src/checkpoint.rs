@@ -129,12 +129,12 @@ impl Checkpoint {
         // Ensure parent directory exists
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|e| {
-                OrchestratorError::io_error(e)
+                OrchestratorError::io(e)
             })?;
         }
 
         fs::write(path, json).map_err(|e| {
-            OrchestratorError::io_error(e)
+            OrchestratorError::io(e)
         })?;
 
         info!("Checkpoint saved to: {}", path.display());
@@ -144,14 +144,14 @@ impl Checkpoint {
     /// Load checkpoint from a JSON file.
     pub fn load(path: &Path) -> Result<Self> {
         if !path.exists() {
-            return Err(OrchestratorError::NotFound(format!(
+            return Err(OrchestratorError::not_found(format!(
                 "Checkpoint file not found: {}",
                 path.display()
             )));
         }
 
         let json = fs::read_to_string(path).map_err(|e| {
-            OrchestratorError::io_error(e)
+            OrchestratorError::io(e)
         })?;
 
         let checkpoint: Checkpoint = serde_json::from_str(&json).map_err(|e| {
@@ -206,19 +206,19 @@ pub struct CheckpointManager {
 
 impl CheckpointManager {
     /// Create a new checkpoint manager.
-    pub fn new(checkpoint_dir: &Path) -> Result<Self> {
+    pub fn new(checkpoint_dir: &Path) -> Self {
         // Create checkpoint directory if it doesn't exist
-        fs::create_dir_all(checkpoint_dir).map_err(|e| {
-            OrchestratorError::io_error(e)
-        })?;
+        if let Err(e) = fs::create_dir_all(checkpoint_dir) {
+            warn!("Failed to create checkpoint directory: {}", e);
+        }
 
-        Ok(Self {
+        Self {
             checkpoint_dir: checkpoint_dir.to_path_buf(),
             auto_save_interval: 10, // Auto-save every 10 packages
             max_checkpoints: 5,
             checkpoint: None,
             packages_since_save: 0,
-        })
+        }
     }
 
     /// Set auto-save interval.
@@ -343,7 +343,7 @@ impl CheckpointManager {
         let checkpoint_path = self.checkpoint_path(source);
         if checkpoint_path.exists() {
             fs::remove_file(&checkpoint_path).map_err(|e| {
-                OrchestratorError::io_error(e)
+                OrchestratorError::io(e)
             })?;
             info!("Cleared checkpoint for: {}", source);
         }
@@ -359,7 +359,7 @@ impl CheckpointManager {
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) == Some("checkpoint") {
                     fs::remove_file(&path).map_err(|e| {
-                        OrchestratorError::io_error(e)
+                        OrchestratorError::io(e)
                     })?;
                     cleared += 1;
                 }
@@ -470,7 +470,7 @@ mod tests {
     #[test]
     fn test_checkpoint_manager_creation() {
         let temp_dir = TempDir::new().unwrap();
-        let manager = CheckpointManager::new(temp_dir.path()).unwrap();
+        let manager = CheckpointManager::new(temp_dir.path());
 
         assert_eq!(manager.auto_save_interval, 10);
         assert_eq!(manager.max_checkpoints, 5);
@@ -479,7 +479,7 @@ mod tests {
     #[test]
     fn test_checkpoint_manager_init() {
         let temp_dir = TempDir::new().unwrap();
-        let mut manager = CheckpointManager::new(temp_dir.path()).unwrap();
+        let mut manager = CheckpointManager::new(temp_dir.path());
 
         let packages = vec!["pkg1".to_string(), "pkg2".to_string()];
         manager.init_checkpoint("npm".to_string(), packages).unwrap();
@@ -491,7 +491,7 @@ mod tests {
     #[test]
     fn test_checkpoint_manager_mark_scanned() {
         let temp_dir = TempDir::new().unwrap();
-        let mut manager = CheckpointManager::new(temp_dir.path()).unwrap();
+        let mut manager = CheckpointManager::new(temp_dir.path());
 
         let packages = vec!["pkg1".to_string(), "pkg2".to_string()];
         manager.init_checkpoint("npm".to_string(), packages).unwrap();
@@ -505,7 +505,7 @@ mod tests {
     #[test]
     fn test_checkpoint_manager_save_load() {
         let temp_dir = TempDir::new().unwrap();
-        let mut manager = CheckpointManager::new(temp_dir.path()).unwrap();
+        let mut manager = CheckpointManager::new(temp_dir.path());
 
         let packages = vec!["pkg1".to_string(), "pkg2".to_string()];
         manager.init_checkpoint("npm".to_string(), packages).unwrap();

@@ -128,14 +128,14 @@ impl JsonFormatter {
     /// Format scan results to JSON.
     pub fn format(&self, results: &[PackageScanResult]) -> Result<String> {
         let output = self.create_output(results);
-        
+
         if self.pretty {
             serde_json::to_string_pretty(&output).map_err(|e| {
-                OrchestratorError::Cache(format!("Failed to serialize JSON: {}", e))
+                OrchestratorError::cache_error(format!("Failed to serialize JSON: {}", e))
             })
         } else {
             serde_json::to_string(&output).map_err(|e| {
-                OrchestratorError::Cache(format!("Failed to serialize JSON: {}", e))
+                OrchestratorError::cache_error(format!("Failed to serialize JSON: {}", e))
             })
         }
     }
@@ -144,7 +144,7 @@ impl JsonFormatter {
     pub fn format_to_file(&self, results: &[PackageScanResult], path: &std::path::Path) -> Result<()> {
         let json = self.format(results)?;
         std::fs::write(path, json).map_err(|e| {
-            OrchestratorError::Io(e)
+            OrchestratorError::io(e)
         })?;
         Ok(())
     }
@@ -287,7 +287,7 @@ mod tests {
 
         let json = formatter.format(&results).unwrap();
         assert!(json.contains("test-pkg"));
-        assert!(json.contains("test finding"));
+        assert!(json.contains("Test finding"));
     }
 
     #[test]

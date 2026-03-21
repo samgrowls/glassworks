@@ -1,0 +1,60 @@
+{
+  "scans": [
+    {
+      "id": "4e12cab4-bd88-4fe0-961a-f70b14cbbc4d",
+      "started_at": "2026-03-21T06:12:47.691808442Z",
+      "completed_at": "2026-03-21T06:12:48.181995449Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "express"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "21cb2a9f-aee4-4e50-9beb-8244d2d58b5d",
+      "started_at": "2026-03-21T06:18:38.227178244Z",
+      "completed_at": "2026-03-21T06:18:38.762893005Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@composio/openclaw-plugin"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "19de2c54-ff95-4b5b-8fc0-d96845be7991",
+      "started_at": "2026-03-21T06:25:43.488322055Z",
+      "completed_at": "2026-03-21T06:25:44.617137738Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@composio/openclaw-plugin"
+      ],
+      "version_policy": "last-5",
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "e88017d7-8363-4202-b648-a90045edd992",
+      "started_at": "2026-03-21T06:26:12.418541901Z",
+      "completed_at": "2026-03-21T06:26:13.465548696Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "express"
+      ],
+      "version_policy": "last-5",
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    }
+  ]
+}

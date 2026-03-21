@@ -5,19 +5,17 @@
 mod cli;
 
 use anyhow::Result;
-use cli::{Cli, Commands, OutputFormat, ResumeSource, SeverityLevel};
-use orchestrator_core::{
+use cli::{Cli, Commands, OutputFormat, ResumeSource};
+use glassware_orchestrator::{
     Orchestrator, OrchestratorConfig, DownloaderConfig, ScannerConfig,
     PackageScanResult, ScanSummary,
-    streaming::{StreamingWriter, OutputFormat as StreamOutputFormat},
+    streaming::StreamingWriter,
     adversarial::AdversarialTester,
+    scan_registry::{ScanRegistry, ScanStatus},
+    cli_validator,
 };
 use glassware_core::Severity;
-use std::io::{self, Write};
-use std::fs::File;
-use std::path::Path;
 use tracing::{error, info, warn, Level};
-use tracing_subscriber::FmtSubscriber;
 use tokio::io::BufWriter;
 
 #[tokio::main]
@@ -34,34 +32,49 @@ async fn main() -> Result<()> {
         _ => Level::INFO,
     };
 
-    let tracing_config = orchestrator_core::tracing::TracingConfig {
+    let tracing_config = glassware_orchestrator::tracing::TracingConfig {
         level: log_level,
         format: if cli.quiet {
-            orchestrator_core::tracing::TracingFormat::Minimal
+            glassware_orchestrator::tracing::TracingFormat::Minimal
         } else if cli.verbose {
-            orchestrator_core::tracing::TracingFormat::Pretty
+            glassware_orchestrator::tracing::TracingFormat::Pretty
         } else {
-            orchestrator_core::tracing::TracingFormat::Compact
+            glassware_orchestrator::tracing::TracingFormat::Compact
         },
         output: if let Some(ref log_file) = cli.log_file {
-            orchestrator_core::tracing::TracingOutput::File(log_file.clone())
+            glassware_orchestrator::tracing::TracingOutput::File(log_file.clone().into())
         } else {
-            orchestrator_core::tracing::TracingOutput::Stdout
+            glassware_orchestrator::tracing::TracingOutput::Stdout
         },
         with_ansi: !cli.no_color && !cli.quiet,
         ..Default::default()
     };
 
-    if let Err(e) = orchestrator_core::tracing::init_tracing(&tracing_config) {
+    if let Err(e) = glassware_orchestrator::tracing::init_tracing(&tracing_config) {
         eprintln!("Warning: Failed to initialize tracing: {}", e);
     }
 
-    info!("Glassware Orchestrator v{}", orchestrator_core::VERSION);
+    info!("Glassware Orchestrator v{}", glassware_orchestrator::VERSION);
+
+    // Validate CLI flags
+    if let Err(e) = cli_validator::validate_cli(cli.llm, cli.no_cache, &cli.cache_db, cli.concurrency) {
+        eprintln!("Error: Invalid flag combination\n");
+        for error in &e.errors {
+            eprintln!("  × {}", error);
+        }
+        if !e.warnings.is_empty() {
+            eprintln!("\nWarnings:");
+            for warning in &e.warnings {
+                eprintln!("  ⚠ {}", warning);
+            }
+        }
+        return Err(anyhow::anyhow!("CLI validation failed"));
+    }
 
     // Run command
     match cli.command {
-        Commands::ScanNpm { ref packages } => {
-            cmd_scan_npm(&cli, packages.clone()).await?;
+        Commands::ScanNpm { ref packages, ref versions } => {
+            cmd_scan_npm(&cli, packages.clone(), versions.clone()).await?;
         }
         Commands::ScanGithub { ref repos, ref r#ref } => {
             cmd_scan_github(&cli, repos.clone(), r#ref.as_deref()).await?;
@@ -78,35 +91,117 @@ async fn main() -> Result<()> {
         Commands::CacheCleanup => {
             cmd_cache_cleanup(&cli).await?;
         }
+        Commands::ScanList { ref status, ref limit } => {
+            cmd_scan_list(&cli, status.clone(), *limit).await?;
+        }
+        Commands::ScanShow { ref id } => {
+            cmd_scan_show(&cli, id).await?;
+        }
+        Commands::ScanCancel { ref id } => {
+            cmd_scan_cancel(&cli, id).await?;
+        }
     }
 
     Ok(())
 }
 
 /// Scan npm packages command.
-async fn cmd_scan_npm(cli: &Cli, packages: Vec<String>) -> Result<()> {
+async fn cmd_scan_npm(cli: &Cli, packages: Vec<String>, versions: Option<String>) -> Result<()> {
     if packages.is_empty() {
         error!("No packages specified");
         return Ok(());
     }
 
-    info!("Scanning {} npm packages", packages.len());
+    // Register scan
+    let mut registry = ScanRegistry::new(None)?;
+    let scan_id = registry.start_scan("scan-npm", &packages, versions.as_deref());
+    info!("Started scan: {}", scan_id);
 
-    let orchestrator = create_orchestrator(cli).await?;
-
-    if cli.streaming {
-        // Use streaming output
-        cmd_scan_npm_streaming(cli, &orchestrator, &packages).await?;
-    } else {
-        // Use buffered output
-        let results = orchestrator.scan_npm_packages(&packages).await;
-
-        // Run adversarial testing if enabled
-        if cli.adversarial {
-            run_adversarial_tests(&results).await?;
+    // If version scanning requested
+    if let Some(version_policy) = versions {
+        info!("Scanning multiple versions with policy: {}", version_policy);
+        
+        let policy = glassware_orchestrator::version_scanner::VersionPolicy::from_str(&version_policy)?;
+        let version_scanner = glassware_orchestrator::version_scanner::VersionScanner::new()?;
+        
+        let mut total_findings = 0;
+        let mut total_malicious = 0;
+        
+        for package in &packages {
+            info!("Fetching versions for: {}", package);
+            
+            // Sample versions
+            let sampled_versions = version_scanner.sample_versions(package, &policy).await?;
+            info!("Found {} versions to scan", sampled_versions.len());
+            
+            // Scan each version
+            let results = version_scanner.scan_versions(package, &sampled_versions).await;
+            
+            // Process results
+            for (version, result) in sampled_versions.iter().zip(results.iter()) {
+                match result {
+                    Ok(scan_result) => {
+                        total_findings += scan_result.findings.len();
+                        if scan_result.is_malicious {
+                            total_malicious += 1;
+                        }
+                        info!("  {}@{}: {} findings, threat score: {:.2}",
+                            package, version, scan_result.findings.len(), scan_result.threat_score);
+                    }
+                    Err(e) => {
+                        warn!("  {}@{}: Error - {}", package, version, e);
+                    }
+                }
+            }
         }
+        
+        // Complete scan registration
+        registry.complete_scan(&scan_id, total_findings, total_malicious)?;
+        
+        // Print summary
+        println!("\n============================================================");
+        println!("VERSION SCAN SUMMARY");
+        println!("============================================================");
+        println!("Packages scanned: {}", packages.len());
+        println!("Total findings: {}", total_findings);
+        println!("Malicious versions: {}", total_malicious);
+        println!("============================================================");
+        
+        if total_malicious > 0 {
+            println!("\n🚨 Malicious versions detected!");
+        } else if total_findings > 0 {
+            println!("\n⚠️  Findings detected (review recommended)");
+        } else {
+            println!("\n✅ No security issues detected");
+        }
+    } else {
+        // Regular single-version scan
+        info!("Scanning {} npm packages", packages.len());
 
-        print_results(cli, &results)?;
+        let orchestrator = create_orchestrator(cli).await?;
+
+        let results = if cli.streaming {
+            cmd_scan_npm_streaming(cli, &orchestrator, &packages).await?;
+            vec![]
+        } else {
+            let results = orchestrator.scan_npm_packages(&packages).await;
+
+            if cli.adversarial {
+                run_adversarial_tests(&results).await?;
+            }
+
+            print_results(cli, &results)?;
+            results
+        };
+
+        // Complete scan registration
+        if !cli.streaming {
+            let findings = results.iter().filter_map(|r| r.as_ref().ok()).map(|r| r.findings.len()).sum();
+            let malicious = results.iter().filter_map(|r| r.as_ref().ok()).filter(|r| r.is_malicious).count();
+            registry.complete_scan(&scan_id, findings, malicious)?;
+        } else {
+            registry.complete_scan(&scan_id, 0, 0)?;
+        }
     }
 
     Ok(())
@@ -118,13 +213,6 @@ async fn cmd_scan_npm_streaming(
     orchestrator: &Orchestrator,
     packages: &[String],
 ) -> Result<()> {
-    // Determine output destination
-    let output: Box<dyn Write + Send> = if let Some(ref output_path) = cli.output {
-        Box::new(File::create(output_path)?)
-    } else {
-        Box::new(io::stdout())
-    };
-
     let async_writer = tokio::io::stdout();
     let mut streaming = StreamingWriter::json_lines(BufWriter::new(async_writer));
 
@@ -253,7 +341,7 @@ async fn cmd_cache_stats(cli: &Cli, clear: bool) -> Result<()> {
             OutputFormat::Pretty => {
                 println!("{}", stats);
             }
-            OutputFormat::Json => {
+            OutputFormat::Json | OutputFormat::Jsonl => {
                 let json = serde_json::to_string_pretty(&serde_json::json!({
                     "total_entries": stats.total_entries,
                     "expired_entries": stats.expired_entries,
@@ -300,13 +388,141 @@ async fn cmd_cache_cleanup(cli: &Cli) -> Result<()> {
     Ok(())
 }
 
+/// Scan list command.
+async fn cmd_scan_list(cli: &Cli, status: Option<cli::ScanStatusFilter>, limit: usize) -> Result<()> {
+    let registry = ScanRegistry::new(None)?;
+    
+    let status_filter = match status {
+        Some(cli::ScanStatusFilter::Running) => Some(ScanStatus::Running),
+        Some(cli::ScanStatusFilter::Completed) => Some(ScanStatus::Completed),
+        Some(cli::ScanStatusFilter::Failed) => Some(ScanStatus::Failed),
+        Some(cli::ScanStatusFilter::Cancelled) => Some(ScanStatus::Cancelled),
+        None => None,
+    };
+    
+    let scans = registry.list_scans(status_filter);
+    
+    match cli.format {
+        OutputFormat::Pretty => {
+            if scans.is_empty() {
+                println!("No scans found");
+                return Ok(());
+            }
+            
+            println!("{:<40} {:<12} {:<8} {:<20}", "ID", "Status", "Findings", "Command");
+            println!("{}", "-".repeat(90));
+            
+            for scan in scans.iter().take(limit) {
+                println!("{:<40} {:<12} {:<8} {:<20}", 
+                    &scan.id[..8], 
+                    format!("{:?}", scan.status),
+                    scan.findings_count,
+                    &scan.command[..20.min(scan.command.len())]
+                );
+            }
+        }
+        OutputFormat::Json => {
+            let json_scans: Vec<_> = scans.iter().take(limit).map(|s| {
+                serde_json::json!({
+                    "id": s.id,
+                    "status": format!("{:?}", s.status),
+                    "command": s.command,
+                    "packages": s.packages,
+                    "findings_count": s.findings_count,
+                    "malicious_count": s.malicious_count,
+                    "started_at": s.started_at,
+                    "completed_at": s.completed_at,
+                })
+            }).collect();
+            
+            println!("{}", serde_json::to_string_pretty(&json_scans)?);
+        }
+        _ => {
+            return Err(anyhow::anyhow!("Only pretty and JSON formats supported for scan list"));
+        }
+    }
+    
+    Ok(())
+}
+
+/// Scan show command.
+async fn cmd_scan_show(cli: &Cli, id: &str) -> Result<()> {
+    let registry = ScanRegistry::new(None)?;
+    
+    if let Some(scan) = registry.get_scan(id) {
+        match cli.format {
+            OutputFormat::Pretty => {
+                println!("Scan ID: {}", scan.id);
+                println!("Status: {:?}", scan.status);
+                println!("Command: {}", scan.command);
+                println!("Started: {}", scan.started_at);
+                if let Some(completed) = scan.completed_at {
+                    println!("Completed: {}", completed);
+                }
+                println!("Packages: {}", scan.packages.join(", "));
+                if let Some(policy) = &scan.version_policy {
+                    println!("Version Policy: {}", policy);
+                }
+                println!("Findings: {}", scan.findings_count);
+                println!("Malicious: {}", scan.malicious_count);
+                if let Some(error) = &scan.error {
+                    println!("Error: {}", error);
+                }
+            }
+            OutputFormat::Json => {
+                let json = serde_json::json!({
+                    "id": scan.id,
+                    "status": format!("{:?}", scan.status),
+                    "command": scan.command,
+                    "packages": scan.packages,
+                    "version_policy": scan.version_policy,
+                    "findings_count": scan.findings_count,
+                    "malicious_count": scan.malicious_count,
+                    "started_at": scan.started_at,
+                    "completed_at": scan.completed_at,
+                    "error": scan.error,
+                });
+                println!("{}", serde_json::to_string_pretty(&json)?);
+            }
+            _ => {
+                return Err(anyhow::anyhow!("Only pretty and JSON formats supported"));
+            }
+        }
+    } else {
+        return Err(anyhow::anyhow!("Scan not found: {}", id));
+    }
+    
+    Ok(())
+}
+
+/// Scan cancel command.
+async fn cmd_scan_cancel(cli: &Cli, id: &str) -> Result<()> {
+    let mut registry = ScanRegistry::new(None)?;
+    
+    if let Some(scan) = registry.get_scan(id) {
+        if scan.status != ScanStatus::Running {
+            return Err(anyhow::anyhow!("Scan is not running: {}", id));
+        }
+        
+        registry.cancel_scan(id)?;
+        
+        if !cli.quiet {
+            println!("Cancelled scan: {}", id);
+        }
+    } else {
+        return Err(anyhow::anyhow!("Scan not found: {}", id));
+    }
+    
+    Ok(())
+}
+
 /// Create orchestrator from CLI options.
 async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
     let config = OrchestratorConfig {
         downloader: DownloaderConfig {
             max_retries: cli.max_retries,
-            npm_rate_limit: cli.npm_rate_limit,
-            github_rate_limit: cli.github_rate_limit,
+            npm_rate_limit: cli.npm_rate_limit as f32,
+            github_rate_limit: cli.github_rate_limit as f32,
             github_token: cli.github_token.clone(),
             max_concurrent: cli.concurrency,
             ..Default::default()
@@ -322,8 +538,23 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
         } else {
             Some(cli.cache_db.clone())
         },
-        cache_ttl_days: cli.cache_ttl,
+        cache_ttl_days: cli.cache_ttl as i64,
         enable_cache: !cli.no_cache,
+        github_token: cli.github_token.clone(),
+        enable_checkpoint: true,
+        checkpoint_dir: Some(cli.checkpoint_dir.clone()),
+        checkpoint_interval: 10,
+        retry_config: glassware_orchestrator::retry::RetryConfig::default(),
+        npm_rate_limit: cli.npm_rate_limit as f32,
+        github_rate_limit: cli.github_rate_limit as f32,
+        #[cfg(feature = "llm")]
+        enable_llm: cli.llm,
+        #[cfg(feature = "llm")]
+        llm_config: if cli.llm {
+            glassware_orchestrator::llm::LlmAnalyzerConfig::from_env()
+        } else {
+            None
+        },
     };
 
     let orchestrator = Orchestrator::with_config(config).await?;
@@ -344,7 +575,7 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
 }
 
 /// Print scan results.
-fn print_results(cli: &Cli, results: &[orchestrator_core::Result<PackageScanResult>]) -> Result<()> {
+fn print_results(cli: &Cli, results: &[glassware_orchestrator::Result<PackageScanResult>]) -> Result<()> {
     if cli.quiet {
         // Quiet mode: only print summary
         let success_count = results.iter().filter(|r| r.is_ok()).count();
@@ -450,6 +681,37 @@ fn print_results(cli: &Cli, results: &[orchestrator_core::Result<PackageScanResu
             println!("{}", serde_json::to_string_pretty(&output)?);
         }
 
+        OutputFormat::Jsonl => {
+            // Output each result as a JSON line
+            for result in successful_results {
+                let json = serde_json::json!({
+                    "package_name": result.package_name,
+                    "version": result.version,
+                    "source_type": result.source_type,
+                    "threat_score": result.threat_score,
+                    "is_malicious": result.is_malicious,
+                    "findings": result.findings.iter().map(|f| {
+                        serde_json::json!({
+                            "severity": format!("{:?}", f.severity),
+                            "category": format!("{:?}", f.category),
+                            "file_path": f.file,
+                            "line": f.line,
+                            "column": f.column,
+                            "description": f.description,
+                        })
+                    }).collect::<Vec<_>>(),
+                });
+                println!("{}", serde_json::to_string(&json)?);
+            }
+            // Output errors as JSON lines
+            for error in &errors {
+                let json = serde_json::json!({
+                    "error": error.to_string()
+                });
+                eprintln!("{}", serde_json::to_string(&json)?);
+            }
+        }
+
         OutputFormat::Sarif => {
             // Convert to SARIF format
             let sarif = build_sarif(&successful_results, &errors)?;
@@ -499,7 +761,7 @@ fn print_pretty_summary(summary: &ScanSummary) {
 /// Build SARIF output.
 fn build_sarif(
     results: &[&PackageScanResult],
-    errors: &[&orchestrator_core::error::OrchestratorError],
+    errors: &[&glassware_orchestrator::error::OrchestratorError],
 ) -> Result<serde_json::Value> {
     let mut sarif_results = Vec::new();
 
@@ -539,7 +801,7 @@ fn build_sarif(
             "tool": {
                 "driver": {
                     "name": "glassware-orchestrator",
-                    "version": orchestrator_core::VERSION,
+                    "version": glassware_orchestrator::VERSION,
                     "informationUri": "https://github.com/glassware/glassworks",
                     "rules": [
                         {
@@ -604,11 +866,11 @@ fn severity_to_sarif_level(severity: Severity) -> &'static str {
 
 /// Run adversarial tests on all scanned results.
 async fn run_adversarial_tests(
-    results: &[orchestrator_core::Result<PackageScanResult>],
+    results: &[glassware_orchestrator::Result<PackageScanResult>],
 ) -> Result<()> {
     info!("Running adversarial tests on scanned packages...");
 
-    let tester = AdversarialTester::new()?;
+    let _tester = AdversarialTester::new()?;
     let mut high_risk_count = 0;
 
     for result in results {
@@ -638,7 +900,7 @@ async fn run_adversarial_tests(
 /// Run adversarial test on a single file.
 async fn run_adversarial_test_on_file(
     path: &str,
-) -> Result<Option<orchestrator_core::adversarial::AdversarialReport>> {
+) -> Result<Option<glassware_orchestrator::adversarial::AdversarialReport>> {
     use std::path::Path as StdPath;
 
     let path_obj = StdPath::new(path);

@@ -154,6 +154,22 @@ impl Default for LlmAnalyzerConfig {
 }
 
 impl LlmAnalyzerConfig {
+    /// Create config from environment variables.
+    /// Reads: GLASSWARE_LLM_BASE_URL, GLASSWARE_LLM_API_KEY, GLASSWARE_LLM_MODEL
+    pub fn from_env() -> Option<Self> {
+        let base_url = std::env::var("GLASSWARE_LLM_BASE_URL").ok()?;
+        let api_key = std::env::var("GLASSWARE_LLM_API_KEY").ok()?;
+        let model = std::env::var("GLASSWARE_LLM_MODEL")
+            .unwrap_or_else(|_| "llama-3.3-70b".to_string());
+        
+        Some(Self {
+            base_url,
+            api_key,
+            model,
+            ..Default::default()
+        })
+    }
+
     /// Create config for Cerebras API.
     pub fn cerebras(api_key: String) -> Self {
         Self {
@@ -227,7 +243,7 @@ impl LlmAnalyzer {
         let client = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .build()
-            .map_err(|e| OrchestratorError::http_error(e))?;
+            .map_err(|e| OrchestratorError::http(e))?;
 
         let cache = Arc::new(Mutex::new(HashMap::new()));
         
@@ -409,20 +425,23 @@ Be concise but thorough. Focus on actionable insights."#,
         let response = req_builder
             .send()
             .await
-            .map_err(|e| OrchestratorError::http_error(e))?;
+            .map_err(|e| OrchestratorError::http(e))?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(OrchestratorError::config_error("Invalid API key".to_string()));
         }
 
         if response.status() == StatusCode::TOO_MANY_REQUESTS {
-            return Err(OrchestratorError::RateLimitExceeded { retry_after: 60 });
+            return Err(OrchestratorError::RateLimitExceeded { 
+                retry_after: 60,
+                context: crate::error::ErrorContext::new(),
+            });
         }
 
         if !response.status().is_success() {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
-            return Err(OrchestratorError::GitHub(format!(
+            return Err(OrchestratorError::github(format!(
                 "LLM API error {}: {}",
                 status, body
             )));
@@ -431,7 +450,7 @@ Be concise but thorough. Focus on actionable insights."#,
         let api_response: LlmApiResponse = response
             .json()
             .await
-            .map_err(|e| OrchestratorError::http_error(e))?;
+            .map_err(|e| OrchestratorError::http(e))?;
 
         if api_response.choices.is_empty() {
             return Err(OrchestratorError::config_error("LLM returned no choices".to_string()));
@@ -499,7 +518,7 @@ Be concise but thorough. Focus on actionable insights."#,
         let cache_path = self.get_cache_path();
         if cache_path.exists() {
             std::fs::remove_file(&cache_path).map_err(|e| {
-                OrchestratorError::io_error(e)
+                OrchestratorError::io(e)
             })?;
         }
 

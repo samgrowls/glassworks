@@ -140,17 +140,10 @@ impl ThrottleLimiter {
     }
 
     /// Get the rate limit configuration.
+    #[cfg(feature = "rate-limit")]
     pub fn quota(&self) -> Option<Quota> {
-        #[cfg(feature = "rate-limit")]
-        {
-            // Governor doesn't expose quota directly, return None
-            None
-        }
-        
-        #[cfg(not(feature = "rate-limit"))]
-        {
-            None
-        }
+        // Governor doesn't expose quota directly, return None
+        None
     }
 
     /// Clone the rate limiter (cheap, uses Arc).
@@ -438,13 +431,23 @@ mod tests {
     #[test]
     fn test_multi_rate_limiter() {
         let multi = MultiThrottleLimiter::new();
-        
+
         multi.add_limiter("npm", 2.0);
         multi.add_limiter("github", 1.0);
-        
+
         let services = multi.services();
-        assert!(services.contains(&"npm".to_string()));
-        assert!(services.contains(&"github".to_string()));
+        
+        // Services are only returned when rate-limit feature is enabled
+        #[cfg(feature = "rate-limit")]
+        {
+            assert!(services.contains(&"npm".to_string()));
+            assert!(services.contains(&"github".to_string()));
+        }
+        
+        #[cfg(not(feature = "rate-limit"))]
+        {
+            assert!(services.is_empty());
+        }
     }
 
     #[tokio::test]

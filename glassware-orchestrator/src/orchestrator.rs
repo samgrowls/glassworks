@@ -163,18 +163,13 @@ impl Orchestrator {
                 .as_ref()
                 .unwrap_or(&default_cache_path);
 
-            Some(
-                Cacher::with_path_and_ttl(cache_path, config.cache_ttl_days)
-                    .await
-                    .map_err(|e| {
-                        warn!("Failed to initialize cache: {}. Caching disabled.", e);
-                        e
-                    })
-                    .unwrap_or_else(|_| {
-                        warn!("Cache initialization failed, continuing without cache");
-                        panic!("Cache initialization failed")
-                    }),
-            )
+            match Cacher::with_path_and_ttl(cache_path, config.cache_ttl_days).await {
+                Ok(c) => Some(c),
+                Err(e) => {
+                    warn!("Failed to initialize cache: {}. Caching disabled.", e);
+                    None
+                }
+            }
         } else {
             None
         };
@@ -198,10 +193,10 @@ impl Orchestrator {
                 .as_ref()
                 .map(|s| PathBuf::from(s))
                 .unwrap_or_else(|| PathBuf::from(".glassware-checkpoints"));
-            
-            let mut manager = CheckpointManager::new(&checkpoint_dir)?
+
+            let mut manager = CheckpointManager::new(&checkpoint_dir)
                 .with_auto_save_interval(config.checkpoint_interval);
-            
+
             Some(manager)
         } else {
             None
@@ -217,8 +212,17 @@ impl Orchestrator {
             if let Some(llm_config) = config.llm_config.clone() {
                 Some(LlmAnalyzer::with_config(llm_config)?)
             } else {
-                warn!("LLM enabled but no configuration provided");
-                None
+                // Try to load config from environment
+                match LlmAnalyzerConfig::from_env() {
+                    Some(env_config) => {
+                        info!("LLM analyzer configured from environment (model: {})", env_config.model);
+                        Some(LlmAnalyzer::with_config(env_config)?)
+                    }
+                    None => {
+                        warn!("LLM enabled but configuration failed. Set GLASSWARE_LLM_* environment variables.");
+                        None
+                    }
+                }
             }
         } else {
             None
@@ -358,7 +362,7 @@ impl Orchestrator {
             // Use the built-in downloader without token
             let parts: Vec<&str> = repo.split('/').collect();
             if parts.len() != 2 {
-                return Err(OrchestratorError::invalid_package_name("package", format!("Invalid repo: {}", repo)));
+                return Err(OrchestratorError::invalid_package_name("package".to_string()));
             }
             
             self.downloader.download_github_repo(parts[0], parts[1], None).await
@@ -568,7 +572,7 @@ impl Orchestrator {
         let path = Path::new(file_path);
 
         if !path.exists() {
-            return Err(OrchestratorError::InvalidPath(format!(
+            return Err(OrchestratorError::invalid_path(format!(
                 "File not found: {}",
                 file_path
             )));
@@ -576,7 +580,7 @@ impl Orchestrator {
 
         let content = tokio::fs::read_to_string(path)
             .await
-            .map_err(|e| OrchestratorError::io_error(e))?;
+            .map_err(|e| OrchestratorError::io(e))?;
 
         let packages: Vec<String> = content
             .lines()
@@ -623,6 +627,32 @@ impl Orchestrator {
     /// Get the downloader.
     pub fn downloader(&self) -> &Downloader {
         &self.downloader
+    }
+
+    /// Get cache statistics.
+    pub async fn cache_stats(&self) -> Option<crate::cacher::CacheStats> {
+        if let Some(ref cacher) = self.cacher {
+            cacher.stats().await.ok()
+        } else {
+            None
+        }
+    }
+
+    /// Clear all cache entries.
+    pub async fn clear_cache(&self) -> Result<()> {
+        if let Some(ref cacher) = self.cacher {
+            cacher.clear().await?;
+        }
+        Ok(())
+    }
+
+    /// Clean up expired cache entries.
+    pub async fn cleanup_cache(&self) -> Result<usize> {
+        if let Some(ref cacher) = self.cacher {
+            cacher.cleanup_expired().await
+        } else {
+            Ok(0)
+        }
     }
 }
 

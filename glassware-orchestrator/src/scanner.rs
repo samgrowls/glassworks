@@ -157,7 +157,7 @@ impl Scanner {
         let path = Path::new(path);
 
         if !path.exists() {
-            return Err(OrchestratorError::InvalidPath(format!(
+            return Err(OrchestratorError::invalid_path(format!(
                 "Path does not exist: {}",
                 path.display()
             )));
@@ -214,18 +214,18 @@ impl Scanner {
         }
 
         let entries = std::fs::read_dir(dir).map_err(|e| {
-            OrchestratorError::ScanFailed {
-                path: dir.to_string_lossy().to_string(),
-                source: Box::new(e),
-            }
+            OrchestratorError::scan_failed(
+                dir.to_string_lossy().to_string(),
+                format!("Failed to read directory: {}", e)
+            )
         })?;
 
         for entry in entries {
             let entry = entry.map_err(|e| {
-                OrchestratorError::ScanFailed {
-                    path: dir.to_string_lossy().to_string(),
-                    source: Box::new(e),
-                }
+                OrchestratorError::scan_failed(
+                    dir.to_string_lossy().to_string(),
+                    format!("Failed to read entry: {}", e)
+                )
             })?;
 
             let path = entry.path();
@@ -321,7 +321,7 @@ impl Scanner {
         for task in tasks {
             match task.await {
                 Ok(result) => results.push(result),
-                Err(e) => results.push(Err(OrchestratorError::Cancelled(format!(
+                Err(e) => results.push(Err(OrchestratorError::cancelled(format!(
                     "Task failed: {}",
                     e
                 )))),
@@ -334,6 +334,12 @@ impl Scanner {
     /// Get the scanner configuration.
     pub fn config(&self) -> &ScannerConfig {
         &self.config
+    }
+
+    /// Scan content string for security issues.
+    pub async fn scan_content(&self, content: &str) -> Vec<Finding> {
+        let engine = ScanEngine::default();
+        engine.scan(Path::new("<content>"), content)
     }
 }
 

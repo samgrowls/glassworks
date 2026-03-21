@@ -143,7 +143,7 @@ impl GitHubDownloader {
 
         let client = client_builder
             .build()
-            .map_err(|e| OrchestratorError::http_error(e))?;
+            .map_err(|e| OrchestratorError::http(e))?;
 
         #[cfg(feature = "rate-limit")]
         let limiter = {
@@ -197,16 +197,16 @@ impl GitHubDownloader {
                 .get(&url)
                 .send()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             if response.status() == StatusCode::FORBIDDEN {
-                return Err(OrchestratorError::GitHub(
+                return Err(OrchestratorError::github(
                     "GitHub API rate limit exceeded".to_string(),
                 ));
             }
 
             if !response.status().is_success() {
-                return Err(OrchestratorError::GitHub(format!(
+                return Err(OrchestratorError::github(format!(
                     "GitHub API returned status: {}",
                     response.status()
                 )));
@@ -215,7 +215,7 @@ impl GitHubDownloader {
             let search_response: GitHubSearchResponse = response
                 .json()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             Ok(search_response)
         };
@@ -261,23 +261,23 @@ impl GitHubDownloader {
                 .get(&url)
                 .send()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             if response.status() == StatusCode::NOT_FOUND {
-                return Err(OrchestratorError::NotFound(format!(
+                return Err(OrchestratorError::not_found(format!(
                     "GitHub repository: {}/{}",
                     owner, repo
                 )));
             }
 
             if response.status() == StatusCode::FORBIDDEN {
-                return Err(OrchestratorError::GitHub(
+                return Err(OrchestratorError::github(
                     "GitHub API rate limit exceeded".to_string(),
                 ));
             }
 
             if !response.status().is_success() {
-                return Err(OrchestratorError::GitHub(format!(
+                return Err(OrchestratorError::github(format!(
                     "GitHub API returned status: {}",
                     response.status()
                 )));
@@ -286,7 +286,7 @@ impl GitHubDownloader {
             let repo_info: crate::downloader::GitHubRepoInfo = response
                 .json()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             Ok(repo_info)
         };
@@ -329,35 +329,32 @@ impl GitHubDownloader {
                 .get(&archive_url)
                 .send()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             if response.status() == StatusCode::NOT_FOUND {
-                return Err(OrchestratorError::NotFound(format!(
+                return Err(OrchestratorError::not_found(format!(
                     "GitHub archive: {}/{}@{}",
                     owner, repo, ref_name
                 )));
             }
 
             if response.status() == StatusCode::FORBIDDEN {
-                return Err(OrchestratorError::GitHub(
+                return Err(OrchestratorError::github(
                     "GitHub API rate limit exceeded".to_string(),
                 ));
             }
 
             if !response.status().is_success() {
-                return Err(OrchestratorError::DownloadFailed {
-                    package: format!("{}/{}", owner, repo),
-                    source: Box::new(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        format!("Download failed: {}", response.status()),
-                    )),
-                });
+                return Err(OrchestratorError::download_failed(
+                    format!("{}/{}", owner, repo),
+                    format!("Download failed: {}", response.status()),
+                ));
             }
 
             let bytes = response
                 .bytes()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             Ok(bytes)
         };
@@ -378,7 +375,7 @@ impl GitHubDownloader {
         };
 
         // Create temp directory for extraction
-        let temp_dir = tempfile::tempdir().map_err(|e| OrchestratorError::io_error(e))?;
+        let temp_dir = tempfile::tempdir().map_err(|e| OrchestratorError::io(e))?;
         let temp_path = temp_dir.path().to_path_buf();
 
         // Extract archive
@@ -398,12 +395,12 @@ impl GitHubDownloader {
     /// Extract a tarball or zipball archive.
     async fn extract_archive(&self, bytes: &[u8], dest: &Path, format: &str) -> Result<()> {
         let mut archive_file = tempfile::NamedTempFile::new()
-            .map_err(|e| OrchestratorError::io_error(e))?;
+            .map_err(|e| OrchestratorError::io(e))?;
 
         use std::io::Write;
         archive_file
             .write_all(bytes)
-            .map_err(|e| OrchestratorError::io_error(e))?;
+            .map_err(|e| OrchestratorError::io(e))?;
 
         let archive_path = archive_file.path();
 
@@ -419,7 +416,7 @@ impl GitHubDownloader {
                 .arg(format!("--strip-components={}", strip_level))
                 .output()
                 .await
-                .map_err(|e| OrchestratorError::io_error(e))?
+                .map_err(|e| OrchestratorError::io(e))?
         } else {
             // For zipball, use unzip
             tokio::process::Command::new("unzip")
@@ -429,20 +426,17 @@ impl GitHubDownloader {
                 .arg(dest)
                 .output()
                 .await
-                .map_err(|e| OrchestratorError::io_error(e))?
+                .map_err(|e| OrchestratorError::io(e))?
         };
 
         if !status.status.success() {
-            return Err(OrchestratorError::DownloadFailed {
-                package: "unknown".to_string(),
-                source: Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!(
-                        "Archive extraction failed: {}",
-                        String::from_utf8_lossy(&status.stderr)
-                    ),
-                )),
-            });
+            return Err(OrchestratorError::download_failed(
+                "unknown".to_string(),
+                format!(
+                    "Archive extraction failed: {}",
+                    String::from_utf8_lossy(&status.stderr)
+                ),
+            ));
         }
 
         Ok(())
@@ -460,9 +454,8 @@ impl GitHubDownloader {
                 .collect();
 
             if parts.len() < 2 {
-                return Err(OrchestratorError::InvalidPackageName(format!(
-                    "Invalid GitHub URL: {}",
-                    repo
+                return Err(OrchestratorError::invalid_package_name(format!(
+                    "{}", repo
                 )));
             }
 
@@ -472,9 +465,8 @@ impl GitHubDownloader {
         // Handle owner/repo format
         let parts: Vec<&str> = repo.split('/').collect();
         if parts.len() != 2 {
-            return Err(OrchestratorError::InvalidPackageName(format!(
-                "Invalid GitHub repo identifier: {}",
-                repo
+            return Err(OrchestratorError::invalid_package_name(format!(
+                "{}", repo
             )));
         }
 
@@ -490,10 +482,10 @@ impl GitHubDownloader {
             .get(url)
             .send()
             .await
-            .map_err(|e| OrchestratorError::http_error(e))?;
+            .map_err(|e| OrchestratorError::http(e))?;
 
         if !response.status().is_success() {
-            return Err(OrchestratorError::GitHub(format!(
+            return Err(OrchestratorError::github(format!(
                 "Failed to get rate limit: {}",
                 response.status()
             )));
@@ -502,7 +494,7 @@ impl GitHubDownloader {
         let rate_limit: GitHubRateLimitResponse = response
             .json()
             .await
-            .map_err(|e| OrchestratorError::http_error(e))?;
+            .map_err(|e| OrchestratorError::http(e))?;
 
         Ok(GitHubRateLimit {
             core: rate_limit.resources.core,

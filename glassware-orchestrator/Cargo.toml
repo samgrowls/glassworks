@@ -47,10 +47,22 @@ parking_lot = { workspace = true }
 urlencoding = { workspace = true }
 rand = { workspace = true }
 
+# Rate limiting
+governor = { workspace = true }
+nonzero_ext = { workspace = true }
+
+# Utilities
+tempfile = { workspace = true }
+
 [dev-dependencies]
 tokio-test = { workspace = true }
-tempfile = { workspace = true }
 
 [[bin]]
 name = "glassware-orchestrator"
 path = "src/main.rs"
+
+[features]
+default = ["llm"]
+llm = []
+rate-limit = []
+retry = []

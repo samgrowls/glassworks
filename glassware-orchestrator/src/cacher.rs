@@ -57,8 +57,15 @@ impl Cacher {
         db_path: P,
         ttl_days: i64,
     ) -> Result<Self> {
-        let db_path = db_path.as_ref().to_path_buf();
-        
+        let mut db_path = db_path.as_ref().to_path_buf();
+
+        // Convert relative path to absolute path
+        if db_path.is_relative() {
+            if let Ok(current_dir) = std::env::current_dir() {
+                db_path = current_dir.join(db_path);
+            }
+        }
+
         // Ensure parent directory exists
         if let Some(parent) = db_path.parent() {
             tokio::fs::create_dir_all(parent).await.map_err(|e| {
@@ -66,15 +73,33 @@ impl Cacher {
             })?;
         }
 
+        // Create the database file if it doesn't exist (sqlx requires the file to exist)
+        if !db_path.exists() {
+            tokio::fs::File::create(&db_path).await.map_err(|e| {
+                OrchestratorError::cache_error(format!("Failed to create cache database file: {}", e))
+            })?;
+        }
+
+        // Build SQLite connection URL with sqlite: prefix (required by sqlx)
+        // For absolute paths: sqlite:/tmp/file.db (one slash after sqlite:)
+        // For relative paths: sqlite:file.db (no slash after sqlite:)
+        let db_url = format!(
+            "sqlite:{}",
+            db_path.to_str().ok_or_else(|| {
+                OrchestratorError::cache_error("Invalid database path".to_string())
+            })?
+        );
+
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .min_connections(1)
             .acquire_timeout(StdDuration::from_secs(30))
-            .connect(db_path.to_str().ok_or_else(|| {
-                OrchestratorError::cache_error("Invalid database path".to_string())
-            })?)
+            .connect(&db_url)
             .await
-            .map_err(|e| OrchestratorError::database_error(e))?;
+            .map_err(|e| OrchestratorError::database_error(e, format!(
+                "Failed to connect to cache database '{}'",
+                db_url
+            )))?;
 
         let cacher = Self {
             pool: Arc::new(pool),
@@ -103,7 +128,7 @@ impl Cacher {
         )
         .execute(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         // Create index on expires_at for efficient cleanup
         sqlx::query(
@@ -113,7 +138,7 @@ impl Cacher {
         )
         .execute(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         // Create index on source_type for filtering
         sqlx::query(
@@ -123,9 +148,27 @@ impl Cacher {
         )
         .execute(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
-        info!("Cache database initialized");
+        // Enable WAL mode for better concurrency
+        sqlx::query("PRAGMA journal_mode = WAL")
+            .execute(&*self.pool)
+            .await
+            .map_err(|e| OrchestratorError::database_error(e, "Failed to set WAL mode"))?;
+
+        // Set synchronous to NORMAL for better performance (safe with WAL)
+        sqlx::query("PRAGMA synchronous = NORMAL")
+            .execute(&*self.pool)
+            .await
+            .map_err(|e| OrchestratorError::database_error(e, "Failed to set synchronous"))?;
+
+        // Set cache size (64MB)
+        sqlx::query("PRAGMA cache_size = -64000")
+            .execute(&*self.pool)
+            .await
+            .map_err(|e| OrchestratorError::database_error(e, "Failed to set cache_size"))?;
+
+        info!("Cache database initialized with WAL mode");
         Ok(())
     }
 
@@ -142,7 +185,7 @@ impl Cacher {
         .bind(key)
         .fetch_optional(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         if let Some((key, source_type, result, created_at_str, expires_at_str, content_hash)) = row {
             // Parse DateTime from strings
@@ -188,7 +231,7 @@ impl Cacher {
         .bind(&entry.content_hash)
         .execute(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         debug!("Cached entry for key: {}", entry.key);
         Ok(())
@@ -226,7 +269,7 @@ impl Cacher {
         .bind(key)
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         Ok(count.0 > 0)
     }
@@ -241,7 +284,7 @@ impl Cacher {
         .bind(key)
         .execute(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -255,7 +298,7 @@ impl Cacher {
         )
         .execute(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         let removed = result.rows_affected() as usize;
         if removed > 0 {
@@ -269,35 +312,35 @@ impl Cacher {
         let total: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM cache_entries")
             .fetch_one(&*self.pool)
             .await
-            .map_err(|e| OrchestratorError::database_error(e))?;
+            .map_err(|e| OrchestratorError::database(e))?;
 
         let expired: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM cache_entries WHERE expires_at <= datetime('now')",
         )
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         let npm: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM cache_entries WHERE source_type = 'npm'",
         )
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         let github: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM cache_entries WHERE source_type = 'github'",
         )
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         let file: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM cache_entries WHERE source_type = 'file'",
         )
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| OrchestratorError::database_error(e))?;
+        .map_err(|e| OrchestratorError::database(e))?;
 
         Ok(CacheStats {
             total_entries: total.0 as usize,
@@ -313,7 +356,7 @@ impl Cacher {
         sqlx::query("DELETE FROM cache_entries")
             .execute(&*self.pool)
             .await
-            .map_err(|e| OrchestratorError::database_error(e))?;
+            .map_err(|e| OrchestratorError::database(e))?;
 
         info!("Cache cleared");
         Ok(())

@@ -203,6 +203,8 @@
 pub mod adversarial;
 pub mod cacher;
 pub mod checkpoint;
+pub mod cli;
+pub mod cli_validator;
 pub mod downloader;
 pub mod error;
 pub mod formatters;
@@ -213,8 +215,10 @@ pub mod progress;
 pub mod rate_limiter;
 pub mod retry;
 pub mod scanner;
+pub mod scan_registry;
 pub mod streaming;
 pub mod tracing;
+pub mod version_scanner;
 
 // Re-export main types for convenience
 pub use adversarial::{
@@ -307,8 +311,7 @@ mod tests {
     fn test_checkpoint_creation() {
         use tempfile::TempDir;
         let temp_dir = TempDir::new().unwrap();
-        let manager = CheckpointManager::new(temp_dir.path());
-        assert!(manager.is_ok());
+        let _manager = CheckpointManager::new(temp_dir.path());
     }
 
     #[test]

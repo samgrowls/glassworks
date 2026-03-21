@@ -144,14 +144,14 @@ where
     /// Write result in JSON Lines format.
     async fn write_json_lines(&mut self, result: &PackageScanResult) -> Result<()> {
         let json = serde_json::to_string(result).map_err(|e| {
-            OrchestratorError::json_error(e)
+            OrchestratorError::json(e)
         })?;
 
         self.output.write_all(json.as_bytes()).await.map_err(|e| {
-            OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+            OrchestratorError::io(e)
         })?;
         self.output.write_all(b"\n").await.map_err(|e| {
-            OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+            OrchestratorError::io(e)
         })?;
 
         Ok(())
@@ -167,13 +167,13 @@ where
             // Write SARIF header
             let header = r#"{"$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","version":"2.1.0","runs":[{"tool":{"driver":{"name":"glassware-orchestrator","version":"0.1.0","informationUri":"https://github.com/glassware/glassworks"}},"results":["#;
             self.output.write_all(header.as_bytes()).await.map_err(|e| {
-                OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                OrchestratorError::io(e)
             })?;
             state.started = true;
         } else if state.count > 0 {
             // Write comma separator
             self.output.write_all(b",").await.map_err(|e| {
-                OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                OrchestratorError::io(e)
             })?;
         }
 
@@ -181,7 +181,7 @@ where
         for finding in &result.findings {
             if state.count > 0 {
                 self.output.write_all(b",").await.map_err(|e| {
-                    OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                    OrchestratorError::io(e)
                 })?;
             }
 
@@ -210,11 +210,11 @@ where
             });
 
             let json = serde_json::to_string(&sarif_result).map_err(|e| {
-                OrchestratorError::json_error(e)
+                OrchestratorError::json(e)
             })?;
 
             self.output.write_all(json.as_bytes()).await.map_err(|e| {
-                OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                OrchestratorError::io(e)
             })?;
 
             state.count += 1;
@@ -229,26 +229,26 @@ where
             OutputFormat::JsonArray => {
                 // Write all buffered results as JSON array
                 self.output.write_all(b"[").await.map_err(|e| {
-                    OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                    OrchestratorError::io(e)
                 })?;
 
                 for (i, result) in self.buffer.iter().enumerate() {
                     if i > 0 {
                         self.output.write_all(b",").await.map_err(|e| {
-                            OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                            OrchestratorError::io(e)
                         })?;
                     }
 
                     let json = serde_json::to_string(result).map_err(|e| {
-                        OrchestratorError::json_error(e)
+                        OrchestratorError::json(e)
                     })?;
                     self.output.write_all(json.as_bytes()).await.map_err(|e| {
-                        OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                        OrchestratorError::io(e)
                     })?;
                 }
 
                 self.output.write_all(b"]").await.map_err(|e| {
-                    OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                    OrchestratorError::io(e)
                 })?;
             }
             OutputFormat::Sarif => {
@@ -257,7 +257,7 @@ where
                     if state.started {
                         let footer = r#"]}]}"#;
                         self.output.write_all(footer.as_bytes()).await.map_err(|e| {
-                            OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+                            OrchestratorError::io(e)
                         })?;
                     }
                 }
@@ -268,7 +268,7 @@ where
         }
 
         self.output.flush().await.map_err(|e| {
-            OrchestratorError::io_error(io::Error::new(io::ErrorKind::WriteZero, e.to_string()))
+            OrchestratorError::io(e)
         })?;
 
         Ok(())

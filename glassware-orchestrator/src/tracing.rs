@@ -35,6 +35,7 @@ use std::fs::File;
 use std::io;
 use tracing_subscriber::{
     fmt,
+    prelude::__tracing_subscriber_SubscriberExt,
     registry::Registry,
     EnvFilter,
 };
@@ -212,38 +213,95 @@ pub fn init_tracing(config: &TracingConfig) -> Result<()> {
     // Set up output based on config - use dynamic dispatch for different formats
     match &config.output {
         TracingOutput::Stdout => {
-            let subscriber = create_subscriber(config, filter, io::stdout)?;
-            tracing::subscriber::set_global_default(subscriber)
-                .map_err(|e| OrchestratorError::internal_error(format!(
-                    "Failed to set tracing subscriber: {}",
-                    e
-                )))?;
+            setup_tracing(config, filter, io::stdout)?;
         }
         TracingOutput::Stderr => {
-            let subscriber = create_subscriber(config, filter, io::stderr)?;
-            tracing::subscriber::set_global_default(subscriber)
-                .map_err(|e| OrchestratorError::internal_error(format!(
-                    "Failed to set tracing subscriber: {}",
-                    e
-                )))?;
+            setup_tracing(config, filter, io::stderr)?;
         }
         TracingOutput::File(path) => {
             let file = File::create(path)
-                .map_err(|e| OrchestratorError::io_error(e, format!("Failed to create log file: {}", path)))?;
+                .map_err(|e| OrchestratorError::io(e))?;
 
-            let subscriber = create_subscriber(config, filter, file)?;
+            setup_tracing(config, filter, file)?;
+        }
+        TracingOutput::Both(path) => {
+            // For Both output, just use file for now
+            // Tee writer requires more complex MakeWriter implementation
+            let file = File::create(path)
+                .map_err(|e| OrchestratorError::io(e))?;
+
+            setup_tracing(config, filter, file)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Set up tracing subscriber with the given configuration.
+fn setup_tracing<W>(
+    config: &TracingConfig,
+    filter: EnvFilter,
+    writer: W,
+) -> Result<()>
+where
+    W: for<'a> tracing_subscriber::fmt::MakeWriter<'a> + Send + Sync + 'static,
+{
+    // Build subscriber based on format
+    match config.format {
+        TracingFormat::Pretty => {
+            let subscriber = Registry::default()
+                .with(filter)
+                .with(
+                    fmt::layer()
+                        .pretty()
+                        .with_ansi(config.with_ansi)
+                        .with_thread_names(config.with_threads)
+                        .with_thread_ids(config.with_threads)
+                        .with_target(config.with_targets)
+                        .with_line_number(config.with_line_numbers)
+                        .with_file(config.with_file_names)
+                        .with_writer(writer),
+                );
             tracing::subscriber::set_global_default(subscriber)
                 .map_err(|e| OrchestratorError::internal_error(format!(
                     "Failed to set tracing subscriber: {}",
                     e
                 )))?;
         }
-        TracingOutput::Both(path) => {
-            let file = File::create(path)
-                .map_err(|e| OrchestratorError::io_error(e, format!("Failed to create log file: {}", path)))?;
-
-            let tee_writer = TeeWriter::new(io::stdout(), file);
-            let subscriber = create_subscriber(config, filter, tee_writer)?;
+        TracingFormat::Compact | TracingFormat::Json => {
+            let subscriber = Registry::default()
+                .with(filter)
+                .with(
+                    fmt::layer()
+                        .compact()
+                        .with_ansi(config.with_ansi)
+                        .with_thread_names(config.with_threads)
+                        .with_thread_ids(config.with_threads)
+                        .with_target(config.with_targets)
+                        .with_line_number(config.with_line_numbers)
+                        .with_file(config.with_file_names)
+                        .with_writer(writer),
+                );
+            tracing::subscriber::set_global_default(subscriber)
+                .map_err(|e| OrchestratorError::internal_error(format!(
+                    "Failed to set tracing subscriber: {}",
+                    e
+                )))?;
+        }
+        TracingFormat::Minimal => {
+            let subscriber = Registry::default()
+                .with(filter)
+                .with(
+                    fmt::layer()
+                        .with_ansi(false)
+                        .without_time()
+                        .with_target(false)
+                        .with_thread_names(false)
+                        .with_thread_ids(false)
+                        .with_line_number(false)
+                        .with_file(false)
+                        .with_writer(writer),
+                );
             tracing::subscriber::set_global_default(subscriber)
                 .map_err(|e| OrchestratorError::internal_error(format!(
                     "Failed to set tracing subscriber: {}",
@@ -253,66 +311,6 @@ pub fn init_tracing(config: &TracingConfig) -> Result<()> {
     }
 
     Ok(())
-}
-
-/// Create a tracing subscriber with the given configuration.
-fn create_subscriber<W>(
-    config: &TracingConfig,
-    filter: EnvFilter,
-    writer: W,
-) -> Result<Registry>
-where
-    W: for<'a> tracing_subscriber::fmt::MakeWriter<'a> + Send + Sync + 'static,
-{
-    let subscriber = match config.format {
-        TracingFormat::Pretty => {
-            Registry::default()
-                .with(filter)
-                .with(
-                    fmt::layer()
-                        .pretty()
-                        .with_ansi(config.with_ansi)
-                        .with_thread_names(config.with_threads)
-                        .with_thread_ids(config.with_threads)
-                        .with_target(config.with_targets)
-                        .with_line_numbers(config.with_line_numbers)
-                        .with_file(config.with_file_names)
-                        .with_writer(writer),
-                )
-        }
-        TracingFormat::Compact | TracingFormat::Json => {
-            Registry::default()
-                .with(filter)
-                .with(
-                    fmt::layer()
-                        .compact()
-                        .with_ansi(config.with_ansi)
-                        .with_thread_names(config.with_threads)
-                        .with_thread_ids(config.with_threads)
-                        .with_target(config.with_targets)
-                        .with_line_numbers(config.with_line_numbers)
-                        .with_file(config.with_file_names)
-                        .with_writer(writer),
-                )
-        }
-        TracingFormat::Minimal => {
-            Registry::default()
-                .with(filter)
-                .with(
-                    fmt::layer()
-                        .with_ansi(false)
-                        .without_time()
-                        .with_target(false)
-                        .with_thread_names(false)
-                        .with_thread_ids(false)
-                        .with_line_numbers(false)
-                        .with_file(false)
-                        .with_writer(writer),
-                )
-        }
-    };
-
-    Ok(subscriber)
 }
 
 /// Writer that writes to both outputs (tee).
@@ -481,6 +479,8 @@ mod tests {
 
     #[test]
     fn test_tee_writer() {
+        use std::io::Write;
+        
         let mut buf1 = Vec::new();
         let mut buf2 = Vec::new();
 

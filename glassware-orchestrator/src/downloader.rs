@@ -22,25 +22,56 @@ use tokio_retry::{
     Retry,
 };
 
-use crate::error::{OrchestratorError, Result};
+use crate::error::{ErrorContext, OrchestratorError, Result};
 
 /// npm registry response for package metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct NpmPackageInfo {
     /// Package name.
     pub name: String,
-    /// Latest version.
+
+    /// Latest version from dist-tags
+    #[serde(rename = "dist-tags", default)]
+    pub dist_tags: Option<NpmDistTags>,
+
+    /// All versions with their metadata
     #[serde(default)]
-    pub version: Option<String>,
-    /// Package description.
+    pub versions: std::collections::HashMap<String, NpmVersionInfo>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NpmDistTags {
+    #[serde(default)]
+    pub latest: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NpmVersionInfo {
+    pub name: String,
+    pub version: String,
+    #[serde(default)]
+    pub dist: Option<NpmDist>,
     #[serde(default)]
     pub description: Option<String>,
-    /// Repository URL.
-    #[serde(default)]
-    pub repository: Option<NpmRepository>,
-    /// Download URL for the tarball.
-    #[serde(rename = "dist", default)]
-    pub dist: Option<NpmDist>,
+}
+
+impl NpmPackageInfo {
+    /// Resolve the tarball URL for the latest version.
+    pub fn resolve_tarball(&self) -> Option<String> {
+        // Get latest version from dist-tags
+        let latest = self.dist_tags.as_ref()?.latest.as_ref()?;
+
+        // Get version info from versions map
+        let version_info = self.versions.get(latest)?;
+
+        // Get tarball from dist
+        version_info.dist.as_ref()?.tarball.clone()
+    }
+
+    /// Get the latest version string.
+    pub fn latest_version(&self) -> Option<String> {
+        self.dist_tags.as_ref()?.latest.clone()
+    }
 }
 
 /// Repository information from npm.
@@ -155,7 +186,7 @@ impl Downloader {
             .timeout(Duration::from_secs(config.timeout_secs))
             .user_agent("glassware-orchestrator/0.1.0")
             .build()
-            .map_err(|e| OrchestratorError::http_error(e))?;
+            .map_err(|e| OrchestratorError::http(e))?;
 
         let concurrency_semaphore = Arc::new(Semaphore::new(config.max_concurrent));
 
@@ -195,14 +226,14 @@ impl Downloader {
                 .get(&url)
                 .send()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             if response.status() == StatusCode::NOT_FOUND {
                 return Err(OrchestratorError::not_found(package));
             }
 
             if !response.status().is_success() {
-                return Err(OrchestratorError::Npm(format!(
+                return Err(OrchestratorError::npm(format!(
                     "npm API returned status: {}",
                     response.status()
                 )));
@@ -211,7 +242,7 @@ impl Downloader {
             let info: NpmPackageInfo = response
                 .json()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             Ok(info)
         };
@@ -233,16 +264,29 @@ impl Downloader {
     /// Download npm package tarball.
     pub async fn download_npm_package(&self, package: &str) -> Result<DownloadedPackage> {
         let info = self.get_npm_package_info(package).await?;
-        
+
+        // Resolve tarball URL from versions[latest].dist.tarball
         let tarball_url = info
-            .dist
-            .as_ref()
-            .and_then(|d| d.tarball.as_ref())
-            .ok_or_else(|| OrchestratorError::npm_error("No tarball URL found".to_string()))?;
+            .resolve_tarball()
+            .ok_or_else(|| OrchestratorError::npm(format!(
+                "No tarball URL found for package '{}'. Available versions: {:?}",
+                package,
+                info.versions.keys().take(5).collect::<Vec<_>>()
+            )))?;
 
-        let version = info.version.clone().unwrap_or_else(|| "latest".to_string());
+        // Get version from dist-tags.latest
+        let version = info
+            .latest_version()
+            .unwrap_or_else(|| "unknown".to_string());
 
-        self.download_tarball(package, tarball_url, "npm", &version).await
+        tracing::debug!(
+            package = %package,
+            version = %version,
+            tarball = %tarball_url,
+            "Downloading npm package"
+        );
+
+        self.download_tarball(package, &tarball_url, "npm", &version).await
     }
 
     /// Get GitHub repository information.
@@ -266,10 +310,10 @@ impl Downloader {
             let response = request
                 .send()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             if response.status() == StatusCode::NOT_FOUND {
-                return Err(OrchestratorError::NotFound(format!(
+                return Err(OrchestratorError::not_found(format!(
                     "GitHub repository: {}/{}",
                     owner, repo
                 )));
@@ -284,15 +328,16 @@ impl Downloader {
                         .unwrap_or(60);
                     return Err(OrchestratorError::RateLimitExceeded {
                         retry_after: retry_after_secs,
+                        context: ErrorContext::new(),
                     });
                 }
-                return Err(OrchestratorError::GitHub(
+                return Err(OrchestratorError::github(
                     "GitHub API rate limit exceeded".to_string(),
                 ));
             }
 
             if !response.status().is_success() {
-                return Err(OrchestratorError::GitHub(format!(
+                return Err(OrchestratorError::github(format!(
                     "GitHub API returned status: {}",
                     response.status()
                 )));
@@ -301,7 +346,7 @@ impl Downloader {
             let repo_info: GitHubRepoInfo = response
                 .json()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             Ok(repo_info)
         };
@@ -372,22 +417,19 @@ impl Downloader {
             let response = request
                 .send()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             if !response.status().is_success() {
-                return Err(OrchestratorError::DownloadFailed {
-                    package: name.to_string(),
-                    source: Box::new(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        format!("Download failed: {}", response.status()),
-                    )),
-                });
+                return Err(OrchestratorError::download_failed(
+                    name.to_string(),
+                    format!("Download failed: {}", response.status()),
+                ));
             }
 
             let bytes = response
                 .bytes()
                 .await
-                .map_err(|e| OrchestratorError::http_error(e))?;
+                .map_err(|e| OrchestratorError::http(e))?;
 
             Ok(bytes)
         };
@@ -412,7 +454,7 @@ impl Downloader {
         let content_hash = format!("{:x}", hasher.finish());
 
         // Create temp directory for extraction
-        let temp_dir = tempfile::tempdir().map_err(|e| OrchestratorError::io_error(e))?;
+        let temp_dir = tempfile::tempdir().map_err(|e| OrchestratorError::io(e))?;
         let temp_path = temp_dir.path().to_path_buf();
 
         // Extract tarball
@@ -447,12 +489,12 @@ impl Downloader {
     ) -> Result<()> {
         // Use tokio process to run tar command
         let mut archive_file = tempfile::NamedTempFile::new()
-            .map_err(|e| OrchestratorError::io_error(e))?;
+            .map_err(|e| OrchestratorError::io(e))?;
         
         use std::io::Write;
         archive_file
             .write_all(bytes)
-            .map_err(|e| OrchestratorError::io_error(e))?;
+            .map_err(|e| OrchestratorError::io(e))?;
 
         let archive_path = archive_file.path();
 
@@ -469,19 +511,16 @@ impl Downloader {
             .arg(format!("--strip-components={}", strip_level))
             .output()
             .await
-            .map_err(|e| OrchestratorError::io_error(e))?;
+            .map_err(|e| OrchestratorError::io(e))?;
 
         if !status.status.success() {
-            return Err(OrchestratorError::DownloadFailed {
-                package: "unknown".to_string(),
-                source: Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!(
-                        "tar extraction failed: {}",
-                        String::from_utf8_lossy(&status.stderr)
-                    ),
-                )),
-            });
+            return Err(OrchestratorError::download_failed(
+                "unknown".to_string(),
+                format!(
+                    "tar extraction failed: {}",
+                    String::from_utf8_lossy(&status.stderr)
+                ),
+            ));
         }
 
         Ok(())
@@ -493,11 +532,10 @@ impl Downloader {
         if spec.contains('/') || spec.starts_with("github:") {
             let spec = spec.strip_prefix("github:").unwrap_or(spec);
             let parts: Vec<&str> = spec.split('/').collect();
-            
+
             if parts.len() != 2 || parts[0].is_empty() || parts[1].is_empty() {
-                return Err(OrchestratorError::InvalidPackageName(format!(
-                    "Invalid GitHub spec: {}",
-                    spec
+                return Err(OrchestratorError::invalid_package_name(format!(
+                    "{}", spec
                 )));
             }
 
