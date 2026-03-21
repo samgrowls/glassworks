@@ -268,6 +268,15 @@ pub enum OrchestratorError {
         context: ErrorContext,
     },
 
+    /// Error during LLM analysis.
+    #[error("LLM error: {message}")]
+    Llm {
+        /// Error message
+        message: String,
+        /// Error context
+        context: ErrorContext,
+    },
+
     /// Error when maximum retries are exceeded.
     #[error("Maximum retries exceeded for operation: {operation}")]
     MaxRetriesExceeded {
@@ -459,6 +468,7 @@ impl OrchestratorError {
             OrchestratorError::Authentication { .. } => ErrorCategory::Authentication,
             OrchestratorError::Internal { .. } => ErrorCategory::Internal,
             OrchestratorError::Parsing { .. } => ErrorCategory::Parsing,
+            OrchestratorError::Llm { .. } => ErrorCategory::Internal,
         }
     }
 
@@ -547,6 +557,9 @@ impl OrchestratorError {
             OrchestratorError::Internal { .. } => {
                 "This is an internal error. Please report it with the full error message"
             }
+            OrchestratorError::Llm { .. } => {
+                "Check LLM API configuration and try again"
+            }
         }
     }
 
@@ -577,6 +590,7 @@ impl OrchestratorError {
             OrchestratorError::Validation { context, .. } => context,
             OrchestratorError::Authentication { context, .. } => context,
             OrchestratorError::Internal { context, .. } => context,
+            OrchestratorError::Llm { context, .. } => context,
         }
     }
 
@@ -607,6 +621,7 @@ impl OrchestratorError {
             OrchestratorError::Authentication { context: c, .. } => *c = context,
             OrchestratorError::Internal { context: c, .. } => *c = context,
             OrchestratorError::Parsing { context: c, .. } => *c = context,
+            OrchestratorError::Llm { context: c, .. } => *c = context,
         }
         self
     }
@@ -715,6 +730,14 @@ impl OrchestratorError {
     /// Create a config error with context.
     pub fn config_error(message: impl Into<String>) -> Self {
         Self::Config {
+            message: message.into(),
+            context: ErrorContext::new(),
+        }
+    }
+
+    /// Create an LLM error with context.
+    pub fn llm(message: impl Into<String>) -> Self {
+        Self::Llm {
             message: message.into(),
             context: ErrorContext::new(),
         }

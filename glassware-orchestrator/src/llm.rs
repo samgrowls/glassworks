@@ -124,8 +124,10 @@ pub struct LlmAnalyzerConfig {
     pub base_url: String,
     /// API key.
     pub api_key: String,
-    /// Model name.
+    /// Model name (for backwards compatibility - use models for multiple).
     pub model: String,
+    /// List of models to try in order (for fallback).
+    pub models: Vec<String>,
     /// Request timeout in seconds.
     pub timeout_secs: u64,
     /// Maximum tokens for response.
@@ -144,9 +146,16 @@ impl Default for LlmAnalyzerConfig {
             base_url: "https://api.cerebras.ai/v1".to_string(),
             api_key: String::new(),
             model: "llama-3.3-70b".to_string(),
+            // Default model list matching Python harness (NVIDIA models with fallback)
+            models: vec![
+                "qwen/qwen3.5-397b-a17b".to_string(),  // Strongest - 397B
+                "moonshotai/kimi-k2.5".to_string(),     // Kimi K2.5
+                "z-ai/glm5".to_string(),                // GLM-5
+                "meta/llama-3.3-70b-instruct".to_string(), // Fallback - 70B
+            ],
             timeout_secs: 30,
             max_tokens: 1024,
-            temperature: 0.1, // Low temperature for consistent analysis
+            temperature: 0.1,
             enable_cache: true,
             cache_dir: None,
         }
@@ -155,17 +164,31 @@ impl Default for LlmAnalyzerConfig {
 
 impl LlmAnalyzerConfig {
     /// Create config from environment variables.
-    /// Reads: GLASSWARE_LLM_BASE_URL, GLASSWARE_LLM_API_KEY, GLASSWARE_LLM_MODEL
+    /// Reads: GLASSWARE_LLM_BASE_URL, GLASSWARE_LLM_API_KEY, GLASSWARE_LLM_MODELS (or GLASSWARE_LLM_MODEL)
     pub fn from_env() -> Option<Self> {
         let base_url = std::env::var("GLASSWARE_LLM_BASE_URL").ok()?;
         let api_key = std::env::var("GLASSWARE_LLM_API_KEY").ok()?;
-        let model = std::env::var("GLASSWARE_LLM_MODEL")
-            .unwrap_or_else(|_| "llama-3.3-70b".to_string());
         
+        // Try GLASSWARE_LLM_MODELS first (comma-separated), then fall back to GLASSWARE_LLM_MODEL
+        let models = if let Ok(models_str) = std::env::var("GLASSWARE_LLM_MODELS") {
+            models_str.split(',').map(|s| s.trim().to_string()).collect()
+        } else if let Ok(model) = std::env::var("GLASSWARE_LLM_MODEL") {
+            vec![model]
+        } else {
+            // Default to NVIDIA models with fallback
+            vec![
+                "qwen/qwen3.5-397b-a17b".to_string(),
+                "moonshotai/kimi-k2.5".to_string(),
+                "z-ai/glm5".to_string(),
+                "meta/llama-3.3-70b-instruct".to_string(),
+            ]
+        };
+
         Some(Self {
             base_url,
             api_key,
-            model,
+            model: models.first().cloned().unwrap_or_else(|| "llama-3.3-70b".to_string()),
+            models,
             ..Default::default()
         })
     }
@@ -190,12 +213,19 @@ impl LlmAnalyzerConfig {
         }
     }
 
-    /// Create config for NVIDIA NIM API.
+    /// Create config for NVIDIA NIM API with model fallback.
     pub fn nvidia_nim(api_key: String) -> Self {
         Self {
             base_url: "https://integrate.api.nvidia.com/v1".to_string(),
             api_key,
             model: "meta/llama-3.3-70b-instruct".to_string(),
+            // NVIDIA models in order of preference (strongest first)
+            models: vec![
+                "qwen/qwen3.5-397b-a17b".to_string(),  // Strongest - 397B
+                "moonshotai/kimi-k2.5".to_string(),     // Kimi K2.5
+                "z-ai/glm5".to_string(),                // GLM-5
+                "meta/llama-3.3-70b-instruct".to_string(), // Fallback - 70B
+            ],
             ..Default::default()
         }
     }
@@ -265,12 +295,44 @@ impl LlmAnalyzer {
         self.analyze(&findings).await
     }
 
-    /// Analyze multiple findings.
-    pub async fn analyze(&self, findings: &[LlmFinding]) -> Result<LlmVerdict> {
+    /// Analyze multiple findings with model fallback.
+    /// Tries models in order until one succeeds.
+    pub async fn analyze_with_fallback(&self, findings: &[LlmFinding]) -> Result<LlmVerdict> {
         if findings.is_empty() {
             return Err(OrchestratorError::config_error("No findings to analyze".to_string()));
         }
 
+        let mut last_error: Option<OrchestratorError> = None;
+
+        // Try each model in order
+        for (i, model) in self.config.models.iter().enumerate() {
+            debug!("Attempting LLM analysis with model {}/{}: {}", i + 1, self.config.models.len(), model);
+            
+            // Temporarily override the model for this attempt
+            let mut config_with_model = self.config.clone();
+            config_with_model.model = model.clone();
+            
+            match self.analyze_with_model(findings, &config_with_model).await {
+                Ok(verdict) => {
+                    info!("LLM analysis succeeded with model: {}", model);
+                    return Ok(verdict);
+                }
+                Err(e) => {
+                    warn!("LLM analysis failed with model {}: {}", model, e);
+                    last_error = Some(e);
+                    // Continue to next model
+                }
+            }
+        }
+
+        // All models failed
+        Err(last_error.unwrap_or_else(|| {
+            OrchestratorError::llm("All LLM models failed".to_string())
+        }))
+    }
+
+    /// Analyze with a specific model (internal helper for fallback).
+    async fn analyze_with_model(&self, findings: &[LlmFinding], config: &LlmAnalyzerConfig) -> Result<LlmVerdict> {
         // Check cache
         let cache_key = self.compute_cache_key(findings);
         {
@@ -284,8 +346,8 @@ impl LlmAnalyzer {
         // Build prompt
         let prompt = self.build_prompt(findings);
 
-        // Create API request
-        let request = self.create_request(&prompt);
+        // Create API request with specific model
+        let request = self.create_request_with_model(&prompt, &config.model);
 
         // Make API call
         let response = self.call_api(&request).await?;
@@ -296,8 +358,7 @@ impl LlmAnalyzer {
         // Cache result
         if self.config.enable_cache {
             let mut cache = self.cache.lock().await;
-            let cache_key_clone = cache_key.clone();
-            cache.insert(cache_key_clone, LlmCacheEntry {
+            cache.insert(cache_key.clone(), LlmCacheEntry {
                 input_hash: cache_key,
                 verdict: verdict.clone(),
                 timestamp: chrono::Utc::now(),
@@ -305,6 +366,12 @@ impl LlmAnalyzer {
         }
 
         Ok(verdict)
+    }
+
+    /// Analyze multiple findings.
+    pub async fn analyze(&self, findings: &[LlmFinding]) -> Result<LlmVerdict> {
+        // Use fallback method by default
+        self.analyze_with_fallback(findings).await
     }
 
     /// Analyze findings in batch.
@@ -390,8 +457,13 @@ Be concise but thorough. Focus on actionable insights."#,
 
     /// Create API request body.
     fn create_request(&self, prompt: &str) -> serde_json::Value {
+        self.create_request_with_model(prompt, &self.config.model)
+    }
+
+    /// Create API request body with specific model.
+    fn create_request_with_model(&self, prompt: &str, model: &str) -> serde_json::Value {
         serde_json::json!({
-            "model": self.config.model,
+            "model": model,
             "messages": [
                 {
                     "role": "system",
@@ -610,6 +682,15 @@ mod tests {
         let ollama = LlmAnalyzerConfig::ollama("llama3".to_string());
         assert!(ollama.base_url.contains("localhost"));
         assert_eq!(ollama.model, "llama3");
+    }
+
+    #[test]
+    fn test_llm_config_models_default() {
+        let config = LlmAnalyzerConfig::default();
+        // Verify default has 4 models for fallback
+        assert_eq!(config.models.len(), 4);
+        assert_eq!(config.models[0], "qwen/qwen3.5-397b-a17b");
+        assert_eq!(config.models[3], "meta/llama-3.3-70b-instruct");
     }
 
     #[test]
