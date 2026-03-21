@@ -1,384 +1,475 @@
-# glassware Workflow Guide
+# GlassWorm Campaign Workflow Guide
 
-**Purpose:** Make scan/analyze/improve workflow obvious for developers and agents
+**Version:** v0.11.5  
+**Last Updated:** 2026-03-21
 
 ---
 
-## Quick Start (5 Minutes)
+## Quick Start
 
-### Scan npm Packages
-
-```bash
-cd harness
-
-# Scan 100 packages
-python3 diverse_sampling.py --samples-per-keyword 10 -o packages.txt
-python3 optimized_scanner.py packages.txt -w 10 -o results.json
-
-# Check results
-cat results.json | jq '{scanned, flagged, errors}'
-```
-
-### Scan GitHub Repos
+### 5-Minute Scan
 
 ```bash
-cd harness
+# Clone and build
+git clone https://github.com/samgrowls/glassworks.git
+cd glassworks
+cargo build -p glassware-cli --release
 
-# Scan 50 repos
-python3 github_scanner.py --queries "mcp" --max-repos 50 -o github-results.json
+# Scan a directory
+./target/release/glassware /path/to/project
 
-# Check results
-cat github-results.json | jq '{scanned, flagged, errors}'
+# Scan npm packages
+./target/release/glassware-orchestrator scan-npm express lodash axios
 ```
 
 ---
 
-## Complete Workflow (Scan → Analyze → Improve)
+## Table of Contents
 
-### Phase 1: Scan
+1. [Architecture Overview](#architecture-overview)
+2. [Choosing Your Tool](#choosing-your-tool)
+3. [Quick Scans](#quick-scans)
+4. [Campaign Scans](#campaign-scans)
+5. [Wave-Based Scanning](#wave-based-scanning)
+6. [LLM Analysis](#llm-analysis)
+7. [Output Formats](#output-formats)
+8. [Troubleshooting](#troubleshooting)
 
-#### Option A: npm Package Scan
+---
 
-```bash
-cd harness
+## Architecture Overview
 
-# 1. Choose categories
-# See diverse_sampling.py for available categories:
-# - ai-ml, native-build, install-scripts, devtools, crypto, etc.
-
-# 2. Sample packages
-python3 diverse_sampling.py \
-  --categories ai-ml native-build install-scripts \
-  --samples-per-keyword 20 \
-  --delay-between-keywords 0.5 \
-  --output packages.txt
-
-# Expected: 200-600 packages in 10-20 minutes
-
-# 3. Scan packages
-python3 optimized_scanner.py \
-  packages.txt \
-  -w 10 \              # Workers (10 = fast, reduce if system slow)
-  -e data/evidence/scan-1 \
-  -o scan-1-results.json \
-  -n scan-1
-
-# Expected: 200 packages in 2-5 minutes
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    GlassWorm Detection Engine                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │  glassware CLI   │  │   Rust           │  │   Python     │  │
+│  │  (single file)   │  │   Orchestrator   │  │   Harness    │  │
+│  │                  │  │                  │  │              │  │
+│  │  - Quick scans   │  │  - Campaign scans│  │  - Wave scans│  │
+│  │  - Directories   │  │  - npm/GitHub    │  │  - NVIDIA LLM│  │
+│  │  - Fast          │  │  - SARIF output  │  │  - Flexible  │  │
+│  └──────────────────┘  └──────────────────┘  └──────────────┘  │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              glassware-core (Rust detection engine)       │   │
+│  │  - 22+ detectors (Unicode, Binary, Behavioral, Host)     │   │
+│  │  - L1/L2/L3 detection tiers                              │   │
+│  │  - Campaign correlation                                  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-#### Option B: GitHub Repo Scan
+---
+
+## Choosing Your Tool
+
+| Use Case | Recommended Tool | Why |
+|----------|-----------------|-----|
+| Scan a project directory | `glassware` CLI | Fast, simple, direct |
+| Scan specific npm packages | `glassware-orchestrator` | Version support, caching |
+| Scan GitHub repositories | `glassware-orchestrator` | GitHub API integration |
+| Wave-based campaigns | Python harness | waves.toml configuration |
+| NVIDIA LLM analysis | Python harness | Model fallback, stronger models |
+| SARIF output (GitHub Security) | `glassware-orchestrator` | Native SARIF support |
+| Maximum performance | `glassware-orchestrator` | 1.5x faster than Python |
+
+### Performance Comparison
+
+| Metric | Rust Orchestrator | Python Harness |
+|--------|-------------------|----------------|
+| Scan speed (3 packages) | 9.5s | 14.5s |
+| Packages/sec | 0.32 | 0.21 |
+| Memory usage | ~50MB | ~150MB |
+| Startup time | <1s | ~2s |
+
+---
+
+## Quick Scans
+
+### Single File
 
 ```bash
-cd harness
+# Scan a single file
+glassware src/index.js
 
-# 1. Choose queries
-# Common queries: "mcp", "vscode", "cursor", "node-gyp", "prebuild"
+# With JSON output
+glassware --format json src/index.js > results.json
 
-# 2. Scan repos
-python3 github_scanner.py \
-  --queries "mcp" "vscode" "cursor" \
-  --repos-per-query 50 \
-  --max-repos 200 \
-  --scanner ./glassware-scanner \
-  --output github-scan.json
-
-# Expected: 200 repos in 1-2 hours
+# Only high/critical findings
+glassware --severity high src/index.js
 ```
 
-#### Option C: Targeted Scan
+### Directory Scan
 
 ```bash
-cd harness
+# Scan entire project
+glassware /path/to/project
 
+# With specific extensions
+glassware --extensions js,ts,tsx,jsx /path/to/project
+
+# Exclude directories
+glassware --exclude node_modules,target,.git /path/to/project
+
+# SARIF output for GitHub
+glassware --format sarif /path/to/project > results.sarif
+```
+
+### npm Packages
+
+```bash
+# Scan specific packages (Rust)
+glassware-orchestrator scan-npm express@4.19.2 lodash@4.17.21
+
+# Scan with version policy
+glassware-orchestrator scan-npm express --versions last-10
+
+# Scan from file
+echo -e "express\nlodash\naxios" > packages.txt
+glassware-orchestrator scan-file packages.txt
+```
+
+---
+
+## Campaign Scans
+
+### What is a Campaign?
+
+A **campaign** is a coordinated scanning effort targeting specific threat patterns:
+
+- **GlassWorm**: Unicode steganography + behavioral evasion
+- **PhantomRaven**: RDD (URL dependencies) + JPD author signature
+- **ForceMemo**: Python repository injection
+
+### Running a Campaign
+
+#### Option 1: Rust Orchestrator (Recommended for speed)
+
+```bash
 # 1. Create package list
-cat > target.txt << EOF
-suspicious-package@1.0.0
-another-package@2.0.0
+cat > campaign-packages.txt << EOF
+react-native-country-select@0.3.91
+react-native-international-phone-number@0.11.8
 EOF
 
-# 2. Scan
-python3 optimized_scanner.py target.txt -w 5 -e data/evidence/targeted
+# 2. Run scan with SARIF output
+glassware-orchestrator --format sarif \
+  --output campaign-results.sarif \
+  scan-file campaign-packages.txt
+
+# 3. Review results
+cat campaign-results.sarif | jq '.runs[0].results'
+```
+
+#### Option 2: Python Harness (Recommended for LLM analysis)
+
+```bash
+# 1. Configure wave in waves.toml (see Wave-Based Scanning)
+
+# 2. Run wave
+cd harness
+python3 -m core.orchestrator run-wave --wave 0 --llm
+
+# 3. Review report
+cat reports/scan-<run_id>.md
 ```
 
 ---
 
-### Phase 2: Analyze
+## Wave-Based Scanning
 
-#### Step 1: Check Scan Results
+### What is a Wave?
 
-```bash
-cd harness
+A **wave** is a pre-configured scanning campaign with:
+- Target package categories
+- Sample sizes
+- Detection thresholds
 
-# Overall stats
-cat scan-1-results.json | jq '{scanned, flagged, cached, errors}'
+### Configuring Waves
 
-# Flagged packages
-cat scan-1-results.json | jq '.flagged_packages[] | {package, findings, critical}' | head -20
-```
+Edit `harness/waves.toml`:
 
-#### Step 2: Extract Flagged Packages
+```toml
+[wave_0]
+name = "Wave 0: Calibration"
+description = "Validate pipeline with known malicious + clean packages"
+packages_total = 50
 
-```bash
-# Extract package names
-cat scan-1-results.json | jq -r '.flagged_packages[].package' > flagged.txt
-
-# Sort by critical count
-cat scan-1-results.json | jq -r '.flagged_packages | sort_by(-.critical) | .[].package' > flagged-priority.txt
-```
-
-#### Step 3: LLM Analysis (Optional)
-
-```bash
-# Set API key
-export NVIDIA_API_KEY="nvapi-..."
-
-# Run LLM on flagged packages
-python3 batch_llm_analyzer.py \
-  flagged.txt \
-  -w 2 \                # Workers (2 = safe for rate limits)
-  -e data/evidence/llm-1 \
-  -o llm-1-results.json
-
-# Check LLM results
-cat llm-1-results.json | jq '.results[] | {package, llm_classification, confidence}'
-```
-
-#### Step 4: Manual Review
-
-```bash
-# Download suspicious package
-cd /tmp
-npm pack "suspicious-package@1.0.0"
-tar -xzf *.tgz
-
-# Scan with verbose output
-cd harness
-./glassware-scanner --format json /tmp/package/ | jq '.'
-
-# Review findings
-./glassware-scanner /tmp/package/
-```
-
----
-
-### Phase 3: Improve
-
-#### Step 1: Identify False Positives
-
-```bash
-# Common FP patterns:
-# - Minified code (>100KB files)
-# - Legitimate i18n (locale checks without exit)
-# - UI polling (setInterval without network)
-# - Parser code (hex decoding in parsers)
-
-# Check flagged packages for FP patterns
-cat llm-1-results.json | jq '.results[] | select(.llm_classification == "FALSE_POSITIVE")'
-```
-
-#### Step 2: Tune Detectors
-
-**If minified code FPs:**
-- Already handled: Files >100KB skip homoglyph/bidi detection
-
-**If i18n FPs:**
-- Already handled: i18n files skipped
-
-**If new FP pattern:**
-1. Identify pattern (e.g., `setInterval` for UI polling)
-2. Add context check to detector
-3. Test on FP package
-4. Rebuild: `cargo build --release`
-
-#### Step 3: Add Allowlist (Optional)
-
-```python
-# harness/allowlist.py
-ALLOWLIST = [
-    "prettier",
-    "eslint",
-    "typescript",
-    # Add known legitimate packages
+[wave_0.known_malicious]
+packages = [
+    "react-native-country-select@0.3.91",
+    "react-native-international-phone-number@0.11.8",
 ]
+
+[wave_0.clean_baseline]
+count = 20
+packages = ["express", "lodash", "axios", ...]
+
+[wave_1]
+name = "Wave 1: Targeted Hunting"
+description = "Hunt in GlassWorm active zones"
+packages_total = 100
+
+[wave_1.react_native]
+count = 30
+keywords = ["react-native-phone", "react-native-country"]
+
+[wave_1.crypto_wallet]
+count = 30
+keywords = ["solana", "ethereum", "web3", "wallet"]
 ```
 
-#### Step 4: Re-scan
+### Running Waves
 
 ```bash
-# Re-scan with tuned detectors
-python3 optimized_scanner.py packages.txt -w 10 -e data/evidence/scan-2 -o scan-2-results.json
-
-# Compare results
-echo "Before:" && cat scan-1-results.json | jq '.flagged'
-echo "After:" && cat scan-2-results.json | jq '.flagged'
-```
-
----
-
-## Monitoring Long Scans
-
-### GitHub Scan (Hours)
-
-```bash
-# Start in background
 cd harness
-nohup python3 github_scanner.py --queries "mcp" --max-repos 500 > github-scan.log 2>&1 &
 
-# Monitor
-tail -f github-scan.log
+# Run Wave 0 (calibration)
+python3 -m core.orchestrator run-wave --wave 0
 
-# Check progress
-ps aux | grep github_scanner | grep -v grep
+# Run with LLM analysis
+python3 -m core.orchestrator run-wave --wave 0 --llm
 
-# Check results (updates during scan)
-cat github-scan-results.json | jq '{scanned, flagged, errors}'
+# Check status
+python3 -m core.orchestrator status --wave 0
+
+# Generate report
+python3 -m core.orchestrator report --wave 0
 ```
 
-### npm Scan (Minutes)
+### Wave Results
+
+After running a wave, check:
 
 ```bash
-# Start scan
-python3 optimized_scanner.py packages.txt -w 10 -o results.json
+# Markdown report
+cat harness/reports/scan-<run_id>.md
 
-# Monitor in real-time
-tail -f results.json | jq '.scanned'  # Updates during scan
+# JSON data
+cat harness/reports/scan-<run_id>.json | jq
+
+# Database queries
+sqlite3 harness/data/corpus.db \
+  "SELECT name, version, finding_count FROM packages WHERE finding_count > 0;"
 ```
 
 ---
 
-## Common Scenarios
+## LLM Analysis
 
-### Scenario 1: Quick Sanity Check
+### Configuration
+
+Add to `~/.env`:
 
 ```bash
-# Scan 10 packages
-cd harness
-echo "prettier" > test.txt
-python3 optimized_scanner.py test.txt -w 2 -o test-results.json
-cat test-results.json | jq '{scanned, flagged}'
+# NVIDIA API (for deep analysis)
+export NVIDIA_API_KEY="nvapi-..."
+export NVIDIA_BASE_URL="https://integrate.api.nvidia.com/v1"
+
+# Model preference (comma-separated, fallback order)
+export NVIDIA_MODELS="qwen/qwen3.5-397b-a17b,moonshotai/kimi-k2.5,z-ai/glm5,meta/llama3-70b-instruct"
+
+# Cerebras API (for Rust orchestrator triage)
+export GLASSWARE_LLM_BASE_URL="https://api.cerebras.ai/v1"
+export GLASSWARE_LLM_API_KEY="csk-..."
 ```
 
-### Scenario 2: High-Risk Scan
+### Running LLM Analysis
+
+#### Python Harness (NVIDIA)
 
 ```bash
-# Scan high-risk categories
-python3 diverse_sampling.py \
-  --categories ai-ml native-build install-scripts crypto \
-  --samples-per-keyword 30 \
-  --output high-risk.txt
+# Scan with LLM on flagged packages
+python3 -m core.orchestrator run-wave --wave 0 --llm
 
-python3 optimized_scanner.py high-risk.txt -w 10 -o high-risk-results.json
+# Results include LLM verdict
+cat harness/reports/scan-<run_id>.json | jq '.packages[] | {name, llm_analysis}'
 ```
 
-### Scenario 3: Campaign Hunting
+#### Rust Orchestrator (Cerebras)
 
 ```bash
-# Scan for specific campaign (PhantomRaven)
-cat > phantomraven.txt << EOF
-unused-imports
-eslint-comments
-sort-keys-fix
-typescript-compat
-EOF
-
-python3 optimized_scanner.py phantomraven.txt -w 5 -o phantomraven-results.json
+# Scan with LLM triage
+glassware-orchestrator --llm scan-npm express lodash
 ```
 
-### Scenario 4: Validation Scan
+### LLM Output Format
 
-```bash
-# Scan known malicious package
-cd /tmp
-npm pack "@iflow-mcp/ref-tools-mcp@3.0.0"
-tar -xzf *.tgz
-
-cd harness
-./glassware-scanner --format json /tmp/package/ | jq '.findings | length'
-# Expected: 15+ findings
+```json
+{
+  "malicious": "no",
+  "confidence": "high",
+  "recommendation": "clean",
+  "concerns": [
+    "Socket.IO usage (likely false positive)",
+    "Time delay (likely test infrastructure)"
+  ],
+  "reasoning": "Package matches official source code...",
+  "model_used": "qwen/qwen3.5-397b-a17b"
+}
 ```
 
 ---
 
-## Decision Tree
+## Output Formats
 
-```
-Start
-│
-├─ Want to scan npm packages?
-│  ├─ Yes → optimized_scanner.py
-│  │  ├─ Have package list? → Use it directly
-│  │  └─ Need packages? → diverse_sampling.py first
-│  │
-│  └─ No → Continue
-│
-├─ Want to scan GitHub repos?
-│  ├─ Yes → github_scanner.py
-│  │  ├─ Have token? → export GITHUB_TOKEN
-│  │  └─ No token? → Works without (slower)
-│  │
-│  └─ No → Continue
-│
-├─ Have flagged packages?
-│  ├─ Yes → Analyze
-│  │  ├─ Want LLM analysis? → batch_llm_analyzer.py
-│  │  └─ Manual review? → Download + scan
-│  │
-│  └─ No → Done (clean scan)
-│
-└─ Have false positives?
-   ├─ Yes → Improve
-   │  ├─ Pattern identified? → Tune detector
-   │  └─ Known legitimate? → Add to allowlist
-   │
-   └─ No → Done (accurate scan)
+### Pretty Print (Default)
+
+```bash
+glassware project/
 ```
 
+```
+⚠ CRITICAL
+  File: src/index.js
+  Line: 42
+  Type: glassware pattern
+  GlassWare attack pattern detected
 ---
 
-## Quick Reference
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2 findings in 15 files (1 critical, 0 high, 1 medium, 0 low)
+Scanned 15 files in 0.25s
+```
 
-### Commands
+### JSON
 
-| Command | Purpose |
-|---------|---------|
-| `diverse_sampling.py` | Sample npm packages by category |
-| `optimized_scanner.py` | Scan npm packages |
-| `github_scanner.py` | Scan GitHub repositories |
-| `batch_llm_analyzer.py` | LLM analysis on flagged packages |
-| `monitor-30k-scan.sh` | Monitor long scans |
+```bash
+glassware --format json project/ > results.json
+```
 
-### Flags
+```json
+{
+  "findings": [
+    {
+      "file": "src/index.js",
+      "line": 42,
+      "severity": "critical",
+      "category": "GlasswarePattern",
+      "description": "GlassWare attack pattern detected"
+    }
+  ],
+  "summary": {
+    "files_scanned": 15,
+    "findings_total": 2
+  }
+}
+```
 
-| Flag | Description |
-|------|-------------|
-| `-w` | Workers (parallel threads) |
-| `-e` | Evidence directory |
-| `-o` | Output file |
-| `-n` | Scan name |
-| `--queries` | GitHub search queries |
-| `--categories` | npm categories |
+### SARIF (GitHub Security)
 
-### Files
+```bash
+glassware-orchestrator --format sarif \
+  --output results.sarif \
+  scan-npm express lodash
+```
 
-| File | Purpose |
-|------|---------|
-| `packages.txt` | Package list (one per line) |
-| `results.json` | Scan results |
-| `flagged.txt` | Flagged package names |
-| `llm-results.json` | LLM analysis results |
+Upload `results.sarif` to GitHub Security tab.
 
 ---
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| npm 429 error | Increase `--delay-between-keywords` |
-| GitHub 403 error | Add `GITHUB_TOKEN` or wait |
-| No findings | Check file paths, try `--format json` |
-| Too many FPs | Review FP patterns, tune detectors |
-| Scan too slow | Reduce `-w` workers or use cache |
+### "Package not found"
+
+**Problem:** Rust orchestrator can't find package with version.
+
+**Solution:** Already fixed in v0.11.5+. Update:
+```bash
+git pull
+cargo build -p glassware-orchestrator --release
+```
+
+### "NVIDIA_API_KEY not set"
+
+**Problem:** LLM analysis fails.
+
+**Solution:** Add to `~/.env`:
+```bash
+export NVIDIA_API_KEY="nvapi-..."
+```
+
+### Slow scanning
+
+**Problem:** Scanning takes too long.
+
+**Solutions:**
+1. Increase concurrency: `--concurrency 20`
+2. Use Rust orchestrator (1.5x faster)
+3. Enable caching: Remove `--no-cache` flag
+4. Exclude large directories: `--exclude node_modules`
+
+### False positives
+
+**Problem:** Legitimate packages flagged.
+
+**Solutions:**
+1. Check severity level: `--severity high` (skip INFO/LOW)
+2. Review LLM analysis for context
+3. Add to exclusion list if consistent FP
+
+### Memory issues
+
+**Problem:** Out of memory during large scans.
+
+**Solutions:**
+1. Reduce concurrency: `--concurrency 5`
+2. Use Rust orchestrator (lower memory footprint)
+3. Scan in batches
 
 ---
 
-**End of Workflow Guide**
+## Quick Reference
+
+### Common Commands
+
+```bash
+# Quick project scan
+glassware /path/to/project
+
+# Scan npm packages
+glassware-orchestrator scan-npm express lodash axios
+
+# Scan GitHub repo
+glassware-orchestrator scan-github owner/repo
+
+# Run wave campaign
+cd harness && python3 -m core.orchestrator run-wave --wave 0
+
+# With LLM analysis
+glassware-orchestrator --llm scan-npm express
+python3 -m core.orchestrator run-wave --wave 0 --llm
+
+# SARIF output
+glassware-orchestrator --format sarif scan-npm express > results.sarif
+
+# Resume interrupted scan
+glassware-orchestrator resume npm --packages express lodash
+```
+
+### Environment Variables
+
+```bash
+# NVIDIA LLM
+export NVIDIA_API_KEY="nvapi-..."
+export NVIDIA_MODELS="qwen/qwen3.5-397b-a17b,..."
+
+# Cerebras LLM (Rust)
+export GLASSWARE_LLM_BASE_URL="https://api.cerebras.ai/v1"
+export GLASSWARE_LLM_API_KEY="csk-..."
+
+# GitHub API (private repos)
+export GITHUB_TOKEN="ghp_..."
+```
+
+---
+
+## Getting Help
+
+- **Documentation:** `glassware --help`, `glassware-orchestrator --help`
+- **Issues:** https://github.com/samgrowls/glassworks/issues
+- **Intel Source:** https://codeberg.org/tip-o-deincognito/glassworm-writeup

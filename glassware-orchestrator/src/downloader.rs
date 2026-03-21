@@ -215,10 +215,13 @@ impl Downloader {
 
     /// Get npm package metadata.
     pub async fn get_npm_package_info(&self, package: &str) -> Result<NpmPackageInfo> {
+        // Parse package spec to extract name (ignore version for metadata fetch)
+        let pkg_spec = NpmPackageSpec::parse(package)?;
+        
         #[cfg(feature = "rate-limit")]
         self.npm_limiter.until_ready().await;
 
-        let url = format!("https://registry.npmjs.org/{}", package);
+        let url = format!("https://registry.npmjs.org/{}", pkg_spec.name);
         
         let fetch = || async {
             let response = self
@@ -263,20 +266,35 @@ impl Downloader {
 
     /// Download npm package tarball.
     pub async fn download_npm_package(&self, package: &str) -> Result<DownloadedPackage> {
-        let info = self.get_npm_package_info(package).await?;
+        // Parse package spec to extract name and version
+        let pkg_spec = NpmPackageSpec::parse(package)?;
+        
+        let info = self.get_npm_package_info(&pkg_spec.name).await?;
 
-        // Resolve tarball URL from versions[latest].dist.tarball
-        let tarball_url = info
-            .resolve_tarball()
-            .ok_or_else(|| OrchestratorError::npm(format!(
-                "No tarball URL found for package '{}'. Available versions: {:?}",
-                package,
-                info.versions.keys().take(5).collect::<Vec<_>>()
-            )))?;
+        // Resolve tarball URL - use specified version or latest
+        let tarball_url = if let Some(ref version) = pkg_spec.version {
+            // Use specified version
+            info.versions.get(version)
+                .and_then(|v| v.dist.as_ref())
+                .and_then(|d| d.tarball.clone())
+                .ok_or_else(|| OrchestratorError::npm(format!(
+                    "Version '{}' not found for package '{}'. Available versions: {:?}",
+                    version,
+                    pkg_spec.name,
+                    info.versions.keys().take(5).collect::<Vec<_>>()
+                )))?
+        } else {
+            // Use latest version
+            info.resolve_tarball()
+                .ok_or_else(|| OrchestratorError::npm(format!(
+                    "No tarball URL found for package '{}'",
+                    pkg_spec.name
+                )))?
+        };
 
-        // Get version from dist-tags.latest
-        let version = info
-            .latest_version()
+        // Get version string for logging
+        let version = pkg_spec.version
+            .or_else(|| info.latest_version())
             .unwrap_or_else(|| "unknown".to_string());
 
         tracing::debug!(
@@ -575,6 +593,57 @@ pub enum PackageSpec {
     },
 }
 
+/// npm package specification with optional version.
+#[derive(Debug, Clone)]
+pub struct NpmPackageSpec {
+    /// Package name (without version).
+    pub name: String,
+    /// Package version (if specified).
+    pub version: Option<String>,
+}
+
+impl NpmPackageSpec {
+    /// Parse an npm package specifier (e.g., "express", "express@4.19.2", "@scope/pkg@1.0.0").
+    pub fn parse(spec: &str) -> Result<Self> {
+        // Handle scoped packages: @scope/name@version
+        if spec.starts_with('@') {
+            // Find the @ that separates name from version (not the scope @)
+            if let Some(at_pos) = spec.rfind('@') {
+                if at_pos > 1 {
+                    // Has version: @scope/name@version
+                    let name = &spec[..at_pos];
+                    let version = &spec[at_pos + 1..];
+                    return Ok(Self {
+                        name: name.to_string(),
+                        version: Some(version.to_string()),
+                    });
+                }
+            }
+            // No version: @scope/name
+            return Ok(Self {
+                name: spec.to_string(),
+                version: None,
+            });
+        }
+
+        // Handle non-scoped packages: name@version
+        if let Some(at_pos) = spec.find('@') {
+            let name = &spec[..at_pos];
+            let version = &spec[at_pos + 1..];
+            Ok(Self {
+                name: name.to_string(),
+                version: Some(version.to_string()),
+            })
+        } else {
+            // No version specified
+            Ok(Self {
+                name: spec.to_string(),
+                version: None,
+            })
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -617,5 +686,33 @@ mod tests {
         assert_eq!(config.max_retries, 3);
         assert_eq!(config.npm_rate_limit, 2.0);
         assert_eq!(config.github_rate_limit, 1.0);
+    }
+
+    #[test]
+    fn test_parse_npm_package_spec_with_version() {
+        // Non-scoped with version
+        let spec = NpmPackageSpec::parse("express@4.19.2").unwrap();
+        assert_eq!(spec.name, "express");
+        assert_eq!(spec.version, Some("4.19.2".to_string()));
+
+        // Non-scoped without version
+        let spec = NpmPackageSpec::parse("lodash").unwrap();
+        assert_eq!(spec.name, "lodash");
+        assert_eq!(spec.version, None);
+
+        // Scoped with version
+        let spec = NpmPackageSpec::parse("@scope/package@1.0.0").unwrap();
+        assert_eq!(spec.name, "@scope/package");
+        assert_eq!(spec.version, Some("1.0.0".to_string()));
+
+        // Scoped without version
+        let spec = NpmPackageSpec::parse("@babel/core").unwrap();
+        assert_eq!(spec.name, "@babel/core");
+        assert_eq!(spec.version, None);
+
+        // Version with pre-release
+        let spec = NpmPackageSpec::parse("react@18.3.0-beta.1").unwrap();
+        assert_eq!(spec.name, "react");
+        assert_eq!(spec.version, Some("18.3.0-beta.1".to_string()));
     }
 }
