@@ -53,6 +53,8 @@ nonzero_ext = { workspace = true }
 
 # Utilities
 tempfile = { workspace = true }
+tar = "0.4"
+flate2 = "1.0"
 
 [dev-dependencies]
 tokio-test = { workspace = true }

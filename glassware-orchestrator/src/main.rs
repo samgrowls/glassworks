@@ -110,8 +110,138 @@ async fn main() -> Result<()> {
         Commands::ScanCancel { ref id } => {
             cmd_scan_cancel(&cli, id).await?;
         }
+        Commands::ScanTarball { ref files } => {
+            cmd_scan_tarball(&cli, files.clone()).await?;
+        }
     }
 
+    Ok(())
+}
+
+/// Scan tarball files command.
+async fn cmd_scan_tarball(cli: &Cli, files: Vec<String>) -> Result<()> {
+    if files.is_empty() {
+        error!("No tarball files specified");
+        return Ok(());
+    }
+
+    info!("Scanning {} tarball file(s)", files.len());
+
+    // Create scanner
+    let scanner = glassware_orchestrator::Scanner::new();
+
+    let mut total_findings = 0;
+    let mut total_malicious = 0;
+    let mut results = Vec::new();
+
+    for file_path in &files {
+        info!("Scanning tarball: {}", file_path);
+
+        // Check file exists
+        let path = std::path::Path::new(file_path);
+        if !path.exists() {
+            error!("File not found: {}", file_path);
+            continue;
+        }
+
+        // Extract and scan tarball
+        match scanner.scan_tarball(file_path).await {
+            Ok(result) => {
+                total_findings += result.findings.len();
+                if result.is_malicious {
+                    total_malicious += 1;
+                }
+                results.push(result);
+            }
+            Err(e) => {
+                error!("Failed to scan {}: {}", file_path, e);
+            }
+        }
+    }
+
+    // Print summary
+    print_scan_summary(&results);
+
+    // Write output if requested
+    if let Some(ref output_path) = cli.output {
+        write_output(cli, &results, output_path)?;
+    }
+
+    // Exit with error code if malicious packages found
+    if total_malicious > 0 {
+        std::process::exit(1);
+    }
+
+    Ok(())
+}
+
+/// Print scan summary to console.
+fn print_scan_summary(results: &[PackageScanResult]) {
+    let total_findings: usize = results.iter().map(|r| r.findings.len()).sum();
+    let malicious_count = results.iter().filter(|r| r.is_malicious).count();
+    let avg_score: f32 = if results.is_empty() {
+        0.0
+    } else {
+        results.iter().map(|r| r.threat_score).sum::<f32>() / results.len() as f32
+    };
+
+    println!("\n============================================================");
+    println!("SCAN SUMMARY");
+    println!("============================================================");
+    println!("Total packages scanned: {}", results.len());
+    println!("Malicious packages: {}", malicious_count);
+    println!("Total findings: {}", total_findings);
+    println!("Average threat score: {:.2}", avg_score);
+    println!("============================================================");
+
+    if malicious_count > 0 {
+        println!("\n⚠️  MALICIOUS PACKAGES DETECTED:");
+        for result in results.iter().filter(|r| r.is_malicious) {
+            println!("  - {} ({}) [threat score: {:.2}]", 
+                result.package_name, result.version, result.threat_score);
+        }
+        println!("\n❌ Malicious packages detected ({} findings below threshold)", total_findings);
+    } else {
+        println!("\n✅ No malicious packages detected ({} findings below threshold)", total_findings);
+    }
+}
+
+/// Write scan results to output file.
+fn write_output(cli: &Cli, results: &[PackageScanResult], output_path: &str) -> Result<()> {
+    use std::io::Write;
+    
+    let output = match cli.format {
+        OutputFormat::Json => {
+            serde_json::to_string_pretty(&serde_json::json!({
+                "results": results,
+                "summary": {
+                    "total_packages": results.len(),
+                    "malicious_packages": results.iter().filter(|r| r.is_malicious).count(),
+                    "total_findings": results.iter().map(|r| r.findings.len()).sum::<usize>(),
+                    "average_threat_score": if results.is_empty() { 0.0 } else {
+                        results.iter().map(|r| r.threat_score).sum::<f32>() / results.len() as f32
+                    }
+                }
+            }))?
+        }
+        _ => {
+            // Default to text format
+            let mut output = String::new();
+            for result in results {
+                output.push_str(&format!("{}@{} - Threat Score: {:.2}\n", 
+                    result.package_name, result.version, result.threat_score));
+                if result.is_malicious {
+                    output.push_str("  ⚠️  MALICIOUS\n");
+                }
+            }
+            output
+        }
+    };
+
+    let mut file = std::fs::File::create(output_path)?;
+    file.write_all(output.as_bytes())?;
+    
+    info!("Results written to {}", output_path);
     Ok(())
 }
 

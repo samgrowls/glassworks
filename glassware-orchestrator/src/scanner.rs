@@ -207,6 +207,142 @@ impl Scanner {
         Ok(all_findings)
     }
 
+    /// Scan a tarball file.
+    pub async fn scan_tarball(&self, tarball_path: &str) -> Result<PackageScanResult> {
+        let tarball_path = Path::new(tarball_path);
+
+        if !tarball_path.exists() {
+            return Err(OrchestratorError::invalid_path(format!(
+                "Tarball file not found: {}",
+                tarball_path.display()
+            )));
+        }
+
+        info!("Extracting tarball: {}", tarball_path.display());
+
+        // Extract tarball to temp directory
+        let temp_dir = tempfile::tempdir().map_err(|e| {
+            OrchestratorError::scan_failed(
+                tarball_path.to_string_lossy().to_string(),
+                format!("Failed to create temp directory: {}", e)
+            )
+        })?;
+
+        // Open and extract tarball
+        let tarball_file = std::fs::File::open(tarball_path).map_err(|e| {
+            OrchestratorError::scan_failed(
+                tarball_path.to_string_lossy().to_string(),
+                format!("Failed to open tarball: {}", e)
+            )
+        })?;
+
+        // Handle both .tar.gz and .tar files
+        let file_size = tarball_file.metadata().map_err(|e| {
+            OrchestratorError::scan_failed(
+                tarball_path.to_string_lossy().to_string(),
+                format!("Failed to get file metadata: {}", e)
+            )
+        })?.len();
+        if file_size == 0 {
+            return Err(OrchestratorError::scan_failed(
+                tarball_path.to_string_lossy().to_string(),
+                "Tarball file is empty".to_string()
+            ));
+        }
+
+        // Try gzip decompression first, then plain tar
+        let result = if tarball_path.extension().map_or(false, |ext| ext == "gz" || ext == "tgz") {
+            // Gzip compressed
+            let decoder = flate2::read::GzDecoder::new(tarball_file);
+            let mut archive = tar::Archive::new(decoder);
+            archive.unpack(temp_dir.path())
+        } else {
+            // Plain tar
+            let mut archive = tar::Archive::new(tarball_file);
+            archive.unpack(temp_dir.path())
+        };
+
+        result.map_err(|e| {
+            OrchestratorError::scan_failed(
+                tarball_path.to_string_lossy().to_string(),
+                format!("Failed to extract tarball: {}", e)
+            )
+        })?;
+
+        // Find package directory (usually in package/ subdirectory)
+        let package_dir = temp_dir.path().join("package");
+        let scan_path = if package_dir.exists() {
+            package_dir
+        } else {
+            temp_dir.path().to_path_buf()
+        };
+
+        // Extract package info from tarball name or package.json
+        let (name, version) = self.extract_package_info(tarball_path, &scan_path)?;
+
+        info!("Scanning package: {} ({})", name, version);
+
+        // Scan the extracted directory
+        let findings = self.scan_directory(scan_path.to_str().unwrap()).await?;
+
+        // Calculate threat score
+        let threat_score = self.calculate_threat_score(&findings, &name);
+        let is_malicious = threat_score >= self.config.threat_threshold;
+
+        if is_malicious {
+            warn!(
+                "Package {} flagged as malicious (threat score: {:.2})",
+                name, threat_score
+            );
+        }
+
+        Ok(PackageScanResult {
+            package_name: name,
+            source_type: "tarball".to_string(),
+            version,
+            path: scan_path.to_string_lossy().to_string(),
+            content_hash: format!("tarball:{}", tarball_path.display()),
+            findings,
+            threat_score,
+            is_malicious,
+        })
+    }
+
+    /// Extract package name and version from tarball or package.json.
+    fn extract_package_info(&self, tarball_path: &Path, package_dir: &Path) -> Result<(String, String)> {
+        // Try to get info from tarball name (e.g., package-1.0.0.tgz)
+        let tarball_name = tarball_path.file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown");
+
+        // Remove .tar if present (e.g., package-1.0.0.tar.gz -> package-1.0.0)
+        let tarball_name = tarball_name.strip_suffix(".tar").unwrap_or(tarball_name);
+
+        // Parse name and version from tarball name
+        if let Some(last_dash) = tarball_name.rfind('-') {
+            let name = &tarball_name[..last_dash];
+            let version = &tarball_name[last_dash + 1..];
+            if !name.is_empty() && !version.is_empty() {
+                return Ok((name.to_string(), version.to_string()));
+            }
+        }
+
+        // Fallback: read package.json
+        let package_json_path = package_dir.join("package.json");
+        if package_json_path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&package_json_path) {
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+                    let name = json["name"].as_str().unwrap_or("unknown").to_string();
+                    let version = json["version"].as_str().unwrap_or("0.0.0").to_string();
+                    return Ok((name, version));
+                }
+            }
+        }
+
+        // Last resort: use tarball name as name, "unknown" as version
+        Ok((tarball_name.to_string(), "unknown".to_string()))
+    }
+
     /// Collect files to scan from a directory.
     fn collect_files(&self, dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
         if !dir.is_dir() {
