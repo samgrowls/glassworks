@@ -1,21 +1,21 @@
 
 # Version History Scan Report
 
-**Generated:** 2026-03-21T06:40:30.957460
-**Policy:** last-3
+**Generated:** 2026-03-21T06:48:20.539807
+**Policy:** last-2
 **Workers:** 2
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Total packages | 10 |
-| Total versions scanned | 30 |
+| Total packages | 3 |
+| Total versions scanned | 6 |
 | Malicious versions | 0 |
 | Malicious packages | 0 |
 | Total findings | 0 |
-| Failed scans | 30 |
-| Duration | 2026-03-21T06:40:24.193521 to 2026-03-21T06:40:30.956459 |
+| Failed scans | 6 |
+| Duration | 2026-03-21T06:45:50.481332 to 2026-03-21T06:48:20.538327 |
 
 ## 🚨 Malicious Versions Detected
 
@@ -24,7 +24,7 @@
 
 ## Database Location
 
-Results saved to: `/tmp/test-results.db`
+Results saved to: `/tmp/glassware-tests/bg-test-results.db`
 
 ## Query Examples
 
