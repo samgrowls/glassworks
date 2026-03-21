@@ -12,7 +12,7 @@ name = "glassware"
 path = "src/main.rs"
 
 [dependencies]
-glassware-core = { path = "../glassware-core", features = ["full"] }
+glassware-core = { path = "../glassware-core", features = ["full", "binary"] }
 clap = { version = "4", features = ["derive"] }
 colored = "2"
 serde_json = "1"
@@ -22,5 +22,6 @@ globset = "0.4"
 rayon = "1.10"
 
 [features]
-default = ["llm"]
+default = ["llm", "binary"]
 llm = ["glassware-core/llm"]
+binary = ["glassware-core/binary"]

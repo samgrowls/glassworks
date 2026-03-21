@@ -9,7 +9,7 @@ authors = ["glassware team"]
 
 [dependencies]
 # Core - use workspace dependency
-glassware-core = { workspace = true }
+glassware-core = { workspace = true, features = ["binary"] }
 
 # Async runtime
 tokio = { workspace = true }
@@ -62,7 +62,8 @@ name = "glassware-orchestrator"
 path = "src/main.rs"
 
 [features]
-default = ["llm"]
+default = ["llm", "binary"]
 llm = []
 rate-limit = []
 retry = []
+binary = ["glassware-core/binary"]

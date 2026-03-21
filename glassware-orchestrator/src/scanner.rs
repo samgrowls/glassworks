@@ -166,8 +166,8 @@ impl Scanner {
         let mut all_findings = Vec::new();
         let mut files_scanned = 0;
 
-        // Create scan engine with default detectors
-        let engine = ScanEngine::default();
+        // Create scan engine with all detectors
+        let engine = ScanEngine::default_detectors();
 
         // Walk directory recursively
         let mut entries: Vec<PathBuf> = Vec::new();
@@ -338,7 +338,7 @@ impl Scanner {
 
     /// Scan content string for security issues.
     pub async fn scan_content(&self, content: &str) -> Vec<Finding> {
-        let engine = ScanEngine::default();
+        let engine = ScanEngine::default_detectors();
         engine.scan(Path::new("<content>"), content)
     }
 }
