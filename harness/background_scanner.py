@@ -34,7 +34,7 @@ from typing import Dict, List, Optional
 import requests
 
 # Configuration
-GLASSWARE = "./target/debug/glassware-orchestrator"
+GLASSWARE = str(Path(__file__).parent.parent / "target" / "debug" / "glassware-orchestrator")
 NPM_REGISTRY = "https://registry.npmjs.org"
 CACHE_DB = "/tmp/glassware-version-cache.db"
 
@@ -175,14 +175,15 @@ class BackgroundScanner:
             if rest.endswith("d"):
                 # Days format - for now just take last N
                 n = int(rest[:-1])
-                return versions[-min(n, len(versions)):]
+                # Take first N (newest, since sorted reverse=True)
+                return versions[:min(n, len(versions))]
             else:
-                # Count format
+                # Count format - take first N (newest)
                 n = int(rest)
-                return versions[-n:]
+                return versions[:min(n, len(versions))]
         else:
-            # Default to last 10
-            return versions[-10:]
+            # Default to last 10 (newest)
+            return versions[:min(10, len(versions))]
     
     def scan_version(self, package: str, version: str) -> Dict:
         """Scan single package version"""
@@ -198,8 +199,14 @@ class BackgroundScanner:
                 cwd=Path(__file__).parent.parent
             )
             
+            # Extract JSON from output (skip log lines)
+            output = result.stdout
+            json_start = output.find('{')
+            if json_start >= 0:
+                output = output[json_start:]
+            
             if result.returncode == 0:
-                data = json.loads(result.stdout)
+                data = json.loads(output)
                 summary = data.get("summary", {})
                 return {
                     "package_name": package,
