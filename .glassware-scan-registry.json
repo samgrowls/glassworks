@@ -363,6 +363,188 @@
       "findings_count": 0,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "52431e4b-0036-48c8-9c38-634cbdb495a2",
+      "started_at": "2026-03-21T06:45:50.593557114Z",
+      "completed_at": "2026-03-21T06:45:51.059405652Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "chalk@0.1.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "b9e5c661-eef7-43f9-8596-aa9c08a68e25",
+      "started_at": "2026-03-21T06:45:51.189723207Z",
+      "completed_at": null,
+      "status": "running",
+      "command": "scan-npm",
+      "packages": [
+        "commander@0.0.3"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "187a352f-f5e3-4a75-b2ae-1722ef046ed0",
+      "started_at": "2026-03-21T06:45:51.203690626Z",
+      "completed_at": "2026-03-21T06:45:51.629459076Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "commander@0.0.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1093352a-e05d-4ce3-b7f0-6d9974fb0300",
+      "started_at": "2026-03-21T06:45:51.743788117Z",
+      "completed_at": null,
+      "status": "running",
+      "command": "scan-npm",
+      "packages": [
+        "debug@0.0.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1dd2d6c4-de95-4b41-9b82-0378a8499762",
+      "started_at": "2026-03-21T06:45:51.751785758Z",
+      "completed_at": "2026-03-21T06:45:52.079498984Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "debug@0.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "60e0d7c4-a48e-4115-8205-dacbc74a80f1",
+      "started_at": "2026-03-21T06:47:14.322975168Z",
+      "completed_at": "2026-03-21T06:47:14.483463757Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "chalk@0.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "6540da17-44b3-4afb-bbaa-60c44d89b8b2",
+      "started_at": "2026-03-21T06:47:14.608467084Z",
+      "completed_at": "2026-03-21T06:47:14.781934943Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "commander@0.0.3"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "febea94b-ae18-4187-a2cf-f3082e14818a",
+      "started_at": "2026-03-21T06:47:14.898940523Z",
+      "completed_at": null,
+      "status": "running",
+      "command": "scan-npm",
+      "packages": [
+        "debug@0.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "ff0657fe-8694-4c7c-9c35-fa000f603c5e",
+      "started_at": "2026-03-21T06:47:14.903369839Z",
+      "completed_at": "2026-03-21T06:47:15.096673950Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "debug@0.0.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "d52213d6-472e-421b-950d-bff6dbeb4e97",
+      "started_at": "2026-03-21T06:48:19.693869360Z",
+      "completed_at": null,
+      "status": "running",
+      "command": "scan-npm",
+      "packages": [
+        "chalk@0.1.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "29d6de15-e820-423f-90f4-542057c48669",
+      "started_at": "2026-03-21T06:48:19.705052991Z",
+      "completed_at": "2026-03-21T06:48:19.893370106Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "chalk@0.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1e4a95d1-9692-4304-94ae-631d54358ffb",
+      "started_at": "2026-03-21T06:48:20.026881856Z",
+      "completed_at": "2026-03-21T06:48:20.218697138Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "commander@0.0.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "a155bc04-498f-46dd-8cb0-dd8fe6bb260d",
+      "started_at": "2026-03-21T06:48:20.335851072Z",
+      "completed_at": "2026-03-21T06:48:20.526281916Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "debug@0.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }
