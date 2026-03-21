@@ -1,3 +1,0 @@
-@sentry/mcp-server
-@railway/mcp-server
-@gleanwork/mcp-config-schema

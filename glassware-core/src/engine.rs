@@ -499,6 +499,15 @@ impl ScanEngine {
         // E3: Browser-kill command detector (GlassWorm signature)
         engine.register(Box::new(crate::detectors::browser_kill::BrowserKillDetector::new()));
 
+        // G3: Typo attribution detector (GlassWorm fingerprints)
+        engine.register(Box::new(crate::detectors::typo_attribution::TypoAttributionDetector::new()));
+
+        // G4: Exfil schema detector (GlassWorm JSON schema)
+        engine.register(Box::new(crate::detectors::exfil_schema::ExfilSchemaDetector::new()));
+
+        // G5: Socket.IO C2 detector (GlassWorm transport pattern)
+        engine.register(Box::new(crate::detectors::socketio_c2::SocketIOC2Detector::new()));
+
         #[cfg(feature = "semantic")]
         {
             engine.register_semantic(Box::new(crate::gw005_semantic::Gw005SemanticDetector::new()));
@@ -583,6 +592,15 @@ impl ScanEngine {
 
         // E3: Browser-kill command detector (GlassWorm signature)
         engine.register(Box::new(crate::detectors::browser_kill::BrowserKillDetector::new()));
+
+        // G3: Typo attribution detector (GlassWorm fingerprints)
+        engine.register(Box::new(crate::detectors::typo_attribution::TypoAttributionDetector::new()));
+
+        // G4: Exfil schema detector (GlassWorm JSON schema)
+        engine.register(Box::new(crate::detectors::exfil_schema::ExfilSchemaDetector::new()));
+
+        // G5: Socket.IO C2 detector (GlassWorm transport pattern)
+        engine.register(Box::new(crate::detectors::socketio_c2::SocketIOC2Detector::new()));
 
         #[cfg(feature = "semantic")]
         {
@@ -1207,12 +1225,13 @@ mod tests {
     #[test]
     fn test_engine_default_detectors() {
         let engine = ScanEngine::default_detectors();
-        // 3 original detectors + 3 new behavioral evasion detectors (GW009-GW011)
-        // + 3 semantic detectors (GW005-GW007) when semantic feature is enabled
+        // 3 original detectors + 3 behavioral evasion (GW009-GW011)
+        // + 1 browser-kill (E3) + 3 Phase 1 (G3, G4, G5) = 10 base
+        // + 4 semantic detectors (GW005-GW008) when semantic feature is enabled
         #[cfg(feature = "semantic")]
-        assert_eq!(engine.detector_count(), 9);
+        assert_eq!(engine.detector_count(), 14);
         #[cfg(not(feature = "semantic"))]
-        assert_eq!(engine.detector_count(), 6);
+        assert_eq!(engine.detector_count(), 10);
     }
 
     #[test]
