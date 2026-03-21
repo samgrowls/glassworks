@@ -385,10 +385,9 @@ class Store:
     def get_pending_packages(self, run_id: str, package_list: List[str]) -> List[str]:
         """Get packages from list that haven't been scanned yet."""
         with get_connection(self.db_path) as conn:
-            placeholders = ",".join("?" * len(package_list))
             rows = conn.execute(
-                f"""
-                SELECT name || '@' || version as pkg
+                """
+                SELECT package_name || '@' || version as pkg
                 FROM checkpoints
                 WHERE scan_run_id = ? AND status = 'scanned'
             """,

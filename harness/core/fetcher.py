@@ -163,15 +163,20 @@ class Fetcher:
             return None
 
     def download_package(
-        self, package: str, timeout: int = 60
+        self, package: str, timeout: int = 120, use_registry_url: bool = True
     ) -> Optional[Dict]:
         """
         Download a package tarball.
         
+        Tries two methods:
+        1. Direct registry URL download (faster, more reliable)
+        2. npm pack fallback (slower, but works for all packages)
+
         Args:
             package: Package spec (e.g., "express@4.19.2")
             timeout: Download timeout in seconds
-            
+            use_registry_url: Try direct URL first (default: True)
+
         Returns:
             Dict with tarball_path, tarball_sha256, name, version
             or None if download failed
@@ -203,11 +208,80 @@ class Fetcher:
                 "cached": True,
             }
 
-        # Download
+        # Method 1: Direct registry URL download
+        if use_registry_url:
+            result = self._download_from_registry(name, version, timeout)
+            if result:
+                return result
+
+        # Method 2: npm pack fallback
+        return self._download_with_npm_pack(name, version, timeout)
+
+    def _download_from_registry(
+        self, name: str, version: str, timeout: int
+    ) -> Optional[Dict]:
+        """Download directly from npm registry URL."""
+        try:
+            # Get package metadata to find tarball URL
+            self._rate_limit()
+            resp = requests.get(f"{NPM_REGISTRY}/{name}", timeout=30)
+            if resp.status_code != 200:
+                return None
+
+            data = resp.json()
+            versions = data.get("versions", {})
+            if version == "latest":
+                version = data.get("dist-tags", {}).get("latest", "")
+
+            version_data = versions.get(version, {})
+            dist = version_data.get("dist", {})
+            tarball_url = dist.get("tarball")
+
+            if not tarball_url:
+                return None
+
+            # Download tarball
+            self._rate_limit()
+            tarball_resp = requests.get(tarball_url, timeout=timeout)
+            if tarball_resp.status_code != 200:
+                return None
+
+            # Save to cache
+            cache_dir = Path.home() / ".glassware" / "cache" / "packages"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            safe_name = name.replace("/", "_")
+            dest_path = cache_dir / f"{safe_name}-{version}.tgz"
+
+            with open(dest_path, "wb") as f:
+                f.write(tarball_resp.content)
+
+            # Calculate hash
+            tarball_sha256 = self._sha256_file(dest_path)
+
+            # Save to cache DB
+            self._save_download(name, version, str(dest_path), tarball_sha256)
+
+            return {
+                "tarball_path": str(dest_path),
+                "tarball_sha256": tarball_sha256,
+                "name": name,
+                "version": version,
+                "cached": False,
+            }
+
+        except Exception:
+            return None
+
+    def _download_with_npm_pack(
+        self, name: str, version: str, timeout: int
+    ) -> Optional[Dict]:
+        """Download using npm pack command."""
+        package_spec = f"{name}@{version}"
+
         with tempfile.TemporaryDirectory() as tmpdir:
             try:
                 dl_result = subprocess.run(
-                    ["npm", "pack", package],
+                    ["npm", "pack", package_spec],
                     capture_output=True,
                     text=True,
                     cwd=tmpdir,
@@ -216,11 +290,19 @@ class Fetcher:
                 if dl_result.returncode != 0:
                     return None
 
-                # Find tarball
-                tarballs = list(Path(tmpdir).glob("*.tgz"))
-                if not tarballs:
+                # npm pack outputs the tarball name to stdout
+                tarball_name = dl_result.stdout.strip()
+                if not tarball_name:
+                    # Fallback to glob
+                    tarballs = list(Path(tmpdir).glob("*.tgz"))
+                    if not tarballs:
+                        return None
+                    tarball = tarballs[0]
+                else:
+                    tarball = Path(tmpdir) / tarball_name
+
+                if not tarball.exists():
                     return None
-                tarball = tarballs[0]
 
                 # Calculate hash
                 tarball_sha256 = self._sha256_file(tarball)
@@ -245,7 +327,7 @@ class Fetcher:
 
             except subprocess.TimeoutExpired:
                 return None
-            except Exception:
+            except Exception as e:
                 return None
 
     def search_packages(

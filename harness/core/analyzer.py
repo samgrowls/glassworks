@@ -32,13 +32,26 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 import requests
 
-# Configuration
+# Configuration - read from environment with fallbacks
 NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
 NVIDIA_BASE_URL = os.environ.get(
     "NVIDIA_BASE_URL",
     "https://integrate.api.nvidia.com/v1",
 )
-NVIDIA_MODEL = os.environ.get("NVIDIA_MODEL", "meta/llama3-70b-instruct")
+
+# Model list in order of preference (strongest first)
+# Read from environment or use defaults
+DEFAULT_MODELS = [
+    "qwen/qwen3.5-397b-a17b",  # Strongest - Qwen 3.5 397B
+    "moonshotai/kimi-k2.5",     # Kimi K2.5
+    "z-ai/glm5",                # GLM-5
+    "meta/llama3-70b-instruct", # Fallback - Llama 3 70B
+]
+
+NVIDIA_MODELS = os.environ.get(
+    "NVIDIA_MODELS",
+    ",".join(DEFAULT_MODELS)
+).split(",")
 
 # LLM prompt for malware analysis
 LLM_PROMPT = """You are a security analyst reviewing a npm package for potential malware.
@@ -69,6 +82,8 @@ class Analyzer:
     
     Refactored from batch_llm_analyzer.py.
     Only handles NVIDIA deep analysis - Cerebras triage is in Rust CLI.
+    
+    Uses model fallback: tries models in order until one succeeds.
     """
 
     def __init__(self, store: Optional[Any] = None):
@@ -81,7 +96,80 @@ class Analyzer:
         self.store = store
         self.api_key = NVIDIA_API_KEY
         self.base_url = NVIDIA_BASE_URL
-        self.model = NVIDIA_MODEL
+        self.models = NVIDIA_MODELS  # List of models to try in order
+
+    def _call_nvidia_with_fallback(self, prompt: str) -> Optional[Dict]:
+        """
+        Call NVIDIA API with model fallback.
+        
+        Tries models in order until one succeeds.
+        
+        Args:
+            prompt: Analysis prompt
+            
+        Returns:
+            Parsed JSON response or None
+        """
+        if not self.api_key:
+            return None
+        
+        last_error = None
+        
+        for model in self.models:
+            try:
+                result = self._call_nvidia_model(prompt, model)
+                if result:
+                    result["model_used"] = model
+                    return result
+            except Exception as e:
+                last_error = e
+                continue  # Try next model
+        
+        return None
+
+    def _call_nvidia_model(self, prompt: str, model: str) -> Optional[Dict]:
+        """
+        Call NVIDIA API with specific model.
+        
+        Args:
+            prompt: Analysis prompt
+            model: Model name to use
+            
+        Returns:
+            Parsed JSON response or None
+        """
+        resp = requests.post(
+            f"{self.base_url}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a security analyst specializing in npm package malware detection.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.1,
+                "max_tokens": 1000,
+            },
+            timeout=120,
+        )
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            content = data["choices"][0]["message"]["content"]
+            return json.loads(content)
+        elif resp.status_code == 400:
+            # Model not available, try next
+            return None
+        else:
+            resp.raise_for_status()
+        
+        return None
 
     def _extract_package(self, tarball_path: str) -> Optional[Path]:
         """Extract tarball and return package directory."""
@@ -144,50 +232,6 @@ class Analyzer:
         
         return files
 
-    def _call_nvidia(self, prompt: str) -> Optional[Dict]:
-        """
-        Call NVIDIA API for LLM analysis.
-        
-        Args:
-            prompt: Analysis prompt
-            
-        Returns:
-            Parsed JSON response or None
-        """
-        if not self.api_key:
-            return None
-        
-        try:
-            resp = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are a security analyst specializing in npm package malware detection.",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": 0.1,
-                    "max_tokens": 1000,
-                },
-                timeout=60,
-            )
-            
-            if resp.status_code == 200:
-                data = resp.json()
-                content = data["choices"][0]["message"]["content"]
-                return json.loads(content)
-            return None
-            
-        except Exception:
-            return None
-
     def analyze_package(
         self,
         name: str,
@@ -249,14 +293,15 @@ class Analyzer:
         
         prompt = LLM_PROMPT.format(findings=findings_text or "No static findings.")
         prompt += f"\n\nPackage files:\n{file_summary}"
-        
-        # Call NVIDIA
-        result = self._call_nvidia(prompt)
-        
+
+        # Call NVIDIA with model fallback
+        result = self._call_nvidia_with_fallback(prompt)
+
         if result:
             result["analyzed_at"] = __import__("datetime").datetime.utcnow().isoformat()
             result["package"] = name
             result["version"] = version
+            # model_used is already set by _call_nvidia_with_fallback
             
             # Cache result
             if self.store and tarball_path:
