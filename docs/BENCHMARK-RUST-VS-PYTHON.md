@@ -206,59 +206,94 @@ EOF
 
 ---
 
-## Update v0.11.6 - Two-Tier LLM Restored
+## Update v0.11.7 - Correct Two-Tier Architecture
 
 **Date:** 2026-03-21
 
-**Original design restored:** Two-tier LLM analysis with different models for different purposes.
+**Architecture clarified:** Different tools for different purposes.
 
-### Tier 1: Fast Triage (Rust + Cerebras)
+### Tool Comparison
+
+| Tool | Default LLM | Speed | Purpose |
+|------|-------------|-------|---------|
+| **Rust CLI** (`glassware`) | Cerebras | ~2-5s | Fast triage during dev |
+| **Rust Orchestrator** | NVIDIA | ~15-30s | Deep analysis in campaigns |
+| **Python Harness** | NVIDIA | ~15-30s | Deep analysis with waves |
+
+### Rust CLI (Fast Triage)
 
 ```bash
-# Default behavior - Cerebras for fast triage
-glassware-orchestrator --llm scan-npm express lodash axios
+# Uses Cerebras by default - fast triage
+glassware --llm src/index.js
+glassware --llm project/
 ```
 
 - **Model:** `llama-3.3-70b` (Cerebras)
-- **Speed:** ~2-5 seconds per analysis
-- **Use case:** Quick triage of ALL flagged packages
-- **Cost:** Free tier available
+- **Speed:** ~2-5 seconds
+- **Use:** Quick feedback during development
 
-### Tier 2: Deep Analysis (Python + NVIDIA)
+### Rust Orchestrator (Deep Analysis)
 
 ```bash
-# Python harness with NVIDIA deep analysis
+# Uses NVIDIA by default - deep analysis
+glassware-orchestrator --llm scan-npm express lodash axios
+```
+
+- **Models:** Qwen 3.5 397B → Kimi K2.5 → GLM-5 → Llama 3 70B
+- **Speed:** ~15-30 seconds
+- **Use:** Campaign scanning with thorough analysis
+
+### Python Harness (Deep Analysis + Waves)
+
+```bash
+# Uses NVIDIA - deep analysis with wave orchestration
 cd harness
 python3 -m core.orchestrator run-wave --wave 0 --llm
 ```
 
-- **Models:** Qwen 3.5 397B → Kimi K2.5 → GLM-5 → Llama 3 70B (fallback chain)
-- **Speed:** ~15-30 seconds per analysis
-- **Use case:** Deep analysis of HIGH-SEVERITY flagged threats
-- **Cost:** NVIDIA API credits
+- **Models:** Same as Rust orchestrator
+- **Speed:** ~15-30 seconds
+- **Use:** Wave-based campaigns with full orchestration
 
-### Optional: Rust with NVIDIA Deep Analysis
+### Configuration
 
+**Rust CLI (Cerebras - default):**
 ```bash
-# Use Rust orchestrator with NVIDIA models (for deep analysis)
+export GLASSWARE_LLM_BASE_URL="https://api.cerebras.ai/v1"
+export GLASSWARE_LLM_API_KEY="csk-..."
+```
+
+**Rust Orchestrator (NVIDIA - default):**
+```bash
 export GLASSWARE_LLM_BASE_URL="https://integrate.api.nvidia.com/v1"
 export GLASSWARE_LLM_API_KEY="nvapi-..."
 export GLASSWARE_LLM_MODELS="qwen/qwen3.5-397b-a17b,moonshotai/kimi-k2.5,z-ai/glm5,meta/llama-3.3-70b-instruct"
-
-glassware-orchestrator --llm scan-npm express lodash axios
 ```
 
 ### Recommended Workflow
 
-1. **Initial scan with Rust + Cerebras:**
+1. **Development (Rust CLI + Cerebras):**
    ```bash
-   glassware-orchestrator --llm scan-npm package1 package2 package3
+   # Quick triage while coding
+   glassware --llm src/
    ```
 
-2. **Deep analysis with Python + NVIDIA (for high-severity only):**
+2. **Pre-commit (Rust CLI + Cerebras):**
    ```bash
-   cd harness
-   python3 -m core.orchestrator run-wave --wave 0 --llm
+   # Fast check before committing
+   glassware --llm .
    ```
 
-**Both tiers now available with proper separation of concerns!**
+3. **Campaign Scan (Rust Orchestrator + NVIDIA):**
+   ```bash
+   # Deep analysis of npm packages
+   glassware-orchestrator --llm scan-npm pkg1 pkg2 pkg3
+   ```
+
+4. **Wave Campaign (Python + NVIDIA):**
+   ```bash
+   # Full wave with orchestration
+   cd harness && python3 -m core.orchestrator run-wave --wave 0 --llm
+   ```
+
+**Each tool optimized for its use case!**
