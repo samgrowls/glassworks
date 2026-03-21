@@ -186,18 +186,25 @@ def main():
     # Scan top clean packages (FP baseline)
     print("🧹 Scanning TOP CLEAN packages (FP baseline)...")
     fp_count = 0
+    fp_medium_plus = 0  # MEDIUM+ severity false positives
     for pkg in TOP_CLEAN:
         print(f"  → {pkg}")
         result = scan_package(pkg)
         all_results.append(result)
-        if result["findings"] > 0:
+        # Count MEDIUM+ severity findings as actual false positives
+        medium_plus = result['medium'] + result['high'] + result['critical']
+        if medium_plus > 0:
+            fp_medium_plus += 1
+            print(f"    ⚠️  FP (MEDIUM+): {medium_plus} findings")
+        elif result["findings"] > 0:
             fp_count += 1
-            print(f"    ⚠️  FP: {result['findings']} findings")
+            print(f"    ℹ️  INFO: {result['findings']} low-severity findings")
         else:
             print(f"    ✅ Clean")
     
     print()
-    print(f"False positives: {fp_count}/{len(TOP_CLEAN)}")
+    print(f"False positives (MEDIUM+): {fp_medium_plus}/{len(TOP_CLEAN)}")
+    print(f"False positives (including LOW): {(fp_count + fp_medium_plus)}/{len(TOP_CLEAN)}")
     print()
     
     # Scan React Native ecosystem
