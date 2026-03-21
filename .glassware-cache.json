@@ -1,0 +1,1755 @@
+{
+  "version": 1,
+  "entries": {
+    "/tmp/aif/package/dist/utils/http-error-handler.d.ts": {
+      "hash": "cfb9fde917a580e288e39cbf6269834d3937629fa0ff015418f5c4042c7fdca7",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1402
+    },
+    "/tmp/aif/package/dist/express/response-middleware.js": {
+      "hash": "4e72482c257e749bded7265c41f5a11200971852c1e1b86b30b52e2cb3f8ce29",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1359
+    },
+    "/tmp/aif/package/dist/services/logger/logger.service.js": {
+      "hash": "d0c86992b6fd3b44fc8f8cba550eefdadc7bb7572ea1d837839226ee7e3bfc8f",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 11279
+    },
+    "/tmp/aif/package/dist/services/redis.service.d.ts": {
+      "hash": "eb066348ba55ce3a214706c90d5282d52fe9b690fcc097b634ab576259165c0e",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1317
+    },
+    "/tmp/aif/package/dist/utils/environment-token.js": {
+      "hash": "fabe42ee0eb397b12f81b8027e7d1f6673e95d66482d7cf0da720e6195048b9f",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 3839
+    },
+    "/tmp/aif/package/dist/utils/config-loader.js": {
+      "hash": "45e43c65829a9cb95088896d34b9c629cd7aa8ec8cb86951fe78244d7cc88d01",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 4894
+    },
+    "/tmp/aif/package/dist/services/logger/logger-context-storage.d.ts": {
+      "hash": "4a1204c98019b6540191e6df91566001ac45f21b013f07d6c0af6bfbb65e84f0",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 2490
+    },
+    "/tmp/aif/package/dist/utils/pagination.utils.d.ts": {
+      "hash": "01ef269e4addffcb9b3bd72f0fe01095c4dd0dba986284b16902bbee9d9a5d25",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1920
+    },
+    "/tmp/aif/package/dist/api/index.d.ts": {
+      "hash": "5db0c8f00bfe18febbdae4cb6b9d03fda4c5f586807014bc059705c1db239e69",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1528
+    },
+    "/tmp/aif/package/dist/utils/data-client-permissions.d.ts": {
+      "hash": "fe6eb02eba6c0e22c362c60081ae68521e64f66638ced28641f0c60a71705120",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 3693
+    },
+    "/tmp/mal-test/package/lib/components/index.ts": {
+      "hash": "93e41c18695723f02fa0690117f657899a206a680aac06a21e7a219ede28130d",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 47
+    },
+    "/tmp/aif/package/dist/api/auth.api.d.ts": {
+      "hash": "adf47bdad3705fdce650b29cb0a17d0a33edb5cd00879554fc5161014f1c8a0c",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3078
+    },
+    "/tmp/aif/package/dist/express/response-helper.js": {
+      "hash": "4a8eda8af98886dfad2e9f50743a7cb82a8e1aad8dda692e196989686fe85fc6",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 3132
+    },
+    "/tmp/aif/package/dist/utils/data-client-response.d.ts": {
+      "hash": "424a2c739e01402f1b8d9eb55eb447b82a38acf5dba21a71ccf5c11fa14ce690",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2853
+    },
+    "/tmp/aif/package/dist/utils/pagination.utils.js": {
+      "hash": "e8446b69ab13c7791d5e197ea2b65dad18eef1bd96b80802d7fb029fb1c43469",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 2321
+    },
+    "/tmp/aif/package/dist/utils/data-client.d.ts": {
+      "hash": "9cfe02b2412615491ec4808db03c76010ee3a91a6282837163ff1811fc584bcc",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3368
+    },
+    "/tmp/aif/package/dist/express/validation-helper.js": {
+      "hash": "32403871d9dbef49833ed54efdfc63949ac903d05d2145f19cfbd0a52362ac7b",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 4405
+    },
+    "/tmp/aif/package/dist/utils/encryption-error.js": {
+      "hash": "3a7a808729b7828a26aa20c8bd35b523d16434ddd6e36a770cb48a87f410fe35",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 1066
+    },
+    "/tmp/aif/package/dist/api/auth-login.api.d.ts": {
+      "hash": "b443b6c1e756cf18330db6f0d19c130f0c8c1a365fe221d9e74da4c352b43401",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2325
+    },
+    "/tmp/aif/package/dist/express/response-helper.d.ts": {
+      "hash": "b0a84592083eaeda3f1f35163f6c222209d3bcb7697724eee55cf38b1482af43",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 2474
+    },
+    "/tmp/aif/package/dist/services/encryption.service.d.ts": {
+      "hash": "2c056676ff6da8554e41ec70f0695742ecaa4e89198fef7867e94e984d813370",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2987
+    },
+    "/tmp/mal-test/package/lib/interface/index.ts": {
+      "hash": "db032276ebfc7cb9620d7efcc540e34f959fe039fae827dc425dc49854a1672c",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 370
+    },
+    "/tmp/aif/package/dist/types/data-client.types.d.ts": {
+      "hash": "8f340772a70b0136731150ef128ea470fda98872f3ffb21cabb8b23ab8b8dc33",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 6740
+    },
+    "/tmp/aif/package/dist/api/logs-list.api.d.ts": {
+      "hash": "74ba497658040b1f3249526eceb922028b5aa874a43f40c4ebeab57227ef611a",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 2825
+    },
+    "/tmp/aif/package/dist/index.d.ts": {
+      "hash": "901abf85be30ffea3612e0205a402181abb66735d6cab98fcd2bfd42a9d55586",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 153
+    },
+    "/tmp/aif/package/dist/utils/http-client-audit.d.ts": {
+      "hash": "63136dbb8200691c01a9e4b094f445c078a7f42afb8c4b794bb176418e394961",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 923
+    },
+    "/tmp/aif/package/dist/api/logs-stats.api.js": {
+      "hash": "3da1f5bdf2ffe5d350a201e732dac52eed91c281a9f54af658deb3f4eca569c8",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 5590
+    },
+    "/tmp/aif/package/dist/services/logger/unified-logger.service.js": {
+      "hash": "0973d1369eb9fb9edb641dc544f1ccfb7b0e8128d862c380acfa0414c731f585",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 6300
+    },
+    "/tmp/aif/package/dist/utils/token-utils.d.ts": {
+      "hash": "8c3e301ba3f08f4bdee691328228c160d4f62897bca3d368178fdff5604302ed",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 733
+    },
+    "/tmp/mal-test/package/lib/components/FullscreenModal/index.tsx": {
+      "hash": "463766262be11b98cd9e34f0e17016212af38833ac82917773e5055133afab01",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 3046
+    },
+    "/tmp/aif/package/dist/api/types/roles.types.d.ts": {
+      "hash": "f0540895e735779004a08e3860bc68c243f7e0b8eb976e00c52d0ae6c52c879f",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 621
+    },
+    "/tmp/mal-test/package/lib/utils/countryHelpers.ts": {
+      "hash": "85bfdcfc8876aa13cdbfde938b17b4390bc7b10a2ee075d9b016e2976fdfd54e",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 1929
+    },
+    "/tmp/aif/package/dist/types/errors.types.js": {
+      "hash": "f098987ed13f01b8d9dccf6d33297b0ef16ac2303d255cbacf95e79f8bffc7f0",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 213
+    },
+    "/tmp/mal-test/package/lib/utils/normalizeCountryName.ts": {
+      "hash": "20a14a53685f90ffbc12bfbefee7f5b29b4e28d5a82f332a5628baade87a42cc",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 129
+    },
+    "/tmp/aif/package/dist/types/config.types.js": {
+      "hash": "e08aff1cda64610b980de1c80e64be8c07ee19fe012719f3367c791339a7ce20",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1074
+    },
+    "/tmp/aif/package/dist/api/types/permissions.types.js": {
+      "hash": "2b99e709877a697cb24fc7fb3d7ccf154a78599985ee070414aaeca1037d8a5b",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 255
+    },
+    "/tmp/aif/package/dist/utils/filter-colon.utils.d.ts": {
+      "hash": "746a9253f03ef9df90a1b84a1042a78dcf9b4c7a0a4d71ac6f1027ade36295db",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1044
+    },
+    "/tmp/aif/package/dist/utils/auth-strategy.js": {
+      "hash": "83c32fefb4cf45b826d7e5b2842f1d6bb98857bf27b1445aed2a84ded5efb366",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 4147
+    },
+    "/tmp/aif/package/dist/api/auth.api.js": {
+      "hash": "d81d39b9f7c4bd18ddafd333a4f44c9bbf28086da2eb9906dd42f1b28676e2c7",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 3472
+    },
+    "/tmp/aif/package/dist/utils/data-client-redirect.d.ts": {
+      "hash": "14205637b1ab6a8522a1a7b10b8ccf6678347eaf21c1e8581d384155c32bdda1",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 2654
+    },
+    "/tmp/aif/package/dist/utils/http-client.js": {
+      "hash": "1c7fbfac5aad5610cfc0c9ac09690c8044a2d145166103ec500564663e47a774",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 9051
+    },
+    "/tmp/aif/package/dist/api/logs-list.api.js": {
+      "hash": "553439c08d9d8fec0119eafd1ccb761c9bb4a225b6172ecc05ced0f2a5cb0060",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 7907
+    },
+    "/tmp/aif/package/dist/services/auth-cache-helpers.js": {
+      "hash": "d84043bb22d6589d3a7e07b4599acbadd26817e2b46f2e6ae8e35ce0e2f2e411",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 2745
+    },
+    "/tmp/aif/package/dist/index.js": {
+      "hash": "d0d95bb10e3236def3152bcf18692aaec93ec3570453ef0200d30c56c7b288f7",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 1080
+    },
+    "/tmp/mal-test/package/lib/utils/getCountryNameInLanguage.ts": {
+      "hash": "2bbfc1fed2105012bdbf2c8b0296bc1e7c613aeaf6dc0f0f1a094863c2ebc838",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 269
+    },
+    "/tmp/aif/package/CHANGELOG.md": {
+      "hash": "90278be881af421baa30617ffbe4cdd5bd4da1ad571025890a87b54536377379",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 79023
+    },
+    "/tmp/aif/package/dist/services/browser-permission.service.d.ts": {
+      "hash": "43f0aecf54ae4317c4e28ce6ab699a5ec29ae4f0cd0511d14de797cdbf3546fa",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 2839
+    },
+    "/tmp/mal-test/package/lib/utils/createAlphabet.ts": {
+      "hash": "10fbafef50cca0c98b7cf58bb424c04ee198815d9cf4fc1e8d225d9124209b45",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 126
+    },
+    "/tmp/aif/package/dist/services/token-validation.service.d.ts": {
+      "hash": "779315656241a776537e73ff659f8b298ebceae06aa1c390fe160ece07ed660c",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2411
+    },
+    "/tmp/mal-test/package/lib/interface/sectionTitle.ts": {
+      "hash": "0de16560ed0a3f5847060b53d8bde23a3535edba3395a86db1fcd0e45ab7a913",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 69
+    },
+    "/tmp/aif/package/dist/api/auth-token.api.d.ts": {
+      "hash": "7f2976c4b63e5a249d371ce970cf63987452fe543e53cc39fa2a9df0167c627b",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2699
+    },
+    "/tmp/aif/package/dist/services/logger/trace-field-utils.js": {
+      "hash": "3bcd04eabd08c50070e9a08bdb66f8f57050cdfeafb713ffc5ba23cd02fc77ba",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 905
+    },
+    "/tmp/aif/package/dist/types/sort.types.js": {
+      "hash": "6da34bac64fbd1e5772d869c7d1350083efe83675d4ecf45a8330b9c6328bfc8",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 217
+    },
+    "/tmp/mal-test/package/lib/index.d.ts": {
+      "hash": "be0643282ed3de7e3cd4cb83c99ae853184d11fcca17f4ed11c9d3ce66fc4127",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 1392
+    },
+    "/tmp/aif/package/dist/utils/browser-jwt-decoder.d.ts": {
+      "hash": "7aecbbf3fbea823a972ae58bd0cac0edb9bc9dc40f5ebed395229a197f05962a",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 806
+    },
+    "/tmp/aif/package/dist/utils/errors.d.ts": {
+      "hash": "30abc3ca4470ea6a1f73050d0ea3103b7e097034115334b6f07aaa28e9f5af99",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1724
+    },
+    "/tmp/aif/package/dist/api/logs-create.api.js": {
+      "hash": "06759eced7fe6c5f69c594c6db0f2e2a92f011273bd907720976493d4dfbab9e",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 4652
+    },
+    "/tmp/aif/package/dist/types/data-client.types.js": {
+      "hash": "50421f9d38fd45264bb1d4303a352cd968dbcc04fc5afac8f9c9032bceaa1560",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1479
+    },
+    "/tmp/aif/package/dist/services/logger/logger-context.d.ts": {
+      "hash": "69021cc3c64c7cd1440e1cb421026609f999c82a751dc4b409f38f379f16931a",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 2950
+    },
+    "/tmp/aif/package/dist/utils/data-client-audit.js": {
+      "hash": "e982b76626bcea191c69e8edc68cb1d45fefaa08df184f6331cb46c0e5c333d3",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 5073
+    },
+    "/tmp/aif/package/dist/utils/sort.utils.d.ts": {
+      "hash": "8bcc15b44ae92e6de9eeb60322f3a1d47b90834159fafe8fbb59caa153a0e16b",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1373
+    },
+    "/tmp/mal-test/package/README.md": {
+      "hash": "634a1ab384d517a5046e002347ff946a880bac767c4711633bf165f475c3d698",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 22634
+    },
+    "/tmp/aif/package/dist/utils/data-client-auto-init.d.ts": {
+      "hash": "a131d035995777d1e91e8c6d6dedcf60d791b56efef2b7470b4fabde016fb9dc",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2318
+    },
+    "/tmp/aif/package/dist/services/logger/unified-logger.factory.js": {
+      "hash": "4a873fd6851f114155a547a28fafa69b7bd68291d9706e1908dda68bc63a95ba",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 4063
+    },
+    "/tmp/aif/package/dist/express/logger-context.middleware.js": {
+      "hash": "a9ec4d6269c4883a38d3a58417d566e0a82f4b24d91b5723a8a21a18303d4283",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 3239
+    },
+    "/tmp/aif/package/dist/express/error-types.js": {
+      "hash": "6dc22fe5dd515126cf813c8f505f5da7619ed73de44db9317628ca5377d3c809",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 40241
+    },
+    "/tmp/aif/package/dist/api/permissions.api.d.ts": {
+      "hash": "072fa3d0e31c856e6592e43589f582a050037c0a8225e9bfc91e2ca2390b90cb",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 1478
+    },
+    "/tmp/aif/package/package.json": {
+      "hash": "52ecb86c0cff88fb6113d0d755594f02ae565f6c655dc2a24c73eaf9a40fd431",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 3197
+    },
+    "/tmp/aif/package/dist/services/logger/logger-http-utils.js": {
+      "hash": "4fdd6bfed4eda4803922ae549b615b388c6ffebc0bee0c5cd35e7273dcede213",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1703
+    },
+    "/tmp/aif/package/dist/services/permission.service.d.ts": {
+      "hash": "ff4f9b1dc4cd8b7cae44d64c2320b252a46a3668b9057346ec90b37f0d48ac06",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2816
+    },
+    "/tmp/aif/package/dist/utils/logging-helpers.js": {
+      "hash": "5da95ea0ec673d0fe2a904ccfdf76528a0e5ba4868a47bc67503b82a857e307e",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 2464
+    },
+    "/tmp/aif/package/dist/utils/logging-helpers.d.ts": {
+      "hash": "c667a8ae23db4f587e8337752571a932f843fd8ed03aadc3a5c51d1914e3e06c",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1793
+    },
+    "/tmp/aif/package/dist/utils/data-client-auth.d.ts": {
+      "hash": "af3f3536b1f4da8a087339f4b0eef94b0d8450305dea62744a031c8895bec9e4",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1860
+    },
+    "/tmp/aif/package/dist/express/index.d.ts": {
+      "hash": "eac76a10265f8df22f21fd2cf20b42198263bc46c84930b0494d78d20bf0bd49",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1475
+    },
+    "/tmp/aif/package/dist/types/filter-schema.types.d.ts": {
+      "hash": "9441479a5e4c44b7eef401b40d40678520636866f991fa89161eb8af815327e1",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 3540
+    },
+    "/tmp/aif/package/dist/utils/data-client-roles.d.ts": {
+      "hash": "0af6b7a60d929b2290f63603d14619e3c3505d6cb6745407dc052ce9fccb8e92",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3363
+    },
+    "/tmp/aif/package/dist/services/logger/trace-field-utils.d.ts": {
+      "hash": "0f86bb8c78eba6449a5fd570bd8af42d1095b4c62232291bee2c20accb00258e",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 454
+    },
+    "/tmp/aif/package/dist/utils/data-client-audit.d.ts": {
+      "hash": "5630646634a32a3d5f4e0fc0620522e89f82042298bb7b30caf9302f1d9a48d0",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1345
+    },
+    "/tmp/aif/package/dist/services/auth-cache-helpers.d.ts": {
+      "hash": "2f703e5e53be43b16e4e908fa1a30926764e96dc24f3c6434137fd94e4727b0f",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 803
+    },
+    "/tmp/aif/package/dist/services/application-context.service.js": {
+      "hash": "c25a2cee0e6b5ed32119b72d698fcc61316305b563954beff1c5af3e42b0ba9f",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 5862
+    },
+    "/tmp/aif/package/dist/utils/client-token-manager.js": {
+      "hash": "9725a548bdbdde489a6e12b2ce14ce9ac473d951a969ef5164320b94be47d325",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 9670
+    },
+    "/tmp/aif/package/dist/utils/data-client-oauth.d.ts": {
+      "hash": "87eb2b13aa7fddb12d65115aea119f35148c88d834f525e93b2f463b4318f0cc",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 716
+    },
+    "/tmp/aif/package/dist/api/roles.api.d.ts": {
+      "hash": "f90da26954a2fa2b0045955413a7a25091a3d0d0d8a9413409d7fc4efe2a0b48",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 1334
+    },
+    "/tmp/aif/package/dist/utils/config-loader.d.ts": {
+      "hash": "41d5a72b5fe2af078d62506d54c5e04fd336f65bd559a20f496ea8139bf70ffd",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 289
+    },
+    "/tmp/aif/package/dist/utils/error-extractor.d.ts": {
+      "hash": "94622e6897935e9cfde36b3abafd8fe0b10bdcee7152a33f509b33bc84250b9b",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1503
+    },
+    "/tmp/aif/package/dist/services/token-validation.service.js": {
+      "hash": "c3493f4ac226d933b5de0b9b75b21581b7830f2a8b9e79ccdbf760db5045becc",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 10367
+    },
+    "/tmp/aif/package/dist/services/logger/unified-logger.factory.d.ts": {
+      "hash": "db238da90405b420670ce594f60d4ca8bfa099de423dd3d6570c5d2738a1e031",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 2811
+    },
+    "/tmp/aif/package/dist/sdk-exports.js": {
+      "hash": "676b6052b23ce11e48aaf708611999c9cbac8abe62eaf1da58f0db01fd5a2a94",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 11190
+    },
+    "/tmp/aif/package/dist/utils/error-extractor.js": {
+      "hash": "86908a223eca1f5943c85257b41861fe93f59776aa675303ea9b4d5bee7710d5",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 4027
+    },
+    "/tmp/mal-test/package/lib/interface/countrySelectStyles.ts": {
+      "hash": "dad7f3f91c20df8c9b8e223d189d98b191718de19280ecd1ce60a50405703ba8",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 1144
+    },
+    "/tmp/aif/package/dist/utils/data-client-roles.js": {
+      "hash": "76a0ce4cbe00ee5854a50e6f6d206420a32dc02534a153f49ce2e39f1c22bc95",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 4152
+    },
+    "/tmp/aif/package/dist/utils/environment-token.d.ts": {
+      "hash": "beb1524ee7d66f54fd826129a1972077b4fe21bf71746db48d859ba4ea74d9e5",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 694
+    },
+    "/tmp/aif/package/dist/utils/filter-schema.utils.d.ts": {
+      "hash": "347d3fde503c7b85c14cc9f8ee9d061292031d10d816c53d4a9fd1ea7dd9b403",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3360
+    },
+    "/tmp/aif/package/dist/api/types/applications.types.d.ts": {
+      "hash": "f2eb571ca15189845c69502a89ac0bb51e7adadfdff30917e0c77f6b9a74c53d",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2229
+    },
+    "/tmp/aif/package/dist/utils/sensitive-fields.loader.d.ts": {
+      "hash": "e75a59b30cae5aa6785153e8e9340b96451a60b92b7f76ee0ad1100d539003f4",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 734
+    },
+    "/tmp/aif/package/dist/utils/audit-log-queue.js": {
+      "hash": "ea09c9499f4a178788cccf0f4dc23e583abb3a09ce43fefc5b9e54e2a7dd9769",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 5032
+    },
+    "/tmp/aif/package/dist/api/types/encryption.types.js": {
+      "hash": "8adcee389ba958ad3b4dbb12bf4c391950d012b6fb41620e6e9b1b6e908e2080",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 253
+    },
+    "/tmp/aif/package/dist/services/role.service.d.ts": {
+      "hash": "a7dafced7c8a388fa563d46986e490fd0251a51744da860832ef894babf3c955",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2414
+    },
+    "/tmp/aif/package/dist/utils/console-logger.d.ts": {
+      "hash": "4d55b4343a0e76e310555cd40cc298ba27a53fc3fc3c216e53d9bed9f9f60dee",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1034
+    },
+    "/tmp/mal-test/package/lib/components/styles.js": {
+      "hash": "f4ed62a3e3881c6e5a43c5197868caab1965735025b7ccad02230ac47e7fca7c",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 4756
+    },
+    "/tmp/aif/package/dist/utils/data-client-oauth.js": {
+      "hash": "dae15c124d3e295940a6a8bf356480d07ee332b76356be36956676f13008fa88",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 5663
+    },
+    "/tmp/aif/package/dist/types/pagination.types.d.ts": {
+      "hash": "36534fb4e88b3630488a3b8c9b22368239b568088914da7691bc8c8064dd8d90",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 818
+    },
+    "/tmp/aif/package/dist/utils/audit-log-queue.d.ts": {
+      "hash": "cd565419790c24bc5ecc04e469cee61955ab95a508b3c54402a644d78a5d7648",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1681
+    },
+    "/tmp/aif/package/dist/api/index.js": {
+      "hash": "1f4d02c4310d6cf937dd5593700bd5ac9d26c7143f16c495f6520bf8435e526c",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 1348
+    },
+    "/tmp/aif/package/dist/services/logger/log-entry-builder.js": {
+      "hash": "2d0ceb38645ab5820a630ef5e4b99a0508d52b1192b6ea1e812ffca6caaae510",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 6535
+    },
+    "/tmp/aif/package/dist/express/async-handler.js": {
+      "hash": "21884eaf36d15294773a1435d47ab806f4b955322c67c7a5930bbce6416ebffb",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 1752
+    },
+    "/tmp/aif/package/dist/api/auth-login.api.js": {
+      "hash": "9c6be69b35f2d0f7f35de34fcdd1b29516327af4e3ac449e40c5247477c384cd",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 6055
+    },
+    "/tmp/aif/package/dist/services/logger/unified-logger.service.d.ts": {
+      "hash": "f6cee1a482df300b9bf3fa7a0362211ee974e0211b50836616e10bbbe5f5fd5d",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3095
+    },
+    "/tmp/aif/package/dist/api/auth-cache.api.js": {
+      "hash": "838bc4fc1a1e26eb7efd151677ac2d5efd4dc55734295ad33092f4331bf384a4",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 6529
+    },
+    "/tmp/aif/package/dist/utils/http-client.d.ts": {
+      "hash": "f22cb6bfaa3621ab54c292703ead1de1e1ce561634a55772392df8a5f69586f6",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 5368
+    },
+    "/tmp/aif/package/dist/api/roles.api.js": {
+      "hash": "4d300ff4dda596741d5b2113658895a215a89f7291670b74b228ece5adb0308b",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3060
+    },
+    "/tmp/aif/package/dist/utils/console-logger.js": {
+      "hash": "aa21207b3d4ceddd849383d61f8fadc1a8d1fb3dd0c9423712a03f3075f2af75",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 3027
+    },
+    "/tmp/aif/package/dist/utils/origin-validator.d.ts": {
+      "hash": "6efdc8bda308e5d851fb9591e59013e0952afb0ed1855d94968c9ae414a4359f",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 804
+    },
+    "/tmp/aif/package/dist/miso-client.js": {
+      "hash": "a33a897af0f3cabb0984cdb966ae7f1347a97c96a4df0494c678d94218d35136",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 8544
+    },
+    "/tmp/aif/package/dist/utils/data-client-utils.js": {
+      "hash": "f1b6374046b9bf982bb99eb4da5a60332c1a2d956718965b602229b1b30a1f2a",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 3903
+    },
+    "/tmp/mal-test/package/lib/components/CloseButton/index.tsx": {
+      "hash": "9bf157c5231844ff843457eed2fd42f808b75ee3cb9b3d9dfa948c49ba6c6e97",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 1207
+    },
+    "/tmp/aif/package/dist/miso-client.d.ts": {
+      "hash": "9c569d33ac3ffcfe8481cac4c0b9be4e4455ed8a290ebd16ed6660289ebe68da",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 4899
+    },
+    "/tmp/aif/package/dist/utils/http-client-audit.js": {
+      "hash": "2aec7c6a3faaeee6dba4336e116558ca506e73b3a44fa4c4cf920a2779948a56",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 7211
+    },
+    "/tmp/aif/package/README.md": {
+      "hash": "044a018aba8f5b6d753a7fa94ad92d0e0b5a6371b3533fb5719488bc77412289",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 31795
+    },
+    "/tmp/aif/package/dist/services/logger/logger.service.d.ts": {
+      "hash": "3fa60ee35b7b2e0c775e6030af611fa4e47468ef8b93815b12bd92782f7f55ab",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 4247
+    },
+    "/tmp/aif/package/dist/utils/http-client-metadata.d.ts": {
+      "hash": "a7d6ebcd08598131b470b3715b6512c37482e338f27c145141f54e4c5dc41338",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1381
+    },
+    "/tmp/aif/package/dist/utils/controller-url-resolver.d.ts": {
+      "hash": "4f0600814ce16215893cc7866fa52a22f71bf59706c467b5cab07193720ed7db",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2675
+    },
+    "/tmp/aif/package/dist/utils/data-client-init.d.ts": {
+      "hash": "eedcf805f77b33349cbf4bf9adb08bfb71d958c98eb544016671a48795591762",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 2006
+    },
+    "/tmp/aif/package/dist/services/browser-permission.service.js": {
+      "hash": "f1392ff44c8a13d0d9727d79ceda27acd3ed50b822048a0ee5b866666ea35fbd",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 7962
+    },
+    "/tmp/aif/package/dist/utils/data-client-auto-init.js": {
+      "hash": "342fbd09ea40d4393e68a37519378f988bf694b666a6d96c0e6098df081bfd8b",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 10440
+    },
+    "/tmp/aif/package/dist/api/permissions.api.js": {
+      "hash": "3e5e377143af175a99e5ec27d96ccf07beae1fe789269066ce8c9186caaaa6b0",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3294
+    },
+    "/tmp/aif/package/dist/utils/encryption-error.d.ts": {
+      "hash": "b1e0ffb48823b6aab33ba4fe0e1a08695214116ff874f62dfbfcbe0dc2f68f5a",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 969
+    },
+    "/tmp/aif/package/dist/utils/data-client-response.js": {
+      "hash": "46578af9530f017f97624de82b92cc7fe2e424970f4e7d240f68bb75f2d3a67e",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 9156
+    },
+    "/tmp/aif/package/dist/services/application-context.service.d.ts": {
+      "hash": "bc8b294967bd68358ef5db8772f08e407568036c92945cddfc6808a9f4b2c8fd",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 1865
+    },
+    "/tmp/aif/package/dist/api/auth-cache.api.d.ts": {
+      "hash": "65fb2ad2c77b6cbde816433e802084d1cad3dc13c154cdbab5fe403f3e66002f",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2293
+    },
+    "/tmp/aif/package/dist/services/cache.service.js": {
+      "hash": "082154da98c2b4814ffc633ddaffa8fd146f4310e03b93a9cba95ef2ce572be5",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 6014
+    },
+    "/tmp/aif/package/dist/services/redis.service.js": {
+      "hash": "5e9a22ee105d8a138aed9f64690e785f03a1f1972fdcdc17579f6e11e9a5c303",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 4683
+    },
+    "/tmp/aif/package/dist/services/browser-role.service.d.ts": {
+      "hash": "fcb06cf422bee0325cd77755f64ee8c56aa6eea41985d926bfa67e1b9ca9d14c",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 2677
+    },
+    "/tmp/aif/package/dist/utils/filter-schema-loader.d.ts": {
+      "hash": "6bde2a2fa9a88ffbdaa0a3bc1c4f1e75b8dab869d669ce9f5c517fbe620cc32b",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 417
+    },
+    "/tmp/aif/package/dist/utils/origin-validator.js": {
+      "hash": "b0ad9a1ad34e6294dea96813ca09351fac846fe45638d84f3f98d2c79fb4748e",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3649
+    },
+    "/tmp/aif/package/dist/services/auth-environment-token.d.ts": {
+      "hash": "5e3a18df1c5bae7fcf8496e3b3f7b153429bddf11e9326710f261a99091d5110",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 998
+    },
+    "/tmp/mal-test/package/lib/utils/getCountriesList.ts": {
+      "hash": "658ecb77cf642428bdf1fe5569e5bdcb5d6803a4607e09260976f0ffbb84a413",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 3061
+    },
+    "/tmp/aif/package/dist/api/applications.api.d.ts": {
+      "hash": "321ef997a2b2400ff64cfb9cd95145602806f2c84617d31773a7727a02441318",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1799
+    },
+    "/tmp/aif/package/dist/services/auth-error-handler.js": {
+      "hash": "7f128bddf6e6e4cb462ca048b055b18cdfd6dce05eb79ce7f663ef5492baff9d",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3142
+    },
+    "/tmp/aif/package/dist/express/logger-context.middleware.d.ts": {
+      "hash": "1da21cad9fdebe572b9579d7762673733816214236c11a1630ef1a79c4db0ac5",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1720
+    },
+    "/tmp/mal-test/package/lib/interface/searchInputProps.ts": {
+      "hash": "91e8c0e4c902892ddeb2cdb848913242bf39ce834b6edb67eb7bce5822983f68",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 584
+    },
+    "/tmp/aif/package/dist/services/logger/index.js": {
+      "hash": "c3bb38f00bd14c30f4e42a9fe7be89523f53dfe9f4d072f2223cf45755f718db",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1543
+    },
+    "/tmp/aif/package/dist/utils/data-client-request.js": {
+      "hash": "ee982c2083d5c1209bfa6016cd2895f027e13e27c5390cab95c183023578c604",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 11155
+    },
+    "/tmp/aif/package/dist/utils/data-client-auth.js": {
+      "hash": "11d61a72c91209a141f5c79661a218a29f04a3e237cfe7d903974e71ea6ca6f7",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 12779
+    },
+    "/tmp/aif/package/dist/services/logger/log-level-policy.d.ts": {
+      "hash": "3ee8a6983bc02b3d3737f1d3debc1488d5ff299957d8369759c1ffddfe8eaf7b",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 223
+    },
+    "/tmp/aif/package/dist/utils/data-client.js": {
+      "hash": "2c5011d17e9295b8169ff8faa91f72f1a40e22e020f39b6ca9982759b2fed950",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 17391
+    },
+    "/tmp/aif/package/dist/services/browser-role.service.js": {
+      "hash": "6e5c7a29ae92d55c132760f48d7102f97ca21e544254210fd001d53960f641cb",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 6764
+    },
+    "/tmp/aif/package/dist/types/errors.types.d.ts": {
+      "hash": "698456e2ab7036988f33bb51b1dab14b3f39fbd816541c0da373689acd88b8c8",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 1172
+    },
+    "/tmp/aif/package/dist/utils/http-client-masking.d.ts": {
+      "hash": "104088e225fc507230eb0a6d87f6be638f689f0ef8b089e2fff73f69cd391543",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2719
+    },
+    "/tmp/aif/package/dist/utils/data-client-redirect.js": {
+      "hash": "62a62ee878b694520e0688cbe16d2870fd74684482b247d884600d79e2628e75",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 8121
+    },
+    "/tmp/aif/package/dist/api/auth-user.api.js": {
+      "hash": "f23b6ed22386bc4c9185d0ec9e662284fe3829c09856990f63ed145c629ec8c6",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 3945
+    },
+    "/tmp/aif/package/dist/utils/data-client-utils.d.ts": {
+      "hash": "202896096ee7c4f28faafa1353d23db50d357911b5e7fe7cf79f518517c3e346",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1586
+    },
+    "/tmp/mal-test/package/LICENSE.md": {
+      "hash": "440f3ae155ab4c8027c68debd62516baae34cb8cf54662b678bbf9ab042f47c3",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 769
+    },
+    "/tmp/mal-test/package/lib/components/PopupModal/index.tsx": {
+      "hash": "37b490033c7e35202fbe4db62b2979843e0fe11f1592033686c0019476a19b15",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 2813
+    },
+    "/tmp/mal-test/package/lib/interface/countryCca2.ts": {
+      "hash": "473af0508cea1b778aead6337bec331a500c1d1a6a7ed67637ecf08da6c180db",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 2314
+    },
+    "/tmp/aif/package/dist/utils/data-client-cache.d.ts": {
+      "hash": "084e98affad06eea95cdc8ad26ee69c0f5ab697efcfe3d0d26b57364698e36bc",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1207
+    },
+    "/tmp/aif/package/dist/types/token-validation.types.d.ts": {
+      "hash": "f21e260c835f1560e86f8a500ea81e50fb7cf8738de7b6f2a72c976a92055d36",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 3222
+    },
+    "/tmp/aif/package/dist/utils/sensitive-fields.config.json": {
+      "hash": "f789cbf0b3d8b5c07b1a3ad9693cfec53e7a5d7a268ff34f75024a2713295019",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1498
+    },
+    "/tmp/aif/package/dist/api/logs.api.js": {
+      "hash": "54566c68dcb2d0fb62b4ecc6b51b59de05a29e3e21c04aa81247775888e7fb62",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 2837
+    },
+    "/tmp/aif/package/dist/api/logs-stats.api.d.ts": {
+      "hash": "643b52623f45cd388407add50022c59ffba60f562d7daa9ca6c335dbd2674f11",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 2212
+    },
+    "/tmp/aif/package/dist/utils/data-client-cache.js": {
+      "hash": "983592c5edbcb72639f0b4a3d8d5e83cae1db6c662bd2d4e498acaf5526ceaac",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 1654
+    },
+    "/tmp/aif/package/dist/services/logger/log-entry-builder.d.ts": {
+      "hash": "7ebd95d3af957d2737583fcf3060dc53977572e76ac0ff02e149173e4abd91cc",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1620
+    },
+    "/tmp/mal-test/package/package.json": {
+      "hash": "bfa5ba28572dfececda39ab5f6329769b2a85d724c1c3791f10cf106d06b3a47",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 1463
+    },
+    "/tmp/aif/package/dist/types/pagination.types.js": {
+      "hash": "dfa27024744480ff5a7e2fe8e630acf00b1985308e1373bfe5dd57a5b8091fe8",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 222
+    },
+    "/tmp/aif/package/dist/utils/http-response-validator.d.ts": {
+      "hash": "ff8189ae6eac785130a0d34982ddf33c3764cb8f8df66af463b587d2ebf6ee9c",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 703
+    },
+    "/tmp/aif/package/dist/api/auth-token.api.js": {
+      "hash": "cf24c3d50e1b998e046438a4e5844b7f8f36f2b7699a4c964c98184f8950030f",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 9312
+    },
+    "/tmp/aif/package/dist/services/logger/logger-chain.js": {
+      "hash": "56a0ff4fd487b1983c9ed57f1fbd67cbe7fac039310f7971793c4e5a1fa34724",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 5517
+    },
+    "/tmp/aif/package/dist/express/express.d.ts": {
+      "hash": "e3b1c68799a413bf7c3b59bd8249cc2d242179026d7bb4085195a5e1835e43ba",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1557
+    },
+    "/tmp/aif/package/dist/utils/filter.utils.d.ts": {
+      "hash": "6e46cab844e4ccad8bdfa5258a076db9511cf0be32eed1581f0d52ccd77554d7",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2605
+    },
+    "/tmp/aif/package/dist/utils/auth-strategy.d.ts": {
+      "hash": "403bfa6a2ad1054c45cfc8774c840f3ff4b424bab9b3ef1ca360b45386951101",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1831
+    },
+    "/tmp/aif/package/dist/api/logs-export.api.js": {
+      "hash": "7681bada27154d568d912c6a45ee2c5a0b292f1093b91d603055eab2e4577fbe",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 1985
+    },
+    "/tmp/aif/package/dist/utils/data-masker.js": {
+      "hash": "20781ab8ceddde19006705c60874a0032e1a6f8ccfe09e27cd692eb36a8d97a8",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 5311
+    },
+    "/tmp/aif/package/dist/api/logs.api.d.ts": {
+      "hash": "bc32426aebf7bbdf5f21b5914bc0a156ea8b2aeb43964509b0437bdf16850848",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 2562
+    },
+    "/tmp/aif/package/dist/utils/client-token-manager.d.ts": {
+      "hash": "f435c54bdb1c2b3ec0562e463b51ff1ba979d1ecab957a1cca73aadbf38b842a",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2493
+    },
+    "/tmp/aif/package/dist/services/cache.service.d.ts": {
+      "hash": "0a2558937788881951033e56ea59bb8f31025dd7f254c2932c1054f0cc493cfc",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 1925
+    },
+    "/tmp/aif/package/dist/utils/errors.js": {
+      "hash": "6610ffa3d33077d4c2f97dedd564be110a376d95a65d19dcba2993e80e31e77e",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 4952
+    },
+    "/tmp/aif/package/dist/services/logger/logger-context.js": {
+      "hash": "079eb76b992291fc3b8dcece9d42b93126f19ed512d13473f9e4541c4581a3aa",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 7440
+    },
+    "/tmp/aif/package/dist/services/auth.service.d.ts": {
+      "hash": "d95a1c3f088db0e5b877efcb33cbc75ac70f463a5d9af24652202e555e6e26c6",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 5133
+    },
+    "/tmp/aif/package/dist/services/logger/logger-chain.d.ts": {
+      "hash": "eac66b10db83169656b72c8994770b355dbb8d74a589cbbe55c22580d625a54a",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 3397
+    },
+    "/tmp/mal-test/package/lib/interface/country.ts": {
+      "hash": "05fba52529092f0cd3c41ca7ab626525990931ac5b35d16c61ee54a36e5b016f",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 3121
+    },
+    "/tmp/mal-test/package/lib/interface/alfabeticFilterProps.ts": {
+      "hash": "9323385062175e71b3f440a7b6aa0ca678e83ed69cc668ffd871a8a04f45e8ff",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 697
+    },
+    "/tmp/aif/package/dist/services/logger/index.d.ts": {
+      "hash": "cbaa43967da52f137010919569ce34e0ccf330956390f9f1900838de6ff9bfc5",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 571
+    },
+    "/tmp/aif/package/dist/api/types/permissions.types.d.ts": {
+      "hash": "6e06c0b94716d0e877664201dda53b9073fae145102bd14040f71d46e78a3871",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 681
+    },
+    "/tmp/aif/package/dist/utils/internal-http-client.js": {
+      "hash": "ccbded42bab603db174759658f979a5ca1696fd935316d8b610266d0703fbe82",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 13856
+    },
+    "/tmp/aif/package/dist/services/auth-error-handler.d.ts": {
+      "hash": "a34c326e3472a3026f4108fe935b189909689c838763e6ced483764accc5fde1",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 908
+    },
+    "/tmp/aif/package/dist/utils/sort.utils.js": {
+      "hash": "1921f5a9f1a54fb6720d573e3d3dbdb6f304371fb37b448d3de8808ae1ce6ea7",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3368
+    },
+    "/tmp/aif/package/dist/services/auth.service.js": {
+      "hash": "b00d9a5c8a766425fb13ec043947c4db53996813b0cafc23f5b54af40e37ef08",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 15180
+    },
+    "/tmp/aif/package/dist/services/permission.service.js": {
+      "hash": "954332cc01343e3fac698a01c8032444262589e8b11788fafb7f574790f8539c",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 8034
+    },
+    "/tmp/aif/package/dist/utils/filter.utils.js": {
+      "hash": "584c59227078997178c7a10ef106443f427f7f4ce3714038cbfef36b469fcd83",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 10735
+    },
+    "/tmp/aif/package/dist/utils/request-context.d.ts": {
+      "hash": "e22db7341482da17939f901717b890d3db9a742cae514437b83fc3b825067f33",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1011
+    },
+    "/tmp/aif/package/dist/utils/data-client-permissions.js": {
+      "hash": "47350bb7742d6a5610cb99480ab4a176801838dd6fc902e59e6a74e864007702",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 4632
+    },
+    "/tmp/aif/package/dist/utils/data-client-init.js": {
+      "hash": "639b418aa5ee3d7614679975e67566e00ca3a8dabebece7361a1f30dbf39ab23",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 5593
+    },
+    "/tmp/aif/package/dist/express/error-response.js": {
+      "hash": "6a6b5ef075811b1332c63574a1070aecf898269726e0ca15224e2e1cbdc85402",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 3743
+    },
+    "/tmp/aif/package/dist/express/error-handler.js": {
+      "hash": "a86051fcd3d511fa0b69f59b31b4ffc30d6ed0a4170c42a758f784e6f694b5ac",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 5931
+    },
+    "/tmp/mal-test/package/lib/utils/parseHeight.ts": {
+      "hash": "01ede7c4098b1f963c217e45202257a8a9c02ccb0319e0024c205d033f347e39",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 859
+    },
+    "/tmp/aif/package/dist/express/client-token-endpoint.js": {
+      "hash": "7e27d35843e2dee8fea9c65895344d6393d116eaa398961fde38c074a68291d2",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 8217
+    },
+    "/tmp/mal-test/package/lib/components/BottomSheetModal/index.tsx": {
+      "hash": "fc665c3583acadd410790bfcbb7f8dfe10d4808f58ba1d5a36ba39c15c5f5788",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 7789
+    },
+    "/tmp/mal-test/package/install.js": {
+      "hash": "59221aa9623d86c930357dba7e3f54138c7ccbd0daa9c483d766cd8ce1b6ad26",
+      "findings": [
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 313,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "unknown",
+          "severity": "info",
+          "description": "Socket.IO usage detected (single signal group, likely legitimate)",
+          "remediation": "GlassWorm uses Socket.IO for command-and-control. Review for suspicious connection patterns.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://github.com/samgrowls/glassworks/blob/main/glassworm-writeup/PART3.md"
+          ],
+          "context": "Tunnel: [\"atob(\", \"atob(\", \"atob(\", \"atob(\", \"atob(\", \"atob(\"]"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 313,
+          "column": 11,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "        F(atob(p['link']), async (i, {"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 319,
+          "column": 107,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                console[w(0x69d, 0x698, 'XZuZ', 0x66b)](J(0x4a9, 'oC%3', 0x4b9, 0x4e1) + 't\\x20get,\\x20', atob(p['link']));"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 332,
+          "column": 21,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    eval(atob(u));"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 332,
+          "column": 26,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    eval(atob(u));"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 337,
+          "column": 21,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: eval_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    eval(atob(u));"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 337,
+          "column": 26,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                    eval(atob(u));"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 371,
+          "column": 62,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                'nzcmrce': p[j('Q#j4', 0x5f5, 0x5da, 0x60f)](atob(j('!Gk*', 0x5cf, 0x650, 0x5f6) + 'Q=')),"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 372,
+          "column": 64,
+          "code_point": 0,
+          "character": "",
+          "raw_bytes": null,
+          "category": "glassware_pattern",
+          "severity": "critical",
+          "description": "GlassWare attack pattern detected: encoding_pattern (confidence: 95%)",
+          "remediation": "CRITICAL: This code exhibits strong GlassWare attack characteristics.",
+          "cwe_id": "CWE-956",
+          "references": [
+            "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": "                'secretKey': p[x(0x2e7, 'OPgf', 0x2e0, 0x329)](atob(j('ENIO', 0x5af, 0x5d0, 0x5be) + 'V5'))"
+        },
+        {
+          "file": "/tmp/mal-test/package/install.js",
+          "line": 389,
+          "column": 1,
+          "code_point": 0,
+          "character": "\u0000",
+          "raw_bytes": null,
+          "category": "encrypted_payload",
+          "severity": "high",
+          "description": "High-entropy blob combined with decrypt→exec flow — potential encrypted payload loader",
+          "remediation": "Review this file for encrypted payload patterns. The combination of high-entropy encoded data with decryption followed by dynamic code execution is characteristic of encrypted loaders used in supply chain attacks. Decode the blob to understand the hidden payload.",
+          "cwe_id": "CWE-506",
+          "references": [
+            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode"
+          ],
+          "context": null
+        }
+      ],
+      "timestamp": 1774116002,
+      "file_size": 18886
+    },
+    "/tmp/aif/package/dist/utils/internal-http-client.d.ts": {
+      "hash": "23cfbc818287fc486bf203382efaf3165dab2846878610528f0e1ec71cff8c0e",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 5185
+    },
+    "/tmp/aif/package/dist/express/error-types.d.ts": {
+      "hash": "5474e6159104525d0cbf0490e8aacad36c3b302dac070b97297e17998ed4eaa7",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 2149
+    },
+    "/tmp/aif/package/dist/api/auth-user.api.d.ts": {
+      "hash": "75df28712bafc438b6be3c96eb33d3f565543728a7ebc633f48f91b04b6e97d9",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1571
+    },
+    "/tmp/aif/package/dist/express/error-handler.d.ts": {
+      "hash": "10ffb0c8420b6a7516cfffde204f14686aae849c370a98e2f87fac87e0e1f4b5",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1100
+    },
+    "/tmp/aif/package/dist/utils/filter-schema-loader.js": {
+      "hash": "3b83c26383cb81c009510922d9d15bde870ca254d548819bee8332670640d4a4",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 2507
+    },
+    "/tmp/aif/package/dist/api/types/roles.types.js": {
+      "hash": "5066c854298e418be3c36cdf20a029b48a0dab6a0e5b81e60bc0e4902e1c005a",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 243
+    },
+    "/tmp/aif/package/dist/express/validation-helper.d.ts": {
+      "hash": "f1cb0f23fd9343ca4960d6eda1125881def590e5a74c82f41a28565d60f30440",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 2769
+    },
+    "/tmp/aif/package/dist/api/logs-create.api.d.ts": {
+      "hash": "b7fd764a28388fdd5ecab30fd23a4be6fbf5e1f0e4ffb318db7ac823096451d7",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 1325
+    },
+    "/tmp/aif/package/dist/types/token-validation.types.js": {
+      "hash": "0455e734d2f4969248dabbe50b4972cf16e0f30c77013c3718ee6441c86af54c",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 233
+    },
+    "/tmp/mal-test/package/lib/interface/countrySelectProps.ts": {
+      "hash": "2797d4870d6bec10a76f797828d81bda588498aae105cfb86eb14acf095cbca6",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 2679
+    },
+    "/tmp/aif/package/dist/utils/filter-schema.utils.js": {
+      "hash": "a3d6cca19fb54e4eac6ea41ea16cf9cd09e06943540ba08b310a4c0ee5029ad1",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 12717
+    },
+    "/tmp/mal-test/package/lib/constants/countries.json": {
+      "hash": "3569a98e6b3f6f90562a50d3bc111cace0ccbadb9eb1b37052cb1ed2615e4689",
+      "findings": [],
+      "timestamp": 1774116008,
+      "file_size": 1446072
+    },
+    "/tmp/aif/package/dist/express/client-token-endpoint.d.ts": {
+      "hash": "7e5acef1e8a11029781949fab52f3dcbd7fe4fb52bbcf6efce00310986199980",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 2339
+    },
+    "/tmp/aif/package/dist/utils/http-response-validator.js": {
+      "hash": "2a148052c290c225285c131a25e5e7c735a688393d09268e97f9058480782f0d",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3130
+    },
+    "/tmp/mal-test/package/lib/interface/theme.ts": {
+      "hash": "42ee182671c2225a905056b067561faf7a28ce33ff69cc9e03b2d937c9aeeef6",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 61
+    },
+    "/tmp/mal-test/package/lib/interface/countrySelectLanguages.ts": {
+      "hash": "1b2cdce41d1521857a990bb96a4b722292993a683ff48118d414571ba901338c",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 764
+    },
+    "/tmp/aif/package/dist/utils/data-masker.d.ts": {
+      "hash": "11914c901e2c6abbfbfcae99b20023853f86c8295fb47c249938d4f02c009b2d",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1657
+    },
+    "/tmp/aif/package/dist/types/filter-schema.types.js": {
+      "hash": "7331cc4a58f3bb0a05f7f862dccd0a48f3c1c91923acd17dc86ed7c82a66e8b7",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1408
+    },
+    "/tmp/aif/package/dist/api/types/auth.types.js": {
+      "hash": "d0a0179a9734a78003513356aaa5ef5e7cd5a740fe4db3c1841193a9ef5778fa",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 241
+    },
+    "/tmp/aif/package/dist/utils/browser-jwt-decoder.js": {
+      "hash": "280f987b132d8ea321d73a1b1b243481e186ac40a13a9628743f796e422a056d",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 2312
+    },
+    "/tmp/aif/package/dist/api/types/logs.types.js": {
+      "hash": "114e35886da3152c8831855cb9a04db02c19472196c7ba25a9041b24edf52c60",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 241
+    },
+    "/tmp/mal-test/package/lib/components/CountryItem/index.tsx": {
+      "hash": "998de9ce9ea5e106e86d8b9316daf297890aa79729ee84dc36c4dfd807421a91",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 2921
+    },
+    "/tmp/aif/package/dist/services/role.service.js": {
+      "hash": "1916d1c8f7e03d7f902b99c6e3850ad187e6e3cf158b8a1e9c04d3c3e58a1bcf",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 6535
+    },
+    "/tmp/aif/package/dist/utils/http-error-handler.js": {
+      "hash": "0cc236232869a7ab7ab887a7a3b40cfc4abc1fc63cd0a2e6937534b4514605ba",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 4379
+    },
+    "/tmp/aif/package/dist/api/types/applications.types.js": {
+      "hash": "604ff04412d8c793511434cce227eda2cd1a71b9c7c4fed0707ef9554a890e7c",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 478
+    },
+    "/tmp/aif/package/dist/express/error-response.d.ts": {
+      "hash": "fca32c7ac6bf2d20a37373cbc7a247834b8e486fea2e1108eb909c966a811222",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 2181
+    },
+    "/tmp/aif/package/dist/utils/filter-colon.utils.js": {
+      "hash": "607a8d084f3d02df50e66b1da329d8b5ad1179e4eef31f30279d99a3fd7a6420",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 3717
+    },
+    "/tmp/aif/package/dist/api/encryption.api.d.ts": {
+      "hash": "3454f411c6058fc0fc5fa10094fad170bc3f0e422b98523f6e458aedb015bbb1",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1325
+    },
+    "/tmp/aif/package/dist/services/logger/logger-http-utils.d.ts": {
+      "hash": "d12b4e9382a999f9a61b32aa12ee4ef9ea01ce9fe9321fd5314816f7cc175be5",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 550
+    },
+    "/tmp/aif/package/dist/utils/token-utils.js": {
+      "hash": "a5f5fb566775027e49b8765f3d08b402c5c806cff958243f1ec7b1ab7cfbe101",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3498
+    },
+    "/tmp/aif/package/dist/utils/sensitive-fields.loader.js": {
+      "hash": "24293bb441afb012f4edbab4d125a3aebefe296d815900750e459231f4037dd0",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 7017
+    },
+    "/tmp/mal-test/package/lib/utils/sortCountriesAlphabetically.ts": {
+      "hash": "9bf8f3672da0f57951f12d20c8bde31ff5931540b05812b85bbb0f7f47c6d287",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 601
+    },
+    "/tmp/aif/package/dist/api/types/auth.types.d.ts": {
+      "hash": "21f686155b2bb4e8556ec8e836a84dd669d7e0f036c9536d620d53693836b1c4",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 6077
+    },
+    "/tmp/aif/package/dist/utils/http-client-metadata.js": {
+      "hash": "07e15bb27b84b18d759a2e8214c43c8ecbee512e0bfd895c7cf64015e7618e00",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3071
+    },
+    "/tmp/aif/package/dist/api/encryption.api.js": {
+      "hash": "4d2055270e366729f01db192e277fd51e9ffb0e1aaf671214c0763b9a954c818",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 2360
+    },
+    "/tmp/aif/package/dist/utils/response-validator.d.ts": {
+      "hash": "dc1edd0d16e1fd83155542dcca55acc59409402c6e82a9ded5e76d99f8a61828",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 1994
+    },
+    "/tmp/mal-test/package/lib/interface/closeButtonProps.ts": {
+      "hash": "e1a447a404571a8dd6a86d9ac61546f344abcaffa054d9b611d3b936c4579179",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 448
+    },
+    "/tmp/aif/package/dist/express/index.js": {
+      "hash": "bb50650fd4b70fadd8aed8d265ffd383d71a65f3b9b2fe71adddcdcc30de8877",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 4579
+    },
+    "/tmp/aif/package/dist/types/filter.types.d.ts": {
+      "hash": "c414be06a4cd7561e86ddb5238a517af40325fecb4c9b728ca049809b306b8bc",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 2346
+    },
+    "/tmp/mal-test/package/lib/components/AlphabeticFilter/index.tsx": {
+      "hash": "7d832166fa1f1564c5c0e57e9262bd97b3da37cad2333a0b7a5276ae204a47da",
+      "findings": [],
+      "timestamp": 1774116008,
+      "file_size": 6362
+    },
+    "/tmp/aif/package/dist/utils/http-client-masking.js": {
+      "hash": "ad6fbc19a55d0a48eb08974909f3bef7f09223e15ab1149f5c35d02aac4667b3",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 8661
+    },
+    "/tmp/aif/package/dist/utils/data-client-request.d.ts": {
+      "hash": "62f4e654367e7c145bdd3f6ae975df0d2fe11a91339e805b3f6c9857f6f9369e",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 1995
+    },
+    "/tmp/mal-test/package/lib/index.tsx": {
+      "hash": "dd0e8fbae28f3a2fa757cb02423f61b83ac4a4ea0b24758fb30f35b92ca57012",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 887
+    },
+    "/tmp/aif/package/dist/sdk-exports.d.ts": {
+      "hash": "bcbb239c6bebe38e14ecf1f64a166aed3e38f933e8748bd5f4575b15572b350f",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 4430
+    },
+    "/tmp/mal-test/package/lib/interface/countryItemProps.ts": {
+      "hash": "6aed1326b2f34eeeab2deb78c6cfa662fcded7a087235918b4fa5e90dd4e202b",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 712
+    },
+    "/tmp/mal-test/package/lib/utils/getTranslation.ts": {
+      "hash": "88a91e1d90d9b567b3c8c733b096de59b76221abd4b3c19b59cac78b352b90f5",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 27924
+    },
+    "/tmp/aif/package/dist/api/applications.api.js": {
+      "hash": "0ce18e3d56ccd861005a0aa7772caa5f91c8ee62727d9ae9933cf893bbc1a4a7",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3769
+    },
+    "/tmp/aif/package/dist/services/logger/logger-context-storage.js": {
+      "hash": "1aa2b672eb1b27a2bace1f446711b2d4a4e38f3bd521132d3371a0f3cf94a6d0",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 3009
+    },
+    "/tmp/aif/package/dist/api/types/encryption.types.d.ts": {
+      "hash": "3d38432f625b1f2a593f149d06a53c496c7ca4e2143110b658a8dde06d385e7a",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 1400
+    },
+    "/tmp/aif/package/dist/express/response-middleware.d.ts": {
+      "hash": "5de7f64f021ab5d45fb953e320a91d216ddafbdeaf178bc3acce2bc71929af4d",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 769
+    },
+    "/tmp/mal-test/package/lib/components/CountrySelect/index.tsx": {
+      "hash": "762aa94c233a487841d96ff8d764e106ffaf8332dc5f37a8b4b0c759ca9a72a1",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 16186
+    },
+    "/tmp/aif/package/dist/express/async-handler.d.ts": {
+      "hash": "5b5e660cdf8a9b06556d00274b8a3215c7c538819c1cade046338b83225cb2d8",
+      "findings": [],
+      "timestamp": 1774116278,
+      "file_size": 1394
+    },
+    "/tmp/aif/package/dist/types/config.types.d.ts": {
+      "hash": "cce2e98e806463fb362f687abe223fc9f8465d41b92b7b2c6746d81f861eaffb",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 5627
+    },
+    "/tmp/aif/package/dist/utils/response-validator.js": {
+      "hash": "64103f70a852d48f30632cf0b14de6e57ea3073884a951d2c92f4c9405a8dad4",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 3574
+    },
+    "/tmp/aif/package/dist/services/logger/log-level-policy.js": {
+      "hash": "5a772545a62bf49f230a2e0f8e21ac834953f9534459cf1d77a092edad4e8467",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 532
+    },
+    "/tmp/aif/package/dist/utils/controller-url-resolver.js": {
+      "hash": "8740b8424a2d0485143aedabef786b8bb352ea361317dfab6eb04bf4907b9dd2",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 5502
+    },
+    "/tmp/mal-test/package/lib/components/SearchInput/index.tsx": {
+      "hash": "66570c5615d4eed5bb046bc9a182bd7b4b2bdb077e747dd05b6683f7afe6f0d6",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 1454
+    },
+    "/tmp/aif/package/dist/services/auth-environment-token.js": {
+      "hash": "017714a3bd7f06020d70c008cad3f62b8a2070dc21c0ef35fbd81d9756676777",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 3915
+    },
+    "/tmp/aif/package/dist/utils/request-context.js": {
+      "hash": "51f80ea61d9dc18383f1b5c119847377ee72ac8e88dfebb40603dab0c33864ca",
+      "findings": [],
+      "timestamp": 1774116281,
+      "file_size": 2716
+    },
+    "/tmp/aif/package/dist/services/encryption.service.js": {
+      "hash": "70c753a38ab213bb400cbfc50fdf62d2a488fb5604917b11babd58537430d495",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 5319
+    },
+    "/tmp/mal-test/package/lib/interface/itemList.ts": {
+      "hash": "d97c948918f45c1d6d6361fd5c0428ef3a1abaa426b8c989bfdfd4ffb1037500",
+      "findings": [],
+      "timestamp": 1774116002,
+      "file_size": 133
+    },
+    "/tmp/aif/package/dist/types/filter.types.js": {
+      "hash": "b70143c93626fb2218f3ea63fdfd1b186de035e3a50540a113e861614f73a948",
+      "findings": [],
+      "timestamp": 1774116280,
+      "file_size": 2036
+    },
+    "/tmp/aif/package/dist/types/sort.types.d.ts": {
+      "hash": "a5a9d0515f2153ef50c1bcf293e62106cb61ee66cb02786ac7adb1f16cb63abf",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 353
+    },
+    "/tmp/aif/package/dist/api/logs-export.api.d.ts": {
+      "hash": "1f2e11894b8f435d91c2982761cbb4d465f6ca848ffff95c33507aff8ff4db5c",
+      "findings": [],
+      "timestamp": 1774116279,
+      "file_size": 869
+    },
+    "/tmp/aif/package/dist/api/types/logs.types.d.ts": {
+      "hash": "ca69ae3c36e273d8740a78e8e87dde5af2cf2eba793d35a47938d5bca989363e",
+      "findings": [],
+      "timestamp": 1774116282,
+      "file_size": 7093
+    }
+  },
+  "created_at": 1774116282
+}

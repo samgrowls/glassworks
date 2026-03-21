@@ -82,6 +82,14 @@ const ENDPOINT_PATTERNS: &[&str] = &[
     "no-ip",
     "dyndns",
     "dynu",
+    // GlassWorm C2 IPs (from Sonatype/Aikido reports Mar 2026)
+    "45.32.150.251",
+    "45.32.151.157",
+    "70.34.242.255",
+    "217.69.3.152",
+    "217.69.3.51",
+    "217.69.11.99",
+    "217.69.0.159",
     // Hardcoded IP pattern (will be filtered for localhost)
     "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}",
 ];

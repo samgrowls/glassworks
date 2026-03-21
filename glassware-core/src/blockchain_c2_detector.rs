@@ -33,15 +33,24 @@ const KNOWN_C2_WALLETS: &[&str] = &[
     // ForceMemo
     "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t",  // ForceMemo funding
 
-    // Chrome RAT (NEW from INTEL3)
+    // Chrome RAT (from Sonatype/Aikido reports Mar 2026)
     "DSRUBTziADDHSik7WQvSMjvwCHFsbsThrbbjWMoJPUiW",  // Chrome extension RAT C2
+    "6YGcuyFRJKZtcaYCCFba9fScNUvPkGXodXE1mJiSzqDJ",  // Payload delivery URLs
 ];
 
-/// Known GlassWorm C2 IP addresses (from INTEL3)
+/// Known GlassWorm C2 IP addresses (from Sonatype/Aikido reports Mar 2026)
 const KNOWN_C2_IPS: &[&str] = &[
     "104.238.191.54",    // Vultr AS20473 - GlassWorm infrastructure
     "108.61.208.161",    // Vultr AS20473 - GlassWorm infrastructure
     "45.150.34.158",     // Non-Vultr - led-win32 exfil server (Part 5)
+    // New C2 IPs from Mar 2026 reports
+    "45.32.150.251",
+    "45.32.151.157",
+    "70.34.242.255",
+    "217.69.3.152",      // Exfil endpoint /wall
+    "217.69.3.51",
+    "217.69.11.99",
+    "217.69.0.159",
 ];
 
 /// Patterns for blockchain C2 detection

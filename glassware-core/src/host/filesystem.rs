@@ -62,6 +62,9 @@ const GLASSWORM_PAYLOADS: &[&str] = &[
     "m",
     "BqJuCBQutS.exe",
     "led-win32",
+    // New payloads from Mar 2026 reports
+    "i.js",  // Loader filename
+    "init.json",  // Bot configuration persistence
 ];
 
 /// Known persistence indicators
