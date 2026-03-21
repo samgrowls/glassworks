@@ -29,12 +29,19 @@ const KNOWN_C2_WALLETS: &[&str] = &[
     // GlassWorm Core
     "BjVeAjPrSKFiingBn4vZvghsGj9KCE8AJVtbc9S8o8SC",  // ForceMemo C2
     "28PKnu7RzizxBzFPoLp69HLXp9bJL3JFtT2s5QzHsEA2",  // Primary GlassWorm
-    
+
     // ForceMemo
     "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t",  // ForceMemo funding
-    
+
     // Chrome RAT (NEW from INTEL3)
     "DSRUBTziADDHSik7WQvSMjvwCHFsbsThrbbjWMoJPUiW",  // Chrome extension RAT C2
+];
+
+/// Known GlassWorm C2 IP addresses (from INTEL3)
+const KNOWN_C2_IPS: &[&str] = &[
+    "104.238.191.54",    // Vultr AS20473 - GlassWorm infrastructure
+    "108.61.208.161",    // Vultr AS20473 - GlassWorm infrastructure
+    "45.150.34.158",     // Non-Vultr - led-win32 exfil server (Part 5)
 ];
 
 /// Patterns for blockchain C2 detection
@@ -113,6 +120,29 @@ impl Detector for BlockchainC2Detector {
                             Severity::Critical,
                             "Known GlassWorm C2 wallet address detected",
                             "CRITICAL: This is a confirmed GlassWorm command-and-control wallet. Immediate investigation and reporting required.",
+                        )
+                        .with_cwe_id("CWE-506")
+                        .with_reference(
+                            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode",
+                        ),
+                    );
+                }
+            }
+
+            // Check for known C2 IP addresses (E1 enhancement from INTEL3)
+            for ip in KNOWN_C2_IPS {
+                if line.contains(*ip) {
+                    findings.push(
+                        Finding::new(
+                            &ir.metadata.path,
+                            line_num + 1,
+                            1,
+                            0,
+                            '\0',
+                            DetectionCategory::BlockchainC2,
+                            Severity::Critical,
+                            &format!("Known GlassWorm C2 IP address detected: {}", ip),
+                            "CRITICAL: This IP is associated with GlassWorm infrastructure. Immediate investigation required.",
                         )
                         .with_cwe_id("CWE-506")
                         .with_reference(
@@ -233,6 +263,36 @@ mod tests {
         assert!(!findings.is_empty());
         assert_eq!(findings[0].severity, Severity::Critical);
         assert!(findings[0].description.contains("Known GlassWorm C2 wallet"));
+    }
+
+    #[test]
+    fn test_detect_known_ip_vultr() {
+        // E1: Test Vultr IPs from INTEL3
+        let detector = BlockchainC2Detector::new();
+        let content = r#"
+            const C2_SERVER = "http://104.238.191.54:8080/exfil";
+            const backup = "http://108.61.208.161/api";
+        "#;
+
+        let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].severity, Severity::Critical);
+        assert!(findings[0].description.contains("Known GlassWorm C2 IP"));
+    }
+
+    #[test]
+    fn test_detect_known_ip_led_win32() {
+        // E1: Test led-win32 exfil server from Part 5
+        let detector = BlockchainC2Detector::new();
+        let content = r#"
+            const EXFIL_SERVER = "45.150.34.158:8080";
+            tcp.connect(EXFIL_SERVER);
+        "#;
+
+        let findings = detector.scan(Path::new("test.js"), content, &UnicodeConfig::default());
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].severity, Severity::Critical);
+        assert!(findings[0].description.contains("45.150.34.158"));
     }
 
     #[test]

@@ -496,6 +496,9 @@ impl ScanEngine {
         engine.register(Box::new(TimeDelayDetector::new()));
         engine.register(Box::new(BlockchainC2Detector::new()));
 
+        // E3: Browser-kill command detector (GlassWorm signature)
+        engine.register(Box::new(crate::detectors::browser_kill::BrowserKillDetector::new()));
+
         #[cfg(feature = "semantic")]
         {
             engine.register_semantic(Box::new(crate::gw005_semantic::Gw005SemanticDetector::new()));
@@ -577,6 +580,9 @@ impl ScanEngine {
         engine.register(Box::new(LocaleGeofencingDetector::new()));
         engine.register(Box::new(TimeDelayDetector::new()));
         engine.register(Box::new(BlockchainC2Detector::new()));
+
+        // E3: Browser-kill command detector (GlassWorm signature)
+        engine.register(Box::new(crate::detectors::browser_kill::BrowserKillDetector::new()));
 
         #[cfg(feature = "semantic")]
         {
