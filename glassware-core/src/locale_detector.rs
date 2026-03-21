@@ -24,12 +24,12 @@ use std::path::Path;
 /// Patterns for locale/timezone detection
 static LOCALE_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     vec![
-        // Russian locale strings
-        Regex::new(r#"['"]ru-RU['"]|['"]ru['"]|['"]Russian['"]"#).unwrap(),
-        // Russian/Moscow timezones
-        Regex::new(r"Europe/Moscow|Europe/Kaliningrad|Europe/Volgograd|Europe/Kirov").unwrap(),
-        // Navigator language check
-        Regex::new(r"navigator\.(language|languages).*ru").unwrap(),
+        // Russian locale strings - exact match with word boundaries
+        Regex::new(r#"['"]ru-RU['"]|['"]ru['"]\s*[:=,]|['"]Russian['"]"#).unwrap(),
+        // Russian/Moscow timezones - exact strings
+        Regex::new(r#"['"]Europe/Moscow['"]|['"]Europe/Kaliningrad['"]|['"]Europe/Volgograd['"]|['"]Europe/Kirov['"]"#).unwrap(),
+        // Navigator language check for Russian - must be quoted value
+        Regex::new(r#"navigator\.(language|languages)\s*[=\(].*['"]ru['"]"#).unwrap(),
     ]
 });
 
@@ -94,24 +94,7 @@ impl Detector for LocaleGeofencingDetector {
             for pattern in LOCALE_PATTERNS.iter() {
                 if pattern.is_match(line) {
                     locale_check_lines.push(line_num);
-
-                    findings.push(
-                        Finding::new(
-                            &ir.metadata.path,
-                            line_num + 1,
-                            1,
-                            0,
-                            '\0',
-                            DetectionCategory::LocaleGeofencing,
-                            Severity::Medium,  // Reduced from High - signal not flag
-                            "Russian locale/timezone check detected",
-                            "Review for geographic targeting behavior. Common in GlassWorm, PhantomRaven, and SANDWORM_MODE campaigns to avoid infecting Russian systems.",
-                        )
-                        .with_cwe_id("CWE-506")
-                        .with_reference(
-                            "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode",
-                        ),
-                    );
+                    // Don't emit finding yet - wait to see if there's an exit pattern
                 }
             }
 
@@ -120,20 +103,24 @@ impl Detector for LocaleGeofencingDetector {
                 // Check if this exit is within 5 lines AFTER a locale check (backward lookup)
                 for &check_line in &locale_check_lines {
                     if line_num > check_line && line_num <= check_line + 5 {
-                        // Upgrade the finding to Critical
-                        for finding in &mut findings {
-                            if finding.line == check_line + 1
-                                && finding.category == DetectionCategory::LocaleGeofencing
-                            {
-                                finding.severity = Severity::Critical;
-                                finding.description =
-                                    "Active geofencing: locale check followed by early exit"
-                                        .to_string();
-                                finding.remediation =
-                                    "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required."
-                                        .to_string();
-                            }
-                        }
+                        // Found locale check + exit pattern = CRITICAL
+                        findings.push(
+                            Finding::new(
+                                &ir.metadata.path,
+                                check_line + 1,
+                                1,
+                                0,
+                                '\0',
+                                DetectionCategory::LocaleGeofencing,
+                                Severity::Critical,
+                                "Active geofencing: locale check followed by early exit",
+                                "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required.",
+                            )
+                            .with_cwe_id("CWE-506")
+                            .with_reference(
+                                "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode",
+                            ),
+                        );
                     }
                 }
             }
@@ -144,21 +131,24 @@ impl Detector for LocaleGeofencingDetector {
                 if forward_line_num < lines.len() {
                     let forward_line = lines[forward_line_num];
                     if EXIT_PATTERN.is_match(forward_line) {
-                        // Found exit pattern within 5 lines ahead - upgrade locale check to Critical
-                        for finding in &mut findings {
-                            if finding.line == line_num + 1
-                                && finding.category == DetectionCategory::LocaleGeofencing
-                                && finding.severity == Severity::Medium
-                            {
-                                finding.severity = Severity::Critical;
-                                finding.description =
-                                    "Active geofencing: locale check followed by early exit"
-                                        .to_string();
-                                finding.remediation =
-                                    "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required."
-                                        .to_string();
-                            }
-                        }
+                        // Found exit pattern within 5 lines ahead - emit CRITICAL finding
+                        findings.push(
+                            Finding::new(
+                                &ir.metadata.path,
+                                line_num + 1,
+                                1,
+                                0,
+                                '\0',
+                                DetectionCategory::LocaleGeofencing,
+                                Severity::Critical,
+                                "Active geofencing: locale check followed by early exit",
+                                "CRITICAL: This is active geographic targeting. The package exits early on Russian systems to avoid domestic prosecution. Immediate investigation required.",
+                            )
+                            .with_cwe_id("CWE-506")
+                            .with_reference(
+                                "https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode",
+                            ),
+                        );
                     }
                 }
             }
