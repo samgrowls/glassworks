@@ -219,6 +219,7 @@ pub mod scanner;
 pub mod scan_registry;
 pub mod streaming;
 pub mod tracing;
+pub mod version_checkpoint;
 pub mod version_scanner;
 
 // Re-export main types for convenience
