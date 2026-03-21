@@ -69,8 +69,8 @@ pub struct Cli {
     #[arg(long)]
     pub quiet: bool,
 
-    /// Verbose mode (detailed output).
-    #[arg(long)]
+    /// Verbose mode (detailed output, sets log level to debug).
+    #[arg(short, long)]
     pub verbose: bool,
 
     /// Disable colored output.
@@ -121,6 +121,21 @@ pub enum Commands {
         /// Git reference (branch, tag, or commit).
         #[arg(short, long)]
         r#ref: Option<String>,
+    },
+
+    /// Search GitHub repositories.
+    SearchGithub {
+        /// Search query.
+        #[arg(required = true)]
+        query: String,
+
+        /// Maximum results to return.
+        #[arg(long, default_value = "50")]
+        max_results: usize,
+
+        /// Output file to save results (optional).
+        #[arg(short, long)]
+        output: Option<String>,
     },
 
     /// Scan packages from a file.

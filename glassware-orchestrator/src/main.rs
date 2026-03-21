@@ -23,13 +23,17 @@ async fn main() -> Result<()> {
     let cli = Cli::parse_args();
 
     // Initialize tracing with config
-    let log_level = match cli.log_level.to_lowercase().as_str() {
-        "trace" => Level::TRACE,
-        "debug" => Level::DEBUG,
-        "info" => Level::INFO,
-        "warn" => Level::WARN,
-        "error" => Level::ERROR,
-        _ => Level::INFO,
+    let log_level = if cli.verbose {
+        Level::DEBUG  // Verbose mode overrides log level
+    } else {
+        match cli.log_level.to_lowercase().as_str() {
+            "trace" => Level::TRACE,
+            "debug" => Level::DEBUG,
+            "info" => Level::INFO,
+            "warn" => Level::WARN,
+            "error" => Level::ERROR,
+            _ => Level::INFO,
+        }
     };
 
     let tracing_config = glassware_orchestrator::tracing::TracingConfig {
@@ -78,6 +82,9 @@ async fn main() -> Result<()> {
         }
         Commands::ScanGithub { ref repos, ref r#ref } => {
             cmd_scan_github(&cli, repos.clone(), r#ref.as_deref()).await?;
+        }
+        Commands::SearchGithub { ref query, ref max_results, ref output } => {
+            cmd_search_github(&cli, query.clone(), *max_results, output.as_deref()).await?;
         }
         Commands::ScanFile { ref file } => {
             cmd_scan_file(&cli, file).await?;
@@ -277,6 +284,42 @@ async fn cmd_scan_github(cli: &Cli, repos: Vec<String>, ref_name: Option<&str>) 
     let results = orchestrator.scan_github_repos(&repo_pairs, ref_name).await;
 
     print_results(cli, &results)?;
+
+    Ok(())
+}
+
+/// Search GitHub repositories command.
+async fn cmd_search_github(
+    cli: &Cli,
+    query: String,
+    max_results: usize,
+    output: Option<&str>,
+) -> Result<()> {
+    use std::fs::File;
+    use std::io::Write;
+
+    info!("Searching GitHub for: '{}' (max {} results)", query, max_results);
+
+    let orchestrator = create_orchestrator(cli).await?;
+
+    // Search GitHub
+    let repos = orchestrator.search_github_repos(&query, max_results).await?;
+
+    info!("Found {} repositories", repos.len());
+
+    // Output results
+    if let Some(output_path) = output {
+        let mut file = File::create(output_path)?;
+        for repo in &repos {
+            writeln!(file, "{}", repo)?;
+        }
+        println!("Saved {} repositories to {}", repos.len(), output_path);
+    } else {
+        println!("# Found {} repositories for '{}'", repos.len(), query);
+        for repo in &repos {
+            println!("{}", repo);
+        }
+    }
 
     Ok(())
 }
@@ -552,12 +595,16 @@ async fn cmd_scan_cancel(cli: &Cli, id: &str) -> Result<()> {
 
 /// Create orchestrator from CLI options.
 async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
+    // Load GitHub token from CLI or environment
+    let github_token = cli.github_token.clone()
+        .or_else(|| std::env::var("GITHUB_TOKEN").ok());
+
     let config = OrchestratorConfig {
         downloader: DownloaderConfig {
             max_retries: cli.max_retries,
             npm_rate_limit: cli.npm_rate_limit as f32,
             github_rate_limit: cli.github_rate_limit as f32,
-            github_token: cli.github_token.clone(),
+            github_token: github_token.clone(),
             max_concurrent: cli.concurrency,
             ..Default::default()
         },
@@ -574,7 +621,7 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
         },
         cache_ttl_days: cli.cache_ttl as i64,
         enable_cache: !cli.no_cache,
-        github_token: cli.github_token.clone(),
+        github_token: github_token.clone(),
         enable_checkpoint: true,
         checkpoint_dir: Some(cli.checkpoint_dir.clone()),
         checkpoint_interval: 10,
