@@ -206,35 +206,59 @@ EOF
 
 ---
 
-## Update v0.11.6 - LLM Parity Achieved
+## Update v0.11.6 - Two-Tier LLM Restored
 
 **Date:** 2026-03-21
 
-Rust orchestrator now has **full LLM parity** with Python harness:
+**Original design restored:** Two-tier LLM analysis with different models for different purposes.
 
-| Feature | Before | After |
-|---------|--------|-------|
-| Model options | 1 model | 4 models with fallback |
-| Strongest model | 70B (Llama 3) | 397B (Qwen 3.5) ✅ |
-| Automatic fallback | ❌ | ✅ |
-| NVIDIA support | ✅ (1 model) | ✅ (4 models) |
-
-### Configuration (Same as Python)
+### Tier 1: Fast Triage (Rust + Cerebras)
 
 ```bash
-export GLASSWARE_LLM_BASE_URL="https://integrate.api.nvidia.com/v1"
-export GLASSWARE_LLM_API_KEY="nvapi-..."
-export GLASSWARE_LLM_MODELS="qwen/qwen3.5-397b-a17b,moonshotai/kimi-k2.5,z-ai/glm5,meta/llama-3.3-70b-instruct"
+# Default behavior - Cerebras for fast triage
+glassware-orchestrator --llm scan-npm express lodash axios
 ```
 
-### Usage
+- **Model:** `llama-3.3-70b` (Cerebras)
+- **Speed:** ~2-5 seconds per analysis
+- **Use case:** Quick triage of ALL flagged packages
+- **Cost:** Free tier available
+
+### Tier 2: Deep Analysis (Python + NVIDIA)
 
 ```bash
-# Rust orchestrator with LLM fallback
-glassware-orchestrator --llm scan-npm express lodash axios
-
-# Python harness with LLM fallback
+# Python harness with NVIDIA deep analysis
+cd harness
 python3 -m core.orchestrator run-wave --wave 0 --llm
 ```
 
-**Both now use identical model fallback chain!**
+- **Models:** Qwen 3.5 397B → Kimi K2.5 → GLM-5 → Llama 3 70B (fallback chain)
+- **Speed:** ~15-30 seconds per analysis
+- **Use case:** Deep analysis of HIGH-SEVERITY flagged threats
+- **Cost:** NVIDIA API credits
+
+### Optional: Rust with NVIDIA Deep Analysis
+
+```bash
+# Use Rust orchestrator with NVIDIA models (for deep analysis)
+export GLASSWARE_LLM_BASE_URL="https://integrate.api.nvidia.com/v1"
+export GLASSWARE_LLM_API_KEY="nvapi-..."
+export GLASSWARE_LLM_MODELS="qwen/qwen3.5-397b-a17b,moonshotai/kimi-k2.5,z-ai/glm5,meta/llama-3.3-70b-instruct"
+
+glassware-orchestrator --llm scan-npm express lodash axios
+```
+
+### Recommended Workflow
+
+1. **Initial scan with Rust + Cerebras:**
+   ```bash
+   glassware-orchestrator --llm scan-npm package1 package2 package3
+   ```
+
+2. **Deep analysis with Python + NVIDIA (for high-severity only):**
+   ```bash
+   cd harness
+   python3 -m core.orchestrator run-wave --wave 0 --llm
+   ```
+
+**Both tiers now available with proper separation of concerns!**

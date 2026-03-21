@@ -146,12 +146,10 @@ impl Default for LlmAnalyzerConfig {
             base_url: "https://api.cerebras.ai/v1".to_string(),
             api_key: String::new(),
             model: "llama-3.3-70b".to_string(),
-            // Default model list matching Python harness (NVIDIA models with fallback)
+            // Default: Cerebras for fast triage
+            // Set GLASSWARE_LLM_MODELS for fallback chain or NVIDIA deep analysis
             models: vec![
-                "qwen/qwen3.5-397b-a17b".to_string(),  // Strongest - 397B
-                "moonshotai/kimi-k2.5".to_string(),     // Kimi K2.5
-                "z-ai/glm5".to_string(),                // GLM-5
-                "meta/llama-3.3-70b-instruct".to_string(), // Fallback - 70B
+                "llama-3.3-70b".to_string(),  // Cerebras (fast triage)
             ],
             timeout_secs: 30,
             max_tokens: 1024,
@@ -165,6 +163,9 @@ impl Default for LlmAnalyzerConfig {
 impl LlmAnalyzerConfig {
     /// Create config from environment variables.
     /// Reads: GLASSWARE_LLM_BASE_URL, GLASSWARE_LLM_API_KEY, GLASSWARE_LLM_MODELS (or GLASSWARE_LLM_MODEL)
+    /// 
+    /// Default behavior (no env vars): Cerebras for fast triage
+    /// With GLASSWARE_LLM_MODELS: Use specified models with fallback (e.g., NVIDIA deep analysis)
     pub fn from_env() -> Option<Self> {
         let base_url = std::env::var("GLASSWARE_LLM_BASE_URL").ok()?;
         let api_key = std::env::var("GLASSWARE_LLM_API_KEY").ok()?;
@@ -175,13 +176,8 @@ impl LlmAnalyzerConfig {
         } else if let Ok(model) = std::env::var("GLASSWARE_LLM_MODEL") {
             vec![model]
         } else {
-            // Default to NVIDIA models with fallback
-            vec![
-                "qwen/qwen3.5-397b-a17b".to_string(),
-                "moonshotai/kimi-k2.5".to_string(),
-                "z-ai/glm5".to_string(),
-                "meta/llama-3.3-70b-instruct".to_string(),
-            ]
+            // Default to Cerebras for fast triage
+            vec!["llama-3.3-70b".to_string()]
         };
 
         Some(Self {
@@ -687,10 +683,19 @@ mod tests {
     #[test]
     fn test_llm_config_models_default() {
         let config = LlmAnalyzerConfig::default();
-        // Verify default has 4 models for fallback
+        // Verify default is Cerebras for fast triage
+        assert_eq!(config.models.len(), 1);
+        assert_eq!(config.models[0], "llama-3.3-70b");
+        assert!(config.base_url.contains("cerebras"));
+    }
+
+    #[test]
+    fn test_llm_config_nvidia_models() {
+        // Test NVIDIA config with fallback
+        let config = LlmAnalyzerConfig::nvidia_nim("test-key".to_string());
         assert_eq!(config.models.len(), 4);
         assert_eq!(config.models[0], "qwen/qwen3.5-397b-a17b");
-        assert_eq!(config.models[3], "meta/llama-3.3-70b-instruct");
+        assert!(config.base_url.contains("nvidia"));
     }
 
     #[test]
