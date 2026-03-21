@@ -203,3 +203,38 @@ print(f'Packages/sec: {len(packages)/elapsed:.2f}')
 test_db.unlink()
 EOF
 ```
+
+---
+
+## Update v0.11.6 - LLM Parity Achieved
+
+**Date:** 2026-03-21
+
+Rust orchestrator now has **full LLM parity** with Python harness:
+
+| Feature | Before | After |
+|---------|--------|-------|
+| Model options | 1 model | 4 models with fallback |
+| Strongest model | 70B (Llama 3) | 397B (Qwen 3.5) ✅ |
+| Automatic fallback | ❌ | ✅ |
+| NVIDIA support | ✅ (1 model) | ✅ (4 models) |
+
+### Configuration (Same as Python)
+
+```bash
+export GLASSWARE_LLM_BASE_URL="https://integrate.api.nvidia.com/v1"
+export GLASSWARE_LLM_API_KEY="nvapi-..."
+export GLASSWARE_LLM_MODELS="qwen/qwen3.5-397b-a17b,moonshotai/kimi-k2.5,z-ai/glm5,meta/llama-3.3-70b-instruct"
+```
+
+### Usage
+
+```bash
+# Rust orchestrator with LLM fallback
+glassware-orchestrator --llm scan-npm express lodash axios
+
+# Python harness with LLM fallback
+python3 -m core.orchestrator run-wave --wave 0 --llm
+```
+
+**Both now use identical model fallback chain!**
