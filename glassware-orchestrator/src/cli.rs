@@ -14,7 +14,7 @@ pub struct Cli {
     pub command: Commands,
 
     /// Output format.
-    #[arg(short, long, value_enum, default_value = "pretty")]
+    #[arg(short, long, value_enum, default_value = "pretty", global = true)]
     pub format: OutputFormat,
 
     /// Minimum severity to report.
@@ -62,7 +62,7 @@ pub struct Cli {
     pub log_file: Option<String>,
 
     /// Output file path (optional, defaults to stdout).
-    #[arg(short, long)]
+    #[arg(short, long, global = true)]
     pub output: Option<String>,
 
     /// Quiet mode (minimal output).
