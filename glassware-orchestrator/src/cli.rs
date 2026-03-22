@@ -50,7 +50,7 @@ pub struct Cli {
     pub adversarial: bool,
 
     /// Enable LLM analysis.
-    #[arg(long)]
+    #[arg(long, global = true)]
     pub llm: bool,
 
     /// Log level (trace, debug, info, warn, error).

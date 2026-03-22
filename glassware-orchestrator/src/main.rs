@@ -131,8 +131,15 @@ async fn cmd_scan_tarball(cli: &Cli, files: Vec<String>) -> Result<()> {
 
     info!("Scanning {} tarball file(s)", files.len());
 
-    // Create scanner
-    let scanner = glassware_orchestrator::Scanner::new();
+    // Create scanner with config
+    let config = GlasswareConfig::load().unwrap_or_default();
+    let mut scanner = glassware_orchestrator::Scanner::with_config(config.into());
+    
+    // Enable LLM if requested
+    if cli.llm {
+        info!("LLM analysis enabled");
+        scanner = scanner.with_llm();
+    }
 
     let mut total_findings = 0;
     let mut total_malicious = 0;
@@ -882,8 +889,8 @@ async fn cmd_scan_cancel(cli: &Cli, id: &str) -> Result<()> {
 
 /// Create orchestrator from CLI options.
 async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
-    // Load configuration from file (for future use)
-    let _config = GlasswareConfig::load()
+    // Load configuration from file
+    let glassware_config = GlasswareConfig::load()
         .map_err(|e| anyhow::anyhow!("Failed to load config: {}", e))?;
 
     // Load GitHub token from CLI or environment
@@ -910,7 +917,18 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
             max_concurrent: concurrency,
             min_severity,
             threat_threshold,
-            ..Default::default()
+            enable_semantic: true,
+            enable_llm: cli.llm,
+            extensions: vec![
+                "js".to_string(), "mjs".to_string(), "cjs".to_string(),
+                "ts".to_string(), "tsx".to_string(), "jsx".to_string(),
+                "py".to_string(), "json".to_string(),
+            ],
+            exclude_dirs: vec![
+                "node_modules".to_string(), ".git".to_string(),
+                "dist".to_string(), "build".to_string(),
+            ],
+            glassware_config: glassware_config.clone(),
         },
         cache_db_path: if cli.no_cache {
             None

@@ -119,6 +119,10 @@ pub struct WhitelistConfig {
     /// Build tools (time delays are legitimate)
     #[serde(default)]
     pub build_tools: Vec<String>,
+
+    /// State management libraries (complex patterns are legitimate)
+    #[serde(default)]
+    pub state_management: Vec<String>,
 }
 
 /// Performance configuration
@@ -483,6 +487,7 @@ fn merge_whitelist(
         crypto_packages: [base.crypto_packages, override_config.crypto_packages]
             .concat(),
         build_tools: [base.build_tools, override_config.build_tools].concat(),
+        state_management: [base.state_management, override_config.state_management].concat(),
     }
 }
 
@@ -683,16 +688,19 @@ npm_rate_limit = 15.0
             packages: vec!["package1".to_string()],
             crypto_packages: vec!["crypto1".to_string()],
             build_tools: vec!["build1".to_string()],
+            state_management: vec!["state1".to_string()],
         };
         let override_config = WhitelistConfig {
             packages: vec!["package2".to_string()],
             crypto_packages: vec!["crypto2".to_string()],
             build_tools: vec!["build2".to_string()],
+            state_management: vec!["state2".to_string()],
         };
         let merged = merge_whitelist(base, override_config);
         assert_eq!(merged.packages.len(), 2);
         assert_eq!(merged.crypto_packages.len(), 2);
         assert_eq!(merged.build_tools.len(), 2);
+        assert_eq!(merged.state_management.len(), 2);
     }
 
     #[test]

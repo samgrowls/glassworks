@@ -98,6 +98,28 @@ impl Default for ScannerConfig {
     }
 }
 
+impl From<crate::config::GlasswareConfig> for ScannerConfig {
+    fn from(config: crate::config::GlasswareConfig) -> Self {
+        Self {
+            max_concurrent: config.performance.concurrency,
+            min_severity: Severity::Low,
+            enable_semantic: true,
+            enable_llm: false,  // Can be enabled separately
+            extensions: vec![
+                "js".to_string(), "mjs".to_string(), "cjs".to_string(),
+                "ts".to_string(), "tsx".to_string(), "jsx".to_string(),
+                "py".to_string(), "json".to_string(),
+            ],
+            exclude_dirs: vec![
+                "node_modules".to_string(), ".git".to_string(),
+                "dist".to_string(), "build".to_string(),
+            ],
+            threat_threshold: config.scoring.malicious_threshold,
+            glassware_config: config,
+        }
+    }
+}
+
 /// Scanner for glassware-core integration.
 #[derive(Clone)]
 pub struct Scanner {
@@ -119,6 +141,12 @@ impl Scanner {
             config,
             concurrency_semaphore,
         }
+    }
+
+    /// Enable LLM analysis.
+    pub fn with_llm(mut self) -> Self {
+        self.config.enable_llm = true;
+        self
     }
 
     /// Scan a downloaded package.
@@ -421,16 +449,22 @@ impl Scanner {
 
         // Check if this is a known legitimate package
         let package_lower = package_name.to_lowercase();
-        
+
         // Check against config whitelists
         let is_whitelisted = config.whitelist.packages.iter().any(|p| {
             package_lower.contains(&p.to_lowercase())
+        }) || config.whitelist.crypto_packages.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase())
+        }) || config.whitelist.build_tools.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase())
+        }) || config.whitelist.state_management.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase())
         });
-        
+
         let is_crypto_package = config.whitelist.crypto_packages.iter().any(|p| {
             package_lower.contains(&p.to_lowercase())
         });
-        
+
         let is_build_tool = config.whitelist.build_tools.iter().any(|p| {
             package_lower.contains(&p.to_lowercase())
         });

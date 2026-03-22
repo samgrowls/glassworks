@@ -67,7 +67,20 @@ packages = [
     "typescript",
     "eslint",
     "@babel/core",
-    "@babel/*"
+    "@babel/*",
+    # i18n/locale packages (naturally contain unicode)
+    "i18n",
+    "i18n-",
+    "i18next",
+    "locale",
+    "cldr",
+    "country-data",
+    "timezone",
+    "country",
+    "globalize",
+    "polyglot",
+    "babelfish",
+    "transliteration"
 ]
 
 # Crypto libraries (blockchain API calls are legitimate)
@@ -90,7 +103,26 @@ build_tools = [
     "esbuild",
     "parcel",
     "gulp",
-    "grunt"
+    "grunt",
+    "core-js",
+    # Web frameworks (complex patterns are legitimate)
+    "fastify",
+    "express",
+    "koa",
+    "hapi"
+]
+
+# State management (complex patterns are legitimate)
+state_management = [
+    "mobx",
+    "redux",
+    "vuex",
+    "pinia",
+    "recoil",
+    "zustand",
+    "jotai",
+    "valtio",
+    "immer"
 ]
 
 # ============================================================
