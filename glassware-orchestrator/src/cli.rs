@@ -98,6 +98,25 @@ pub struct Cli {
     pub no_cache: bool,
 }
 
+/// Configuration subcommands
+#[derive(Subcommand, Debug, Clone)]
+pub enum ConfigCommands {
+    /// Initialize default configuration file
+    Init,
+
+    /// Show current configuration
+    Show,
+
+    /// Edit configuration file
+    Edit,
+
+    /// Validate configuration syntax
+    Validate,
+
+    /// Reset configuration to defaults
+    Reset,
+}
+
 /// Available commands.
 #[derive(Subcommand, Debug)]
 pub enum Commands {
@@ -215,6 +234,12 @@ pub enum Commands {
         /// Scan ID.
         #[arg(required = true)]
         id: String,
+    },
+
+    /// Configuration management.
+    Config {
+        #[command(subcommand)]
+        command: ConfigCommands,
     },
 }
 

@@ -205,6 +205,7 @@ pub mod cacher;
 pub mod checkpoint;
 pub mod cli;
 pub mod cli_validator;
+pub mod config;
 pub mod downloader;
 pub mod error;
 pub mod formatters;
@@ -232,6 +233,8 @@ pub use adversarial::{
 pub use cacher::{CacheEntry, CacheStats, Cacher};
 
 pub use checkpoint::{Checkpoint, CheckpointManager, ScanResult as CheckpointScanResult};
+
+pub use config::GlasswareConfig;
 
 pub use downloader::{
     Downloader, DownloaderConfig, DownloadedPackage, GitHubRepoInfo, NpmDist, NpmPackageInfo,

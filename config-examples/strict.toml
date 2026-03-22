@@ -1,0 +1,109 @@
+# GlassWorm Strict Configuration
+#
+# For production environments and security-critical projects.
+# Lower thresholds, stricter detection, more aggressive flagging.
+#
+# Usage: Copy to ~/.config/glassware/config.toml or use as .glassware.toml in project root
+
+# ============================================================
+# Scoring Configuration - STRICT
+# ============================================================
+[scoring]
+# Lower threshold - flag more aggressively
+malicious_threshold = 6.0  # Default: 7.0
+suspicious_threshold = 2.5  # Default: 3.0
+
+# Higher weights - each signal counts more
+category_weight = 2.5  # Default: 2.0
+critical_weight = 4.0  # Default: 3.0
+high_weight = 2.0      # Default: 1.5
+
+# ============================================================
+# Detector Configuration - AGGRESSIVE
+# ============================================================
+[detectors.invisible_char]
+enabled = true
+weight = 1.5  # Higher weight
+
+[detectors.homoglyph]
+enabled = true
+weight = 1.5
+
+[detectors.bidi]
+enabled = true
+weight = 2.0  # Bidi is often malicious
+
+[detectors.blockchain_c2]
+enabled = true
+weight = 3.0  # Much higher weight for C2
+
+[detectors.glassware_pattern]
+enabled = true
+weight = 4.0  # Maximum weight for GlassWorm patterns
+
+[detectors.locale_geofencing]
+enabled = true
+weight = 1.5
+skip_for_packages = ["moment", "date-fns"]  # Smaller whitelist
+
+# ============================================================
+# Package Whitelist - MINIMAL
+# ============================================================
+[whitelist]
+# Only essential locale libraries
+packages = [
+    "moment",
+    "moment-timezone",
+    "date-fns"
+]
+
+# Only well-known crypto libraries
+crypto_packages = [
+    "ethers",
+    "web3",
+    "viem"
+]
+
+# No build tools whitelisted for time delays
+build_tools = []
+
+# ============================================================
+# Performance Configuration
+# ============================================================
+[performance]
+# More conservative concurrency for thorough scanning
+concurrency = 5
+
+# Slower rate limits to avoid missing anything
+npm_rate_limit = 5.0
+github_rate_limit = 2.0
+
+# Longer cache TTL for consistent results
+cache_enabled = true
+cache_ttl_days = 14
+
+# ============================================================
+# LLM Configuration - ENABLED
+# ============================================================
+[llm]
+provider = "nvidia"  # Use stronger models
+
+[llm.cerebras]
+base_url = "https://api.cerebras.ai/v1"
+model = "llama-3.3-70b"
+
+[llm.nvidia]
+base_url = "https://integrate.api.nvidia.com/v1"
+models = [
+    "qwen/qwen3.5-397b-a17b",
+    "moonshotai/kimi-k2.5",
+    "z-ai/glm5"
+]
+
+# ============================================================
+# Output Configuration
+# ============================================================
+[output]
+format = "json"  # JSON for CI/CD integration
+min_severity = "info"  # Report everything
+color = false

@@ -1,0 +1,95 @@
+# GlassWorm CI/CD Configuration
+#
+# Optimized for continuous integration pipelines.
+# Fast scanning, JSON output, strict thresholds.
+#
+# Usage: Copy to .glassware.toml in project root for project-specific config
+
+# ============================================================
+# Scoring Configuration - CI/CD OPTIMIZED
+# ============================================================
+[scoring]
+# Strict threshold for CI/CD - fail fast
+malicious_threshold = 6.5
+suspicious_threshold = 3.0
+
+# Balanced weights
+category_weight = 2.0
+critical_weight = 3.5  # Critical findings weighted heavily
+high_weight = 1.5
+
+# ============================================================
+# Detector Configuration - ESSENTIAL ONLY
+# ============================================================
+[detectors.invisible_char]
+enabled = true
+weight = 1.0
+
+[detectors.homoglyph]
+enabled = true
+weight = 1.0
+
+[detectors.bidi]
+enabled = true
+weight = 1.5
+
+[detectors.blockchain_c2]
+enabled = true
+weight = 2.5
+
+[detectors.glassware_pattern]
+enabled = true
+weight = 4.0  # Always flag GlassWorm patterns
+
+[detectors.locale_geofencing]
+enabled = false  # Skip for faster scanning
+
+# ============================================================
+# Package Whitelist - PROJECT SPECIFIC
+# ============================================================
+[whitelist]
+# Add your project's known-good dependencies
+packages = []
+
+# Crypto libraries (if your project uses them)
+crypto_packages = []
+
+# Build tools (if your project uses them)
+build_tools = []
+
+# ============================================================
+# Performance Configuration - FAST
+# ============================================================
+[performance]
+# Higher concurrency for faster CI/CD
+concurrency = 20
+
+# Aggressive rate limits (CI/CD has short timeouts)
+npm_rate_limit = 20.0
+github_rate_limit = 10.0
+
+# Short cache TTL for fresh results
+cache_enabled = true
+cache_ttl_days = 1
+
+# ============================================================
+# LLM Configuration - DISABLED FOR SPEED
+# ============================================================
+[llm]
+provider = ""  # Disabled for CI/CD speed
+
+[llm.cerebras]
+base_url = ""
+model = ""
+
+[llm.nvidia]
+base_url = ""
+models = []
+
+# ============================================================
+# Output Configuration - CI/CD FRIENDLY
+# ============================================================
+[output]
+format = "json"  # JSON for parsing in CI/CD
+min_severity = "medium"  # Only medium+ for CI/CD
+color = false  # No color in logs

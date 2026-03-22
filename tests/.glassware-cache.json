@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "entries": {
+    "/tmp/tmp.d7wjXushiF/test.js": {
+      "hash": "1cf9f5c32349178423ba7e609fe5bb523591c87d2126798dd3c408f199a8fce6",
+      "findings": [],
+      "timestamp": 1774163481,
+      "file_size": 26
+    },
+    "/tmp/tmp.2dw4Up5XXu/test.js": {
+      "hash": "f8dfd96deade07ce720a9ab6aeb93d084e39d8ad429c053757ec2d41a2232359",
+      "findings": [],
+      "timestamp": 1774163178,
+      "file_size": 31
+    }
+  },
+  "created_at": 1774163481
+}

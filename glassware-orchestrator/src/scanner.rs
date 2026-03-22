@@ -53,6 +53,8 @@ pub struct ScannerConfig {
     pub exclude_dirs: Vec<String>,
     /// Threat score threshold for marking as malicious.
     pub threat_threshold: f32,
+    /// GlassWorm configuration (scoring, detectors, whitelist, etc.)
+    pub glassware_config: crate::config::GlasswareConfig,
 }
 
 impl Default for ScannerConfig {
@@ -90,7 +92,8 @@ impl Default for ScannerConfig {
                 "__pycache__".to_string(),
                 ".cache".to_string(),
             ],
-            threat_threshold: 5.0,
+            threat_threshold: 7.0,  // Updated to match config default
+            glassware_config: crate::config::GlasswareConfig::default(),
         }
     }
 }
@@ -406,85 +409,78 @@ impl Scanner {
         }
     }
 
-    /// Calculate threat score from findings using signal stacking.
-    /// 
-    /// Instead of counting findings, we assess attack patterns across categories:
-    /// - Obfuscation: invisible chars, homoglyphs, bidi
-    /// - Evasion: locale bypass, time delay, sandbox escape
-    /// - C2 Infrastructure: known wallets, known IPs, blockchain polling
-    /// - Execution: eval patterns, encrypted payload, dynamic exec
-    /// - Persistence: preinstall scripts, file writes, registry
-    /// 
-    /// Score = (categories_present * 2.0) + (critical_hits * 3.0) + (high_hits * 1.5)
-    /// 
-    /// Thresholds:
-    /// 0-3: Clean
-    /// 3-6: Suspicious (review)
-    /// 6-10: Likely malicious (quarantine)
-    /// 10+: Confirmed malicious (block + report)
+    /// Calculate threat score from findings using signal stacking with config weights.
+    ///
+    /// Score = (categories × category_weight) + (critical × critical_weight) + (high × high_weight)
     fn calculate_threat_score(&self, findings: &[Finding], package_name: &str) -> f32 {
         if findings.is_empty() {
             return 0.0;
         }
 
-        // Check if this is a known legitimate package that often has unicode in locale files
+        let config = &self.config.glassware_config;
+
+        // Check if this is a known legitimate package
         let package_lower = package_name.to_lowercase();
-        let is_locale_heavy_package = 
-            package_lower.contains("moment") ||
-            package_lower.contains("date") ||
-            package_lower.contains("i18n") ||
-            package_lower.contains("globalize") ||
-            package_lower.contains("prettier") ||  // Prettier has unicode in doc tests
-            package_lower.contains("typescript");   // TypeScript has unicode in tests
+        
+        // Check against config whitelists
+        let is_whitelisted = config.whitelist.packages.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase())
+        });
+        
+        let is_crypto_package = config.whitelist.crypto_packages.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase())
+        });
+        
+        let is_build_tool = config.whitelist.build_tools.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase())
+        });
 
         // Track which signal categories are present
         let mut categories = std::collections::HashSet::new();
-        let mut critical_hits = 0;
-        let mut high_hits = 0;
+        let mut critical_hits = 0.0;
+        let mut high_hits = 0.0;
 
         for finding in findings {
+            // Get detector weight from config (default 1.0 if not specified)
+            let detector_weight = self.get_detector_weight(&finding.category);
+            
             // Categorize each finding
             match finding.category {
                 // === Obfuscation Category ===
                 DetectionCategory::InvisibleCharacter => {
                     categories.insert("obfuscation");
-                    // Skip counting for locale-heavy packages (moment, date libraries)
-                    if !is_locale_heavy_package {
-                        high_hits += 1;
+                    if !is_whitelisted {
+                        high_hits += detector_weight;
                     }
                 }
                 DetectionCategory::Homoglyph => {
                     categories.insert("obfuscation");
-                    if !is_locale_heavy_package {
-                        high_hits += 1;
+                    if !is_whitelisted {
+                        high_hits += detector_weight;
                     }
                 }
                 DetectionCategory::BidirectionalOverride => {
                     categories.insert("obfuscation");
-                    if !is_locale_heavy_package {
-                        high_hits += 1;
+                    if !is_whitelisted {
+                        high_hits += detector_weight;
                     }
                 }
 
                 // === Evasion Category ===
                 DetectionCategory::LocaleGeofencing => {
                     categories.insert("evasion");
-                    // Skip for known packages with i18n support
-                    if !is_locale_heavy_package &&
-                       !package_lower.contains("prettier") &&
-                       !package_lower.contains("typescript") {
-                        high_hits += 1;
+                    let skip = is_whitelisted ||
+                        config.detectors.locale_geofencing.skip_for_packages.iter().any(|p| {
+                            package_lower.contains(&p.to_lowercase())
+                        });
+                    if !skip {
+                        high_hits += detector_weight;
                     }
                 }
                 DetectionCategory::TimeDelaySandboxEvasion => {
                     categories.insert("evasion");
-                    // Time delays in build tools are often legitimate (watch mode, debouncing)
-                    if !package_lower.contains("prettier") &&
-                       !package_lower.contains("typescript") &&
-                       !package_lower.contains("webpack") &&
-                       !package_lower.contains("vite") &&
-                       !package_lower.contains("rollup") {
-                        high_hits += 1;
+                    if !is_build_tool && !is_whitelisted {
+                        high_hits += detector_weight;
                     }
                 }
 
@@ -493,57 +489,72 @@ impl Scanner {
                     // Only count if CRITICAL severity (known wallet/IP)
                     if finding.severity == Severity::Critical {
                         categories.insert("c2");
-                        critical_hits += 1;
-                    } else {
+                        critical_hits += detector_weight;
+                    } else if !is_crypto_package {
                         // INFO/MEDIUM severity = just API usage, not C2
+                        // Skip for crypto packages where API usage is legitimate
                         categories.insert("c2_weak");
                     }
                 }
                 DetectionCategory::SocketIOC2 => {
                     categories.insert("c2");
                     if finding.severity == Severity::High || finding.severity == Severity::Critical {
-                        high_hits += 1;
+                        high_hits += detector_weight;
                     }
                 }
 
                 // === Execution Category ===
                 DetectionCategory::GlasswarePattern => {
                     categories.insert("execution");
-                    // Skip for known legitimate packages with string processing
-                    if !is_locale_heavy_package && 
-                       !package_lower.contains("prettier") &&
-                       !package_lower.contains("eslint") &&
-                       !package_lower.contains("babel") {
+                    if !is_whitelisted {
                         if finding.severity == Severity::Critical {
-                            critical_hits += 1;
+                            critical_hits += detector_weight;
                         } else {
-                            high_hits += 1;
+                            high_hits += detector_weight;
                         }
                     }
                 }
                 DetectionCategory::EncryptedPayload => {
                     categories.insert("execution");
-                    if !is_locale_heavy_package {
-                        high_hits += 1;
+                    if !is_whitelisted {
+                        high_hits += detector_weight;
                     }
                 }
                 DetectionCategory::HeaderC2 => {
                     categories.insert("execution");
-                    critical_hits += 1;
+                    critical_hits += detector_weight;
                 }
 
                 // === Persistence Category ===
                 DetectionCategory::RddAttack => {
                     categories.insert("persistence");
-                    high_hits += 1;
+                    high_hits += detector_weight;
                 }
                 DetectionCategory::ForceMemoPython => {
                     categories.insert("persistence");
-                    critical_hits += 1;
+                    critical_hits += detector_weight;
                 }
                 DetectionCategory::JpdAuthor => {
                     categories.insert("persistence");
-                    high_hits += 1;
+                    high_hits += detector_weight;
+                }
+
+                // === Binary Detectors ===
+                DetectionCategory::XorShiftObfuscation => {
+                    categories.insert("obfuscation");
+                    critical_hits += detector_weight;
+                }
+                DetectionCategory::IElevatorCom => {
+                    categories.insert("c2");
+                    critical_hits += detector_weight;
+                }
+                DetectionCategory::ApcInjection => {
+                    categories.insert("execution");
+                    critical_hits += detector_weight;
+                }
+                DetectionCategory::MemexecLoader => {
+                    categories.insert("execution");
+                    critical_hits += detector_weight;
                 }
 
                 // === Unknown/Other ===
@@ -558,12 +569,29 @@ impl Scanner {
             categories.remove("c2_weak");
         }
 
-        // Calculate score
+        // Calculate score using config weights
         let category_count = categories.len() as f32;
-        let score = (category_count * 2.0) + (critical_hits as f32 * 3.0) + (high_hits as f32 * 1.5);
+        let score = (category_count * config.scoring.category_weight) +
+                    (critical_hits * config.scoring.critical_weight) +
+                    (high_hits * config.scoring.high_weight);
 
         // Cap at 10.0
         score.min(10.0)
+    }
+
+    /// Get detector weight from config.
+    fn get_detector_weight(&self, category: &DetectionCategory) -> f32 {
+        let config = &self.config.glassware_config;
+        match category {
+            DetectionCategory::InvisibleCharacter => config.detectors.invisible_char.weight,
+            DetectionCategory::Homoglyph => config.detectors.homoglyph.weight,
+            DetectionCategory::BidirectionalOverride => config.detectors.bidi.weight,
+            DetectionCategory::BlockchainC2 => config.detectors.blockchain_c2.weight,
+            DetectionCategory::GlasswarePattern => config.detectors.glassware_pattern.weight,
+            DetectionCategory::LocaleGeofencing => config.detectors.locale_geofencing.enabled as u8 as f32,
+            // Default weight for detectors without specific config
+            _ => 1.0,
+        }
     }
 
     /// Check if a file is a locale or data file (where invisible chars are legitimate)

@@ -56,6 +56,10 @@ tempfile = { workspace = true }
 tar = "0.4"
 flate2 = "1.0"
 
+# Configuration
+toml = "0.8"
+dirs = "5.0"
+
 [dev-dependencies]
 tokio-test = { workspace = true }
 

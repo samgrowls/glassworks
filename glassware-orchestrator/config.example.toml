@@ -1,0 +1,67 @@
+# GlassWorm Configuration Example
+# Copy this to ~/.config/glassware/config.toml or .glassware.toml
+
+[scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 3.0
+category_weight = 2.0
+critical_weight = 3.0
+high_weight = 1.5
+
+[detectors]
+[detectors.invisible_char]
+enabled = true
+weight = 1.0
+
+[detectors.homoglyph]
+enabled = true
+weight = 1.0
+
+[detectors.bidi]
+enabled = true
+weight = 1.0
+
+[detectors.blockchain_c2]
+enabled = true
+weight = 2.0
+
+[detectors.glassware_pattern]
+enabled = true
+weight = 3.0
+
+[detectors.locale_geofencing]
+enabled = true
+skip_for_packages = ["moment", "date-fns", "globalize"]
+
+[whitelist]
+packages = ["moment", "moment-timezone", "date-fns", "dayjs", "prettier", "typescript", "eslint"]
+crypto_packages = ["ethers", "web3", "viem", "wagmi", "@solana/web3.js", "bitcoinjs-lib"]
+build_tools = ["webpack", "vite", "rollup", "esbuild", "parcel"]
+
+[performance]
+concurrency = 10
+npm_rate_limit = 10.0
+github_rate_limit = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[llm]
+provider = "cerebras"
+
+[llm.cerebras]
+base_url = "https://api.cerebras.ai/v1"
+model = "llama-3.3-70b"
+
+[llm.nvidia]
+base_url = "https://integrate.api.nvidia.com/v1"
+models = [
+    "qwen/qwen3.5-397b-a17b",
+    "moonshotai/kimi-k2.5",
+    "z-ai/glm5",
+    "meta/llama-3.3-70b-instruct"
+]
+
+[output]
+format = "pretty"
+min_severity = "low"
+color = true

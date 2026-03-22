@@ -1,0 +1,145 @@
+# GlassWorm Default Configuration
+# 
+# This is the standard configuration for most users.
+# Copy this to ~/.config/glassware/config.toml to customize.
+#
+# Documentation: https://github.com/samgrowls/glassworks/blob/main/docs/CONFIG-SYSTEM-DESIGN.md
+
+# ============================================================
+# Scoring Configuration
+# ============================================================
+[scoring]
+# Threat score threshold for "malicious" classification (0.0-10.0)
+# Packages scoring >= this are flagged as malicious
+malicious_threshold = 7.0
+
+# Threat score threshold for "suspicious" classification (0.0-10.0)
+# Packages scoring >= this but < malicious are flagged for review
+suspicious_threshold = 3.0
+
+# Signal stacking weights
+# Score = (categories × category_weight) + (critical × critical_weight) + (high × high_weight)
+category_weight = 2.0    # Weight per attack category present
+critical_weight = 3.0    # Weight per critical severity finding
+high_weight = 1.5        # Weight per high severity finding
+
+# ============================================================
+# Detector Configuration
+# ============================================================
+[detectors.invisible_char]
+enabled = true
+weight = 1.0
+
+[detectors.homoglyph]
+enabled = true
+weight = 1.0
+
+[detectors.bidi]
+enabled = true
+weight = 1.0
+
+[detectors.blockchain_c2]
+enabled = true
+weight = 2.0  # Higher weight for C2 indicators
+
+[detectors.glassware_pattern]
+enabled = true
+weight = 3.0  # Highest weight for confirmed GlassWorm patterns
+
+[detectors.locale_geofencing]
+enabled = true
+weight = 1.0
+# Skip these packages (they have legitimate locale checks)
+skip_for_packages = ["moment", "moment-timezone", "date-fns", "dayjs", "globalize"]
+
+# ============================================================
+# Package Whitelist
+# ============================================================
+[whitelist]
+# Packages to never flag (locale libraries, etc.)
+packages = [
+    "moment",
+    "moment-timezone",
+    "date-fns",
+    "dayjs",
+    "globalize",
+    "prettier",
+    "typescript",
+    "eslint",
+    "@babel/core",
+    "@babel/*"
+]
+
+# Crypto libraries (blockchain API calls are legitimate)
+crypto_packages = [
+    "ethers",
+    "web3",
+    "viem",
+    "wagmi",
+    "@solana/web3.js",
+    "bitcoinjs-lib",
+    "hdkey",
+    "@metamask/*"
+]
+
+# Build tools (time delays are legitimate for watch mode, debouncing)
+build_tools = [
+    "webpack",
+    "vite",
+    "rollup",
+    "esbuild",
+    "parcel",
+    "gulp",
+    "grunt"
+]
+
+# ============================================================
+# Performance Configuration
+# ============================================================
+[performance]
+# Maximum concurrent scans
+concurrency = 10
+
+# Rate limiting (requests per second)
+npm_rate_limit = 10.0
+github_rate_limit = 5.0
+
+# Caching
+cache_enabled = true
+cache_ttl_days = 7
+
+# ============================================================
+# LLM Configuration
+# ============================================================
+[llm]
+# Default LLM provider: "cerebras" or "nvidia"
+provider = "cerebras"
+
+[llm.cerebras]
+base_url = "https://api.cerebras.ai/v1"
+model = "llama-3.3-70b"
+# API key from GLASSWARE_LLM_API_KEY environment variable
+
+[llm.nvidia]
+base_url = "https://integrate.api.nvidia.com/v1"
+# Models in order of preference (fallback chain)
+models = [
+    "qwen/qwen3.5-397b-a17b",  # Strongest (397B parameters)
+    "moonshotai/kimi-k2.5",     # Kimi K2.5
+    "z-ai/glm5",                # GLM-5
+    "meta/llama-3.3-70b-instruct"  # Fallback (70B)
+]
+# API key from NVIDIA_API_KEY environment variable
+
+# ============================================================
+# Output Configuration
+# ============================================================
+[output]
+# Default output format: "pretty", "json", "sarif"
+format = "pretty"
+
+# Default minimum severity to report: "info", "low", "medium", "high", "critical"
+min_severity = "low"
+
+# Enable colored output
+color = true

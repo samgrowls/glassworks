@@ -5,18 +5,19 @@
 mod cli;
 
 use anyhow::Result;
-use cli::{Cli, Commands, OutputFormat, ResumeSource};
+use cli::{Cli, Commands, ConfigCommands, OutputFormat, ResumeSource};
 use glassware_orchestrator::{
     Orchestrator, OrchestratorConfig, DownloaderConfig, ScannerConfig,
     PackageScanResult, ScanSummary,
     streaming::StreamingWriter,
     adversarial::AdversarialTester,
     scan_registry::{ScanRegistry, ScanStatus},
-    cli_validator,
+    cli_validator, config::GlasswareConfig,
 };
 use glassware_core::Severity;
 use tracing::{error, info, warn, Level};
 use tokio::io::BufWriter;
+use std::io::Write;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -113,6 +114,9 @@ async fn main() -> Result<()> {
         Commands::ScanTarball { ref files } => {
             cmd_scan_tarball(&cli, files.clone()).await?;
         }
+        Commands::Config { ref command } => {
+            cmd_config(&cli, command).await?;
+        }
     }
 
     Ok(())
@@ -170,6 +174,159 @@ async fn cmd_scan_tarball(cli: &Cli, files: Vec<String>) -> Result<()> {
     // Exit with error code if malicious packages found
     if total_malicious > 0 {
         std::process::exit(1);
+    }
+
+    Ok(())
+}
+
+/// Configuration management command.
+async fn cmd_config(_cli: &Cli, command: &ConfigCommands) -> Result<()> {
+    match command {
+        ConfigCommands::Init => {
+            // Create default config file
+            let config = GlasswareConfig::default();
+
+            if let Some(config_path) = GlasswareConfig::user_config_file() {
+                if config_path.exists() {
+                    eprintln!("Configuration file already exists: {:?}", config_path);
+                    eprintln!("Use 'glassware-orchestrator config reset' to reset to defaults");
+                    return Ok(());
+                }
+
+                config.save_user_config()
+                    .map_err(|e| anyhow::anyhow!("Failed to save config: {}", e))?;
+                println!("Created default configuration: {:?}", config_path);
+                println!("Edit this file to customize GlassWorm behavior");
+            } else {
+                return Err(anyhow::anyhow!("Could not determine config directory"));
+            }
+        }
+
+        ConfigCommands::Show => {
+            // Load and display current config
+            let config = GlasswareConfig::load()
+                .map_err(|e| anyhow::anyhow!("Failed to load config: {}", e))?;
+
+            println!("Current GlassWorm Configuration:");
+            println!("================================");
+            println!();
+            println!("[scoring]");
+            println!("malicious_threshold = {}", config.scoring.malicious_threshold);
+            println!("suspicious_threshold = {}", config.scoring.suspicious_threshold);
+            println!("category_weight = {}", config.scoring.category_weight);
+            println!("critical_weight = {}", config.scoring.critical_weight);
+            println!("high_weight = {}", config.scoring.high_weight);
+            println!();
+            println!("[performance]");
+            println!("concurrency = {}", config.performance.concurrency);
+            println!("npm_rate_limit = {}", config.performance.npm_rate_limit);
+            println!("github_rate_limit = {}", config.performance.github_rate_limit);
+            println!("cache_enabled = {}", config.performance.cache_enabled);
+            println!("cache_ttl_days = {}", config.performance.cache_ttl_days);
+            println!();
+            println!("[output]");
+            println!("format = {}", config.output.format);
+            println!("min_severity = {}", config.output.min_severity);
+            println!("color = {}", config.output.color);
+            println!();
+
+            // Show config file locations
+            if let Some(user_path) = GlasswareConfig::user_config_file() {
+                println!("User config: {:?}", user_path);
+                if user_path.exists() {
+                    println!("  ✓ exists");
+                } else {
+                    println!("  ✗ not found (using defaults)");
+                }
+            }
+
+            if let Some(project_path) = GlasswareConfig::project_config_file() {
+                println!("Project config: {:?}", project_path);
+                if project_path.exists() {
+                    println!("  ✓ exists");
+                } else {
+                    println!("  ✗ not found");
+                }
+            }
+        }
+
+        ConfigCommands::Edit => {
+            // Open config file in editor
+            let config_path = GlasswareConfig::user_config_file()
+                .ok_or_else(|| anyhow::anyhow!("Could not determine config directory"))?;
+
+            if !config_path.exists() {
+                println!("Configuration file does not exist. Creating default config...");
+                GlasswareConfig::default().save_user_config()
+                    .map_err(|e| anyhow::anyhow!("Failed to save config: {}", e))?;
+            }
+
+            // Try to open in editor
+            let editor = std::env::var("EDITOR").unwrap_or_else(|_| "nano".to_string());
+            let status = std::process::Command::new(editor)
+                .arg(&config_path)
+                .status()?;
+
+            if !status.success() {
+                return Err(anyhow::anyhow!("Editor exited with error"));
+            }
+        }
+
+        ConfigCommands::Validate => {
+            // Validate config syntax
+            let config_path = GlasswareConfig::user_config_file()
+                .ok_or_else(|| anyhow::anyhow!("Could not determine config directory"))?;
+
+            if !config_path.exists() {
+                println!("Configuration file does not exist");
+                return Ok(());
+            }
+
+            match GlasswareConfig::from_file(&config_path) {
+                Ok(config) => {
+                    match config.validate() {
+                        Ok(()) => {
+                            println!("✓ Configuration is valid");
+                            println!("  File: {:?}", config_path);
+                            println!("  Malicious threshold: {}", config.scoring.malicious_threshold);
+                            println!("  Suspicious threshold: {}", config.scoring.suspicious_threshold);
+                        }
+                        Err(e) => {
+                            eprintln!("✗ Configuration validation failed: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("✗ Configuration syntax error: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        ConfigCommands::Reset => {
+            // Reset config to defaults
+            let config_path = GlasswareConfig::user_config_file()
+                .ok_or_else(|| anyhow::anyhow!("Could not determine config directory"))?;
+
+            if !config_path.exists() {
+                println!("Configuration file does not exist");
+                return Ok(());
+            }
+
+            print!("Are you sure you want to reset configuration to defaults? [y/N] ");
+            std::io::stdout().flush().unwrap();
+
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap();
+
+            if input.trim().to_lowercase() == "y" {
+                std::fs::remove_file(&config_path)?;
+                println!("Configuration reset to defaults");
+            } else {
+                println!("Reset cancelled");
+            }
+        }
     }
 
     Ok(())
@@ -725,23 +882,34 @@ async fn cmd_scan_cancel(cli: &Cli, id: &str) -> Result<()> {
 
 /// Create orchestrator from CLI options.
 async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
+    // Load configuration from file (for future use)
+    let _config = GlasswareConfig::load()
+        .map_err(|e| anyhow::anyhow!("Failed to load config: {}", e))?;
+
     // Load GitHub token from CLI or environment
     let github_token = cli.github_token.clone()
         .or_else(|| std::env::var("GITHUB_TOKEN").ok());
 
-    let config = OrchestratorConfig {
+    // Use CLI overrides if provided, otherwise use config file values
+    let concurrency = cli.concurrency;
+    let npm_rate_limit = cli.npm_rate_limit as f32;
+    let github_rate_limit = cli.github_rate_limit as f32;
+    let threat_threshold = cli.threat_threshold;
+    let min_severity = cli.severity.to_core_severity();
+
+    let orchestrator_config = OrchestratorConfig {
         downloader: DownloaderConfig {
             max_retries: cli.max_retries,
-            npm_rate_limit: cli.npm_rate_limit as f32,
-            github_rate_limit: cli.github_rate_limit as f32,
+            npm_rate_limit,
+            github_rate_limit,
             github_token: github_token.clone(),
-            max_concurrent: cli.concurrency,
+            max_concurrent: concurrency,
             ..Default::default()
         },
         scanner: ScannerConfig {
-            max_concurrent: cli.concurrency,
-            min_severity: cli.severity.to_core_severity(),
-            threat_threshold: cli.threat_threshold,
+            max_concurrent: concurrency,
+            min_severity,
+            threat_threshold,
             ..Default::default()
         },
         cache_db_path: if cli.no_cache {
@@ -756,8 +924,8 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
         checkpoint_dir: Some(cli.checkpoint_dir.clone()),
         checkpoint_interval: 10,
         retry_config: glassware_orchestrator::retry::RetryConfig::default(),
-        npm_rate_limit: cli.npm_rate_limit as f32,
-        github_rate_limit: cli.github_rate_limit as f32,
+        npm_rate_limit,
+        github_rate_limit,
         #[cfg(feature = "llm")]
         enable_llm: cli.llm,
         #[cfg(feature = "llm")]
@@ -768,7 +936,7 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
         },
     };
 
-    let orchestrator = Orchestrator::with_config(config).await?;
+    let orchestrator = Orchestrator::with_config(orchestrator_config).await?;
 
     // Set up progress callback if not quiet
     if !cli.quiet {
