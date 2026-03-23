@@ -423,6 +423,7 @@ mod tests {
             findings: vec![create_test_finding()],
             threat_score: 5.0,
             is_malicious: true,
+            llm_verdict: None,
         }
     }
 

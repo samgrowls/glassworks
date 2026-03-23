@@ -809,7 +809,7 @@ mod tests {
         let scanner = Scanner::new();
 
         // Empty findings
-        assert_eq!(scanner.calculate_threat_score(&[]), 0.0);
+        assert_eq!(scanner.calculate_threat_score(&[], "test-pkg"), 0.0);
 
         // Single critical finding
         let findings = vec![Finding {
@@ -829,7 +829,7 @@ mod tests {
             decoded_payload: None,
             confidence: None,
         }];
-        let score = scanner.calculate_threat_score(&findings);
+        let score = scanner.calculate_threat_score(&findings, "test-pkg");
         assert!(score > 0.0);
     }
 
@@ -845,6 +845,7 @@ mod tests {
                 findings: vec![],
                 threat_score: 0.0,
                 is_malicious: false,
+                llm_verdict: None,
             },
             PackageScanResult {
                 package_name: "pkg2".to_string(),
@@ -871,6 +872,7 @@ mod tests {
                 }],
                 threat_score: 5.0,
                 is_malicious: true,
+                llm_verdict: None,
             },
         ];
 

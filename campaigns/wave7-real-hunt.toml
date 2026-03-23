@@ -1,0 +1,147 @@
+# Wave 7: Real-World GlassWare Hunt
+#
+# Purpose: Hunt for actual GlassWare steganographic attacks in real npm packages
+# Target: Known suspicious packages and high-risk categories
+#
+# Run with: glassware campaign run campaigns/wave7-real-hunt.toml
+
+[campaign]
+name = "Wave 7 - Real-World GlassWare Hunt"
+description = "Hunt for actual GlassWare steganographic attacks in npm packages"
+created_by = "security-team"
+priority = "high"
+tags = ["hunt", "real-world", "wave7", "production"]
+
+[settings]
+concurrency = 15
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+malicious_threshold = 7.0
+
+[settings.llm]
+tier1_enabled = false
+tier1_provider = "cerebras"
+tier2_enabled = false
+tier2_threshold = 8.0
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave7"
+report_dir = "reports/wave7"
+
+# Wave 7A: Known Malicious GlassWare Packages (from Koi Security research)
+# These are confirmed malicious packages that use GlassWare-style attacks
+[[waves]]
+id = "wave_7a"
+name = "Known GlassWare Malicious Packages"
+description = "Validate detection with confirmed GlassWare malicious packages from security research"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # React Native packages flagged in GlassWorm research
+    "react-native-country-select@0.3.1",
+    "react-native-international-phone-number@0.10.7",
+    # Additional suspicious packages
+    "react-native-phone-input@1.3.7",
+    "react-native-otp-inputs@0.3.1"
+]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# Wave 7B: Clean Baseline (Popular Safe Packages)
+# These should NOT be flagged
+[[waves]]
+id = "wave_7b"
+name = "Clean Baseline - Popular Packages"
+description = "Validate low false positive rate with known clean popular packages"
+depends_on = ["wave_7a"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Most popular npm packages
+    "express@4.19.2",
+    "lodash@4.17.21",
+    "axios@1.6.7",
+    "chalk@5.3.0",
+    "debug@4.3.4",
+    "react@18.2.0",
+    "moment@2.30.1",
+    "uuid@9.0.0"
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 3.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# Wave 7C: High-Risk Categories
+# Packages in categories that are commonly targeted
+[[waves]]
+id = "wave_7c"
+name = "High-Risk Categories"
+description = "Hunt in high-risk categories: phone, SMS, auth, crypto"
+depends_on = ["wave_7a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Phone/SMS related (common attack vector)
+    "react-native-communications@2.5.0",
+    "react-native-sms@1.11.0",
+    "react-native-call-detection@1.9.0",
+    # Auth related
+    "react-native-biometrics@3.0.1",
+    "react-native-touch-id@4.4.1",
+    # Crypto related
+    "react-native-crypto@2.2.0",
+    "react-native-aes-crypto@3.0.3"
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# Wave 7D: Locale/Geofencing Packages
+# Packages that deal with locale are higher risk for geofencing attacks
+[[waves]]
+id = "wave_7d"
+name = "Locale & Geofencing Risk"
+description = "Hunt in packages that handle locale/region (geofencing risk)"
+depends_on = ["wave_7a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    "react-native-localize@3.0.6",
+    "react-native-locale@0.0.15",
+    "i18next@23.7.13",
+    "react-intl@6.5.0",
+    "moment-timezone@0.5.44"
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false

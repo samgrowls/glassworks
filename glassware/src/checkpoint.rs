@@ -556,6 +556,7 @@ mod tests {
             findings: vec![],
             threat_score: 0.0,
             is_malicious: false,
+            llm_verdict: None,
         };
 
         let scan_result = ScanResult::from(&package_result);
