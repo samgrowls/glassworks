@@ -36,6 +36,7 @@ packages = [
     "i18next",
     "react-intl",
     "lodash",
+    "underscore",
     "express",
     "globalize",
     "prettier",
@@ -54,7 +55,21 @@ crypto_packages = [
     "@solana/web3.js",
     "bitcoinjs-lib",
     "hdkey",
-    "@metamask/*"
+    "@metamask/*",
+    "node-forge",
+]
+
+# Build tools (time delays are legitimate for watch mode, debouncing)
+build_tools = [
+    "webpack",
+    "webpack-",
+    "vite",
+    "rollup",
+    "esbuild",
+    "parcel",
+    "gulp",
+    "grunt",
+    "core-js",
 ]
 
 [settings.scoring]
