@@ -8,7 +8,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Gauge, List, ListItem, Clear, Tabs},
 };
 
-use super::app::{App, AppTab, ConcurrencyDialog};
+use super::app::{App, AppTab, ConcurrencyDialog, FlaggedPackage, Severity, PackageDetailView, PackageQueryDialog};
 use glassware_orchestrator::campaign::{
     types::{CampaignStatus, WaveStatus},
     event_bus::CampaignEvent,
@@ -59,6 +59,16 @@ impl Ui {
 
         // Render help bar with command feedback
         self.render_help_bar(frame, app, chunks[4]);
+
+        // Render package detail view if visible
+        if app.package_detail_view().is_visible() {
+            self.render_package_detail_view(frame, app);
+        }
+
+        // Render package query dialog if visible
+        if app.package_query_dialog().is_visible() {
+            self.render_package_query_dialog(frame, app);
+        }
 
         // Render concurrency dialog if visible
         if app.concurrency_dialog().is_visible() {
@@ -176,14 +186,27 @@ impl Ui {
     }
 
     /// Render the findings tab.
-    fn render_findings_tab(&self, frame: &mut Frame, _app: &App, area: Rect) {
-        let findings = Paragraph::new("Findings view (not yet implemented)")
-            .block(Block::default()
-                .borders(Borders::ALL)
-                .title("Findings"))
-            .style(Style::default().fg(Color::Gray));
+    fn render_findings_tab(&self, frame: &mut Frame, app: &App, area: Rect) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),  // Tabs
+                Constraint::Min(0),     // Package list
+            ])
+            .split(area);
 
-        frame.render_widget(findings, area);
+        // Render tabs
+        let titles = vec!["Campaign", "Findings", "Logs"];
+        let tabs = Tabs::new(titles)
+            .block(Block::default().borders(Borders::ALL).title("Tabs"))
+            .select(app.active_tab() as usize)
+            .style(Style::default().fg(Color::White))
+            .highlight_style(Style::default().fg(Color::Yellow).bold());
+
+        frame.render_widget(tabs, chunks[0]);
+
+        // Render package list
+        self.render_package_list(frame, app, chunks[1]);
     }
 
     /// Render the logs tab.
@@ -195,6 +218,58 @@ impl Ui {
             .style(Style::default().fg(Color::Gray));
 
         frame.render_widget(logs, area);
+    }
+
+    /// Render the package list in the Findings tab.
+    fn render_package_list(&self, frame: &mut Frame, app: &App, area: Rect) {
+        let packages: Vec<ListItem> = app.flagged_packages()
+            .iter()
+            .map(|pkg| {
+                let severity = pkg.severity();
+                let icon = match severity {
+                    Severity::Critical => "🔴",
+                    Severity::High => "🟠",
+                    Severity::Medium => "🟡",
+                    Severity::Low => "🟢",
+                };
+
+                let llm_status = if pkg.llm_verdict.is_some() {
+                    " [LLM ✓]"
+                } else if pkg.llm_explanation.as_ref().map(|s| s == "Analyzing...").unwrap_or(false) {
+                    " [LLM ...]"
+                } else {
+                    ""
+                };
+
+                let content = format!("{} {}@{}  Score: {:.1}  {} findings{}",
+                    icon,
+                    pkg.name,
+                    pkg.version,
+                    pkg.threat_score,
+                    pkg.findings_count,
+                    llm_status);
+
+                ListItem::new(content)
+            })
+            .collect();
+
+        let package_list = if packages.is_empty() {
+            List::new(vec![ListItem::new("No flagged packages found")])
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .title("Flagged Packages (Press Enter for details, 'l' for LLM analysis)"))
+                .style(Style::default().fg(Color::Gray))
+        } else {
+            List::new(packages)
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .title(format!("Flagged Packages ({}) - [Enter] Details  [l] LLM Analysis  [↑/↓] Navigate", 
+                        app.flagged_packages().len())))
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().bg(Color::DarkGray).bold())
+        };
+
+        frame.render_widget(package_list, area);
     }
 
     /// Render the wave list.
@@ -372,6 +447,168 @@ impl Ui {
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::Cyan))
                 .title(" Concurrency Settings "))
+            .style(Style::default().bg(Color::Black));
+
+        frame.render_widget(dialog_content, area);
+    }
+
+    /// Render the package detail view.
+    fn render_package_detail_view(&self, frame: &mut Frame, app: &App) {
+        // Create centered dialog area (larger for detail view)
+        let area = centered_rect(70, 70, frame.size());
+
+        // Clear the area behind the dialog
+        frame.render_widget(Clear, area);
+
+        // Get the package being viewed
+        let pkg = match app.detail_package() {
+            Some(p) => p,
+            None => return,
+        };
+
+        let severity = pkg.severity();
+
+        // Build dialog content
+        let mut lines = vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "Package Details",
+                Style::default().bold().fg(Color::Cyan),
+            )),
+            Line::from(""),
+            Line::from(Span::styled(
+                format!("{}@{}", pkg.name, pkg.version),
+                Style::default().bold().fg(Color::White),
+            )),
+            Line::from(""),
+            Line::from(format!("Wave: {}", pkg.wave_id)),
+            Line::from(format!("Threat Score: {:.1}", pkg.threat_score)),
+            Line::from(Span::styled(
+                format!("Severity: {}", severity.as_str()),
+                Style::default().fg(severity.color()),
+            )),
+            Line::from(format!("Findings: {}", pkg.findings_count)),
+            Line::from(""),
+        ];
+
+        // Add LLM verdict section
+        if let Some(ref explanation) = pkg.llm_explanation {
+            lines.push(Line::from(Span::styled(
+                "LLM Analysis:",
+                Style::default().bold().fg(Color::Green),
+            )));
+            lines.push(Line::from(""));
+            
+            // Wrap text to fit width
+            let max_width = (area.width - 4) as usize;
+            for line in explanation.chars().collect::<Vec<_>>().chunks(max_width) {
+                lines.push(Line::from(String::from_iter(line.iter())));
+            }
+            lines.push(Line::from(""));
+        } else {
+            lines.push(Line::from(Span::styled(
+                "LLM Analysis: Not yet analyzed",
+                Style::default().fg(Color::Gray),
+            )));
+            lines.push(Line::from(""));
+        }
+
+        // Add help text
+        lines.extend(vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "[l] Run LLM Analysis  [?] Ask Question  [q/Esc] Close  [↑/↓] Scroll",
+                Style::default().fg(Color::Yellow),
+            )),
+            Line::from(""),
+        ]);
+
+        let dialog_content = Paragraph::new(lines)
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(severity.color()))
+                .title(format!(" {} - Threat Score: {:.1} ", pkg.name, pkg.threat_score)))
+            .style(Style::default().bg(Color::Black));
+
+        frame.render_widget(dialog_content, area);
+    }
+
+    /// Render the package query dialog.
+    fn render_package_query_dialog(&self, frame: &mut Frame, app: &App) {
+        // Create centered dialog area
+        let area = centered_rect(60, 40, frame.size());
+
+        // Clear the area behind the dialog
+        frame.render_widget(Clear, area);
+
+        let dialog = app.package_query_dialog();
+
+        // Get the package being queried
+        let pkg = match app.detail_package() {
+            Some(p) => p,
+            None => return,
+        };
+
+        // Build dialog content
+        let mut lines = vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                format!("Ask about {}@{}", pkg.name, pkg.version),
+                Style::default().bold().fg(Color::Cyan),
+            )),
+            Line::from(""),
+            Line::from("Enter your question:"),
+            Line::from(""),
+        ];
+
+        // Show input buffer with cursor
+        let input_display = if dialog.input_buffer.is_empty() {
+            Span::styled("_", Style::default().fg(Color::Gray))
+        } else {
+            Span::styled(
+                format!("{}_", dialog.input_buffer),
+                Style::default().fg(Color::Yellow).bold(),
+            )
+        };
+        lines.push(Line::from(input_display));
+
+        lines.push(Line::from(""));
+
+        // Show querying status or response
+        if dialog.querying {
+            lines.push(Line::from(Span::styled(
+                "Querying LLM...",
+                Style::default().fg(Color::Yellow),
+            )));
+        } else if let Some(ref response) = dialog.response {
+            lines.push(Line::from(""));
+            lines.push(Line::from(Span::styled(
+                "Response:",
+                Style::default().bold().fg(Color::Green),
+            )));
+            lines.push(Line::from(""));
+            
+            // Wrap response text
+            let max_width = (area.width - 4) as usize;
+            for line in response.chars().collect::<Vec<_>>().chunks(max_width) {
+                lines.push(Line::from(String::from_iter(line.iter())));
+            }
+        }
+
+        lines.extend(vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "Press Enter to submit, Esc to close",
+                Style::default().fg(Color::Gray),
+            )),
+            Line::from(""),
+        ]);
+
+        let dialog_content = Paragraph::new(lines)
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::Cyan))
+                .title(" Package Query "))
             .style(Style::default().bg(Color::Black));
 
         frame.render_widget(dialog_content, area);

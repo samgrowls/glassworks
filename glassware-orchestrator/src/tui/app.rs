@@ -18,6 +18,7 @@ use glassware_orchestrator::campaign::{
     command_channel::{CommandChannel, CommandSender},
     types::{CampaignState, CampaignStatus, WaveStatus, WaveMode, WaveState},
 };
+use glassware_orchestrator::llm::LlmVerdict;
 
 use super::ui::Ui;
 
@@ -93,6 +94,167 @@ impl ConcurrencyDialog {
     }
 }
 
+/// Severity level for flagged packages.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Severity {
+    Critical,
+    High,
+    Medium,
+    Low,
+}
+
+impl Severity {
+    pub fn from_score(score: f32) -> Self {
+        if score >= 9.0 {
+            Severity::Critical
+        } else if score >= 7.0 {
+            Severity::High
+        } else if score >= 4.0 {
+            Severity::Medium
+        } else {
+            Severity::Low
+        }
+    }
+
+    pub fn color(&self) -> ratatui::style::Color {
+        match self {
+            Severity::Critical => ratatui::style::Color::Red,
+            Severity::High => ratatui::style::Color::Yellow,
+            Severity::Medium => ratatui::style::Color::Cyan,
+            Severity::Low => ratatui::style::Color::White,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Severity::Critical => "CRITICAL",
+            Severity::High => "HIGH",
+            Severity::Medium => "MEDIUM",
+            Severity::Low => "LOW",
+        }
+    }
+}
+
+/// Flagged package information.
+#[derive(Debug, Clone)]
+pub struct FlaggedPackage {
+    /// Package name.
+    pub name: String,
+    /// Package version.
+    pub version: String,
+    /// Wave ID this package belongs to.
+    pub wave_id: String,
+    /// Threat score.
+    pub threat_score: f32,
+    /// Number of findings.
+    pub findings_count: usize,
+    /// LLM verdict (if analyzed).
+    pub llm_verdict: Option<LlmVerdict>,
+    /// LLM explanation (if analyzed).
+    pub llm_explanation: Option<String>,
+}
+
+impl FlaggedPackage {
+    pub fn severity(&self) -> Severity {
+        Severity::from_score(self.threat_score)
+    }
+}
+
+/// Package detail view state.
+#[derive(Debug, Clone)]
+pub struct PackageDetailView {
+    /// Whether the detail view is visible.
+    pub visible: bool,
+    /// Selected package index in the findings list.
+    pub selected_index: usize,
+    /// Scroll offset for findings list.
+    pub scroll_offset: usize,
+}
+
+impl PackageDetailView {
+    fn new() -> Self {
+        Self {
+            visible: false,
+            selected_index: 0,
+            scroll_offset: 0,
+        }
+    }
+
+    fn show(&mut self, index: usize) {
+        self.visible = true;
+        self.selected_index = index;
+        self.scroll_offset = 0;
+    }
+
+    fn hide(&mut self) {
+        self.visible = false;
+    }
+
+    pub fn is_visible(&self) -> bool {
+        self.visible
+    }
+}
+
+/// Package query dialog state.
+#[derive(Debug, Clone)]
+pub struct PackageQueryDialog {
+    /// Whether the dialog is visible.
+    pub visible: bool,
+    /// Input buffer for the query.
+    pub input_buffer: String,
+    /// LLM response (if queried).
+    pub response: Option<String>,
+    /// Whether a query is in progress.
+    pub querying: bool,
+}
+
+impl PackageQueryDialog {
+    fn new() -> Self {
+        Self {
+            visible: false,
+            input_buffer: String::new(),
+            response: None,
+            querying: false,
+        }
+    }
+
+    fn show(&mut self) {
+        self.visible = true;
+        self.input_buffer.clear();
+        self.response = None;
+        self.querying = false;
+    }
+
+    fn hide(&mut self) {
+        self.visible = false;
+    }
+
+    pub fn is_visible(&self) -> bool {
+        self.visible
+    }
+
+    fn add_char(&mut self, c: char) {
+        self.input_buffer.push(c);
+    }
+
+    fn backspace(&mut self) {
+        self.input_buffer.pop();
+    }
+
+    fn get_query(&self) -> String {
+        self.input_buffer.clone()
+    }
+
+    fn set_querying(&mut self, querying: bool) {
+        self.querying = querying;
+    }
+
+    fn set_response(&mut self, response: String) {
+        self.response = Some(response);
+        self.querying = false;
+    }
+}
+
 /// Main TUI application.
 pub struct App {
     /// Whether the app is running.
@@ -115,6 +277,14 @@ pub struct App {
     command_feedback: Option<String>,
     /// Default concurrency value.
     default_concurrency: usize,
+    /// List of flagged packages for the Findings tab.
+    flagged_packages: Vec<FlaggedPackage>,
+    /// Selected index in the flagged packages list.
+    selected_package_index: usize,
+    /// Package detail view state.
+    package_detail_view: PackageDetailView,
+    /// Package query dialog state.
+    package_query_dialog: PackageQueryDialog,
 }
 
 impl App {
@@ -155,6 +325,10 @@ impl App {
             concurrency_dialog: ConcurrencyDialog::new(default_concurrency),
             command_feedback: None,
             default_concurrency,
+            flagged_packages: Vec::new(),
+            selected_package_index: 0,
+            package_detail_view: PackageDetailView::new(),
+            package_query_dialog: PackageQueryDialog::new(),
         }
     }
 
@@ -224,6 +398,28 @@ impl App {
             },
         ];
 
+        // Add sample flagged packages
+        app.flagged_packages = vec![
+            FlaggedPackage {
+                name: "colors-linux".to_string(),
+                version: "1.0.0".to_string(),
+                wave_id: "6A".to_string(),
+                threat_score: 9.5,
+                findings_count: 5,
+                llm_verdict: None,
+                llm_explanation: None,
+            },
+            FlaggedPackage {
+                name: "ua-parser-js".to_string(),
+                version: "0.8.0".to_string(),
+                wave_id: "6A".to_string(),
+                threat_score: 8.2,
+                findings_count: 3,
+                llm_verdict: None,
+                llm_explanation: None,
+            },
+        ];
+
         app
     }
 
@@ -263,6 +459,10 @@ impl App {
             concurrency_dialog: ConcurrencyDialog::new(default_concurrency),
             command_feedback: None,
             default_concurrency,
+            flagged_packages: Vec::new(),
+            selected_package_index: 0,
+            package_detail_view: PackageDetailView::new(),
+            package_query_dialog: PackageQueryDialog::new(),
         }
     }
 
@@ -318,6 +518,18 @@ impl App {
 
     /// Handle keyboard input.
     fn handle_key_input(&mut self, key: KeyEvent) {
+        // Handle package query dialog input if visible
+        if self.package_query_dialog.is_visible() {
+            self.handle_package_query_input(key);
+            return;
+        }
+
+        // Handle package detail view input if visible
+        if self.package_detail_view.is_visible() {
+            self.handle_package_detail_input(key);
+            return;
+        }
+
         // Handle concurrency dialog input if visible
         if self.concurrency_dialog.is_visible() {
             self.handle_concurrency_dialog_input(key);
@@ -365,9 +577,96 @@ impl App {
                 };
                 debug!("Switched to tab: {:?}", self.active_tab);
             }
+            KeyCode::Enter => {
+                // Open package detail view when in Findings tab
+                if self.active_tab == AppTab::Findings && !self.flagged_packages.is_empty() {
+                    self.open_package_detail(self.selected_package_index);
+                }
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                // Navigate up in findings list
+                if self.active_tab == AppTab::Findings && !self.flagged_packages.is_empty() {
+                    if self.selected_package_index > 0 {
+                        self.selected_package_index -= 1;
+                    }
+                }
+            }
+            KeyCode::Down | KeyCode::Char('j') => {
+                // Navigate down in findings list
+                if self.active_tab == AppTab::Findings && !self.flagged_packages.is_empty() {
+                    if self.selected_package_index < self.flagged_packages.len() - 1 {
+                        self.selected_package_index += 1;
+                    }
+                }
+            }
+            KeyCode::Char('l') => {
+                // Run LLM analysis on selected package
+                if self.active_tab == AppTab::Findings && !self.flagged_packages.is_empty() {
+                    self.run_llm_analysis_on_selected();
+                }
+            }
             KeyCode::Char('0'..='9') => {
                 // Number keys can be used for quick concurrency input when dialog is shown
                 // Handled by concurrency dialog
+            }
+            _ => {}
+        }
+    }
+
+    /// Handle input for the package detail view.
+    fn handle_package_detail_input(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Char('q') | KeyCode::Esc => {
+                // Close detail view
+                self.package_detail_view.hide();
+            }
+            KeyCode::Char('?') => {
+                // Open query dialog
+                self.package_query_dialog.show();
+            }
+            KeyCode::Char('l') => {
+                // Run LLM analysis on this package
+                let idx = self.package_detail_view.selected_index;
+                self.run_llm_analysis_on_selected();
+                // Keep detail view open to show updated results
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                // Scroll up in findings
+                if self.package_detail_view.scroll_offset > 0 {
+                    self.package_detail_view.scroll_offset -= 1;
+                }
+            }
+            KeyCode::Down | KeyCode::Char('j') => {
+                // Scroll down in findings
+                let pkg = &self.flagged_packages[self.package_detail_view.selected_index];
+                let max_scroll = pkg.findings_count.saturating_sub(1);
+                if self.package_detail_view.scroll_offset < max_scroll {
+                    self.package_detail_view.scroll_offset += 1;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Handle input for the package query dialog.
+    fn handle_package_query_input(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Enter => {
+                // Submit query
+                let query = self.package_query_dialog.get_query();
+                if !query.is_empty() && !self.package_query_dialog.querying {
+                    self.submit_package_query(query);
+                }
+            }
+            KeyCode::Esc | KeyCode::Char('q') => {
+                // Close dialog
+                self.package_query_dialog.hide();
+            }
+            KeyCode::Backspace => {
+                self.package_query_dialog.backspace();
+            }
+            KeyCode::Char(c) => {
+                self.package_query_dialog.add_char(c);
             }
             _ => {}
         }
@@ -462,6 +761,143 @@ impl App {
                 }
             }
             _ => {}
+        }
+    }
+
+    /// Open the package detail view for a specific package.
+    fn open_package_detail(&mut self, index: usize) {
+        if index < self.flagged_packages.len() {
+            self.package_detail_view.show(index);
+            info!("Opened detail view for package: {}", self.flagged_packages[index].name);
+        }
+    }
+
+    /// Run LLM analysis on the selected package.
+    fn run_llm_analysis_on_selected(&mut self) {
+        let idx = self.selected_package_index;
+        if idx >= self.flagged_packages.len() {
+            return;
+        }
+
+        // Clone necessary data before spawning task to avoid borrow issues
+        let package_name = self.flagged_packages[idx].name.clone();
+        let package_version = self.flagged_packages[idx].version.clone();
+        let threat_score = self.flagged_packages[idx].threat_score;
+
+        // Set a placeholder to indicate analysis is in progress
+        self.flagged_packages[idx].llm_explanation = Some("Analyzing...".to_string());
+
+        // Clone for feedback message (will be used after spawn)
+        let feedback_name = package_name.clone();
+        let feedback_version = package_version.clone();
+
+        // Spawn async task to run LLM analysis
+        tokio::spawn(async move {
+            // In a real implementation, this would call the LLM analyzer
+            // For now, we'll simulate with a delay and mock response
+            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+            let mock_verdict = LlmVerdict {
+                is_malicious: threat_score >= 7.0,
+                confidence: 0.85,
+                explanation: format!(
+                    "Based on analysis of {}@{}, the package shows signs of malicious intent. \
+                    Detected patterns include suspicious code obfuscation and potential data exfiltration. \
+                    Recommend immediate removal and audit of dependent projects.",
+                    package_name, package_version
+                ),
+                recommendations: vec![
+                    "Remove this package from dependencies".to_string(),
+                    "Audit code that imports this package".to_string(),
+                    "Check for unauthorized network connections".to_string(),
+                ],
+                false_positive_indicators: vec![],
+            };
+
+            // Note: In a real implementation, we'd need to send this back via channel
+            // For demo purposes, we just log it
+            info!("LLM analysis complete for {}@{}: malicious={}", 
+                package_name, package_version, mock_verdict.is_malicious);
+        });
+
+        // Set feedback message
+        self.command_feedback = Some(format!("LLM analysis started for {}@{}", feedback_name, feedback_version));
+    }
+
+    /// Submit a package-specific query to the LLM.
+    fn submit_package_query(&mut self, query: String) {
+        let idx = self.package_detail_view.selected_index;
+        if idx >= self.flagged_packages.len() {
+            return;
+        }
+
+        // Clone necessary data before spawning task
+        let package_name = self.flagged_packages[idx].name.clone();
+        let package_version = self.flagged_packages[idx].version.clone();
+        let threat_score = self.flagged_packages[idx].threat_score;
+        let findings_count = self.flagged_packages[idx].findings_count;
+
+        info!("Submitting query for package {}: {}", package_name, query);
+
+        self.package_query_dialog.set_querying(true);
+
+        // Clone for feedback message
+        let feedback_name = package_name.clone();
+        let feedback_version = package_version.clone();
+
+        // Spawn async task to run the query
+        tokio::spawn(async move {
+            // In a real implementation, this would call query_package()
+            // For now, we'll simulate with a delay and mock response
+            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+            let mock_response = format!(
+                "Analysis of {}@{} (threat score: {:.1}, {} findings):\n\n\
+                This package exhibits several concerning patterns:\n\
+                1. Code obfuscation techniques detected\n\
+                2. Potential data exfiltration endpoints\n\
+                3. Suspicious runtime behavior\n\n\
+                Recommendation: Treat as malicious and remove from your dependency tree.",
+                package_name, package_version, threat_score, findings_count
+            );
+
+            info!("Query response for {}@{}: {}", package_name, package_version, mock_response);
+        });
+
+        self.command_feedback = Some(format!("Query submitted for {}@{}", feedback_name, feedback_version));
+    }
+
+    /// Get the flagged packages list.
+    pub fn flagged_packages(&self) -> &[FlaggedPackage] {
+        &self.flagged_packages
+    }
+
+    /// Get the selected package index.
+    pub fn selected_package_index(&self) -> usize {
+        self.selected_package_index
+    }
+
+    /// Get the package detail view state.
+    pub fn package_detail_view(&self) -> &PackageDetailView {
+        &self.package_detail_view
+    }
+
+    /// Get the package query dialog state.
+    pub fn package_query_dialog(&self) -> &PackageQueryDialog {
+        &self.package_query_dialog
+    }
+
+    /// Get the currently selected package.
+    pub fn selected_package(&self) -> Option<&FlaggedPackage> {
+        self.flagged_packages.get(self.selected_package_index)
+    }
+
+    /// Get the package being viewed in detail.
+    pub fn detail_package(&self) -> Option<&FlaggedPackage> {
+        if let Some(idx) = self.package_detail_view.visible.then(|| self.package_detail_view.selected_index) {
+            self.flagged_packages.get(idx)
+        } else {
+            None
         }
     }
 

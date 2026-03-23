@@ -63,6 +63,66 @@ pub async fn query_campaign(case_id: &str, question: &str) -> Result<String> {
     Ok(response)
 }
 
+/// Query a specific package within a campaign.
+///
+/// # Arguments
+/// * `case_id` - Campaign case ID
+/// * `package_name` - Package name (e.g., "colors-linux")
+/// * `package_version` - Package version (e.g., "1.0.0")
+/// * `question` - Natural language question about the package
+///
+/// # Returns
+/// * `Ok(String)` - LLM response to the question
+/// * `Err(OrchestratorError)` - Query failed
+///
+/// # Example
+/// ```rust,no_run
+/// # async fn example() -> anyhow::Result<()> {
+/// let response = query_package("case-123", "colors-linux", "1.0.0", 
+///     "What malicious patterns were detected?").await?;
+/// println!("{}", response);
+/// # Ok(())
+/// # }
+/// ```
+pub async fn query_package(
+    case_id: &str,
+    package_name: &str,
+    package_version: &str,
+    question: &str,
+) -> Result<String> {
+    info!("Querying package {}@{} in campaign '{}' with question: {}", 
+        package_name, package_version, case_id, question);
+
+    // Load campaign checkpoint
+    let checkpoint_db = Path::new(".glassware-checkpoints.db");
+    let checkpoint_mgr = CheckpointManager::new(checkpoint_db)
+        .map_err(|e| OrchestratorError::internal_error(format!("Failed to open checkpoint database: {}", e)))?;
+
+    let checkpoint = checkpoint_mgr.load_checkpoint(case_id)
+        .map_err(|e| OrchestratorError::internal_error(format!("Failed to load checkpoint: {}", e)))?
+        .ok_or_else(|| OrchestratorError::not_found(case_id.to_string()))?;
+
+    info!("Loaded checkpoint for campaign: {} (status: {})", checkpoint.case_id, checkpoint.status);
+
+    // Build package-specific context
+    let context = build_package_context(&checkpoint, package_name, package_version)?;
+
+    // Create LLM analyzer with NVIDIA deep analysis config
+    let analyzer = LlmAnalyzer::with_config(
+        LlmAnalyzerConfig::nvidia_deep_analysis()
+            .ok_or_else(|| OrchestratorError::config_error("NVIDIA_API_KEY environment variable not set".to_string()))?
+    )?;
+
+    // Build the prompt with context and question
+    let prompt = build_package_query_prompt(&context, question, package_name, package_version);
+
+    // Send to LLM for analysis
+    let response = analyzer.query(&prompt).await
+        .map_err(|e| OrchestratorError::llm(format!("LLM query failed: {}", e)))?;
+
+    Ok(response)
+}
+
 /// Build campaign context from checkpoint data.
 fn build_campaign_context(checkpoint: &CampaignCheckpoint) -> Result<String> {
     use serde_json::Value;
@@ -105,6 +165,46 @@ fn build_campaign_context(checkpoint: &CampaignCheckpoint) -> Result<String> {
     Ok(context)
 }
 
+/// Build package-specific context from checkpoint data.
+fn build_package_context(
+    checkpoint: &CampaignCheckpoint,
+    package_name: &str,
+    package_version: &str,
+) -> Result<String> {
+    use serde_json::Value;
+
+    // Parse campaign config
+    let config: Value = serde_json::from_str(&checkpoint.config_json)
+        .map_err(|e| OrchestratorError::json_error(e, "Failed to parse campaign config"))?;
+
+    // Build context string
+    let mut context = String::new();
+
+    context.push_str(&format!("Campaign: {}\n", checkpoint.campaign_name));
+    context.push_str(&format!("Case ID: {}\n", checkpoint.case_id));
+    context.push_str(&format!("Package: {}@{}\n", package_name, package_version));
+    context.push_str(&format!("Status: {}\n", checkpoint.status));
+
+    // Parse wave states to find package-specific data
+    if !checkpoint.wave_states.is_empty() && checkpoint.wave_states != "{}" {
+        if let Ok(states) = serde_json::from_str::<Value>(&checkpoint.wave_states) {
+            context.push_str(&format!("\nWave States: {}\n", states));
+        }
+    }
+
+    // Add config summary if available
+    if let Some(waves) = config.get("waves").and_then(|v| v.as_array()) {
+        context.push_str(&format!("\nTotal Waves: {}\n", waves.len()));
+        for (i, wave) in waves.iter().enumerate() {
+            if let Some(name) = wave.get("name").and_then(|v| v.as_str()) {
+                context.push_str(&format!("  Wave {}: {}\n", i + 1, name));
+            }
+        }
+    }
+
+    Ok(context)
+}
+
 /// Build the query prompt for the LLM.
 fn build_query_prompt(context: &str, question: &str) -> String {
     format!(
@@ -126,6 +226,43 @@ Be concise but thorough. Use bullet points or tables when appropriate for clarit
 ## Answer
 "#,
         context,
+        question
+    )
+}
+
+/// Build the package-specific query prompt for the LLM.
+fn build_package_query_prompt(
+    context: &str,
+    question: &str,
+    package_name: &str,
+    package_version: &str,
+) -> String {
+    format!(
+        r#"You are a security analysis assistant helping to analyze a specific package.
+
+## Campaign Context
+{}
+
+## Package Information
+- **Name**: {}
+- **Version**: {}
+
+## User Question
+{}
+
+## Instructions
+Answer the user's question about this specific package based on the campaign context provided above.
+Focus on the security implications, detected patterns, and recommendations for this package.
+If the context doesn't contain enough information to answer the question,
+say so clearly and suggest what additional analysis would be needed.
+
+Be concise but thorough. Use bullet points or tables when appropriate for clarity.
+
+## Answer
+"#,
+        context,
+        package_name,
+        package_version,
         question
     )
 }
