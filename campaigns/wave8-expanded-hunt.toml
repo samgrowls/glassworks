@@ -57,6 +57,7 @@ crypto_packages = [
     "hdkey",
     "@metamask/*",
     "node-forge",
+    "crypto-js",
 ]
 
 # Build tools (time delays are legitimate for watch mode, debouncing)

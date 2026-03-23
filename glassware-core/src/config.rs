@@ -109,6 +109,109 @@ impl Default for DetectorConfig {
     }
 }
 
+/// GlassWare detection configuration
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct GlasswareConfig {
+    /// Package whitelist
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub whitelist: WhitelistConfig,
+    /// Scoring configuration
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub scoring: ScoringConfig,
+    /// Detector configuration
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub detectors: DetectorWeights,
+}
+
+/// Package whitelist configuration
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct WhitelistConfig {
+    /// Packages to never flag (i18n libraries, etc.)
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub packages: Vec<String>,
+    /// Crypto libraries (blockchain API calls are legitimate)
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub crypto_packages: Vec<String>,
+    /// Build tools (time delays are legitimate)
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub build_tools: Vec<String>,
+    /// State management libraries
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub state_management: Vec<String>,
+}
+
+/// Scoring configuration
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ScoringConfig {
+    /// Threat score threshold for "malicious" classification
+    #[cfg_attr(feature = "serde", serde(default = "default_malicious_threshold"))]
+    pub malicious_threshold: f32,
+    /// Threat score threshold for "suspicious" classification
+    #[cfg_attr(feature = "serde", serde(default = "default_suspicious_threshold"))]
+    pub suspicious_threshold: f32,
+    /// Weight per attack category present
+    #[cfg_attr(feature = "serde", serde(default = "default_category_weight"))]
+    pub category_weight: f32,
+    /// Weight per critical severity finding
+    #[cfg_attr(feature = "serde", serde(default = "default_critical_weight"))]
+    pub critical_weight: f32,
+    /// Weight per high severity finding
+    #[cfg_attr(feature = "serde", serde(default = "default_high_weight"))]
+    pub high_weight: f32,
+}
+
+impl Default for ScoringConfig {
+    fn default() -> Self {
+        Self {
+            malicious_threshold: default_malicious_threshold(),
+            suspicious_threshold: default_suspicious_threshold(),
+            category_weight: default_category_weight(),
+            critical_weight: default_critical_weight(),
+            high_weight: default_high_weight(),
+        }
+    }
+}
+
+fn default_malicious_threshold() -> f32 { 7.0 }
+fn default_suspicious_threshold() -> f32 { 3.0 }
+fn default_category_weight() -> f32 { 2.0 }
+fn default_critical_weight() -> f32 { 3.0 }
+fn default_high_weight() -> f32 { 1.5 }
+
+/// Detector weights configuration
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct DetectorWeights {
+    #[cfg_attr(feature = "serde", serde(default = "default_weight"))]
+    pub invisible_char: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_weight"))]
+    pub homoglyph: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_weight"))]
+    pub bidi: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_weight"))]
+    pub blockchain_c2: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_heavy_weight"))]
+    pub glassware_pattern: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_weight"))]
+    pub locale_geofencing: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_weight"))]
+    pub time_delay: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_heavy_weight"))]
+    pub encrypted_payload: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_heavy_weight"))]
+    pub rdd: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_heavy_weight"))]
+    pub forcememo: f32,
+    #[cfg_attr(feature = "serde", serde(default = "default_heavy_weight"))]
+    pub jpd_author: f32,
+}
+
+fn default_weight() -> f32 { 1.0 }
+fn default_heavy_weight() -> f32 { 3.0 }
+
 /// Allowlist configuration for legitimate i18n usage
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

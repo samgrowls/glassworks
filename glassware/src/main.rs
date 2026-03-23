@@ -935,7 +935,22 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
                 "node_modules".to_string(), ".git".to_string(),
                 "dist".to_string(), "build".to_string(),
             ],
-            glassware_config: glassware_config.clone(),
+            glassware_config: glassware_core::GlasswareConfig {
+                whitelist: glassware_core::WhitelistConfig {
+                    packages: glassware_config.whitelist.packages.clone(),
+                    crypto_packages: glassware_config.whitelist.crypto_packages.clone(),
+                    build_tools: glassware_config.whitelist.build_tools.clone(),
+                    state_management: vec![],
+                },
+                scoring: glassware_core::ScoringConfig {
+                    malicious_threshold: glassware_config.scoring.malicious_threshold,
+                    suspicious_threshold: glassware_config.scoring.suspicious_threshold,
+                    category_weight: glassware_config.scoring.category_weight,
+                    critical_weight: glassware_config.scoring.critical_weight,
+                    high_weight: glassware_config.scoring.high_weight,
+                },
+                detectors: glassware_core::DetectorWeights::default(),
+            },
         },
         cache_db_path: if cli.no_cache {
             None

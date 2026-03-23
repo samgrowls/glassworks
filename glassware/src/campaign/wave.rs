@@ -12,7 +12,7 @@ use tracing::{debug, error, info, warn};
 
 use glassware_core::{ScanEngine, Finding};
 
-use crate::campaign::config::{WaveConfig, WaveSource};
+use crate::campaign::config::{WaveConfig, WaveSource, CampaignSettings};
 use crate::campaign::event_bus::{EventBus, CampaignEvent, EventBusExt};
 use crate::campaign::state_manager::StateManager;
 use crate::campaign::types::{WaveStatus, PackageStage, ActivePackage};
@@ -21,6 +21,7 @@ use crate::downloader::DownloadedPackage;
 /// Wave executor for running individual waves.
 pub struct WaveExecutor {
     config: WaveConfig,
+    settings: CampaignSettings,
     state: StateManager,
     event_bus: EventBus,
     concurrency_semaphore: Arc<Semaphore>,
@@ -31,19 +32,43 @@ impl WaveExecutor {
     /// Create a new wave executor.
     pub fn new(
         config: WaveConfig,
+        settings: CampaignSettings,
         state: StateManager,
         event_bus: EventBus,
         max_concurrency: usize,
     ) -> Self {
+        // Convert campaign whitelist to glassware-core format
+        let whitelist_config = glassware_core::config::WhitelistConfig {
+            packages: settings.whitelist.packages.clone(),
+            crypto_packages: settings.whitelist.crypto_packages.clone(),
+            build_tools: settings.whitelist.build_tools.clone(),
+            state_management: vec![],
+        };
+
+        // Convert campaign scoring to glassware-core format
+        let scoring_config = glassware_core::config::ScoringConfig {
+            malicious_threshold: settings.scoring.malicious_threshold,
+            suspicious_threshold: settings.scoring.suspicious_threshold,
+            category_weight: 2.0,
+            critical_weight: 3.0,
+            high_weight: 1.5,
+        };
+
         let scanner = crate::scanner::Scanner::with_config(
             crate::scanner::ScannerConfig {
                 max_concurrent: max_concurrency,
+                glassware_config: glassware_core::GlasswareConfig {
+                    whitelist: whitelist_config,
+                    scoring: scoring_config,
+                    ..Default::default()
+                },
                 ..Default::default()
             }
         );
-        
+
         Self {
             config,
+            settings,
             state,
             event_bus,
             concurrency_semaphore: Arc::new(Semaphore::new(max_concurrency)),

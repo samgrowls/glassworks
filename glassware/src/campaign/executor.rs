@@ -330,13 +330,14 @@ impl CampaignExecutor {
             let config = self.config.get_wave(wave_id).unwrap().clone();
             let state = self.state.clone();
             let event_bus = self.event_bus.clone();
+            let settings = self.config.settings.clone();
             let concurrency = self.concurrency;
             let wave_id_clone = (*wave_id).clone();
 
             let handle = tokio::spawn(async move {
                 let wave_id_for_log = config.id.clone();
                 info!("Wave {} executor starting...", wave_id_for_log);
-                let executor = WaveExecutor::new(config, state, event_bus, concurrency);
+                let executor = WaveExecutor::new(config, settings, state, event_bus, concurrency);
                 info!("Wave {} executing...", wave_id_for_log);
                 executor.execute().await.map_err(CampaignError::WaveError)
             });
@@ -399,6 +400,7 @@ impl CampaignExecutor {
             let config = self.config.get_wave(wave_id).unwrap().clone();
             let executor = WaveExecutor::new(
                 config,
+                self.config.settings.clone(),
                 self.state.clone(),
                 self.event_bus.clone(),
                 self.concurrency,

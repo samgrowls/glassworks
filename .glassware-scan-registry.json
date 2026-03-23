@@ -332,6 +332,20 @@
       "findings_count": 194,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "fa045144-b3ce-4a28-897e-35a71c5b44e6",
+      "started_at": "2026-03-23T17:40:02.417610131Z",
+      "completed_at": "2026-03-23T17:40:22.307519512Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "crypto-js@4.2.0"
+      ],
+      "version_policy": null,
+      "findings_count": 5,
+      "malicious_count": 1,
+      "error": null
     }
   ]
 }

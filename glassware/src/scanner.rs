@@ -72,7 +72,7 @@ pub struct ScannerConfig {
     /// Threat score threshold for marking as malicious.
     pub threat_threshold: f32,
     /// GlassWorm configuration (scoring, detectors, whitelist, etc.)
-    pub glassware_config: crate::config::GlasswareConfig,
+    pub glassware_config: glassware_core::GlasswareConfig,
 }
 
 impl Default for ScannerConfig {
@@ -111,13 +111,31 @@ impl Default for ScannerConfig {
                 ".cache".to_string(),
             ],
             threat_threshold: 7.0,  // Updated to match config default
-            glassware_config: crate::config::GlasswareConfig::default(),
+            glassware_config: glassware_core::GlasswareConfig::default(),
         }
     }
 }
 
 impl From<crate::config::GlasswareConfig> for ScannerConfig {
     fn from(config: crate::config::GlasswareConfig) -> Self {
+        // Convert local config to glassware_core config
+        let core_config = glassware_core::GlasswareConfig {
+            whitelist: glassware_core::WhitelistConfig {
+                packages: config.whitelist.packages,
+                crypto_packages: config.whitelist.crypto_packages,
+                build_tools: config.whitelist.build_tools,
+                state_management: vec![],
+            },
+            scoring: glassware_core::ScoringConfig {
+                malicious_threshold: config.scoring.malicious_threshold,
+                suspicious_threshold: config.scoring.suspicious_threshold,
+                category_weight: config.scoring.category_weight,
+                critical_weight: config.scoring.critical_weight,
+                high_weight: config.scoring.high_weight,
+            },
+            detectors: glassware_core::DetectorWeights::default(),
+        };
+
         Self {
             max_concurrent: config.performance.concurrency,
             min_severity: Severity::Low,
@@ -133,7 +151,7 @@ impl From<crate::config::GlasswareConfig> for ScannerConfig {
                 "dist".to_string(), "build".to_string(),
             ],
             threat_threshold: config.scoring.malicious_threshold,
-            glassware_config: config,
+            glassware_config: core_config,
         }
     }
 }
@@ -534,11 +552,8 @@ impl Scanner {
                 // === Evasion Category ===
                 DetectionCategory::LocaleGeofencing => {
                     categories.insert("evasion");
-                    let skip = is_whitelisted ||
-                        config.detectors.locale_geofencing.skip_for_packages.iter().any(|p| {
-                            package_lower.contains(&p.to_lowercase())
-                        });
-                    if !skip {
+                    // Skip for whitelisted i18n packages
+                    if !is_whitelisted {
                         high_hits += detector_weight;
                     }
                 }
@@ -648,12 +663,17 @@ impl Scanner {
     fn get_detector_weight(&self, category: &DetectionCategory) -> f32 {
         let config = &self.config.glassware_config;
         match category {
-            DetectionCategory::InvisibleCharacter => config.detectors.invisible_char.weight,
-            DetectionCategory::Homoglyph => config.detectors.homoglyph.weight,
-            DetectionCategory::BidirectionalOverride => config.detectors.bidi.weight,
-            DetectionCategory::BlockchainC2 => config.detectors.blockchain_c2.weight,
-            DetectionCategory::GlasswarePattern => config.detectors.glassware_pattern.weight,
-            DetectionCategory::LocaleGeofencing => config.detectors.locale_geofencing.enabled as u8 as f32,
+            DetectionCategory::InvisibleCharacter => config.detectors.invisible_char,
+            DetectionCategory::Homoglyph => config.detectors.homoglyph,
+            DetectionCategory::BidirectionalOverride => config.detectors.bidi,
+            DetectionCategory::BlockchainC2 => config.detectors.blockchain_c2,
+            DetectionCategory::GlasswarePattern => config.detectors.glassware_pattern,
+            DetectionCategory::LocaleGeofencing => config.detectors.locale_geofencing,
+            DetectionCategory::TimeDelaySandboxEvasion => config.detectors.time_delay,
+            DetectionCategory::EncryptedPayload => config.detectors.encrypted_payload,
+            DetectionCategory::RddAttack => config.detectors.rdd,
+            DetectionCategory::ForceMemoPython => config.detectors.forcememo,
+            DetectionCategory::JpdAuthor => config.detectors.jpd_author,
             // Default weight for detectors without specific config
             _ => 1.0,
         }

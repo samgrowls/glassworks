@@ -241,6 +241,12 @@ pub struct CampaignSettings {
     /// Cache TTL in days.
     #[serde(default = "default_cache_ttl")]
     pub cache_ttl_days: u64,
+    /// Package whitelist.
+    #[serde(default)]
+    pub whitelist: WhitelistConfig,
+    /// Scoring configuration.
+    #[serde(default)]
+    pub scoring: ScoringConfig,
     /// LLM configuration.
     #[serde(default)]
     pub llm: LlmSettings,
@@ -257,6 +263,8 @@ impl Default for CampaignSettings {
             rate_limit_github: default_github_rate_limit(),
             cache_enabled: default_true(),
             cache_ttl_days: default_cache_ttl(),
+            whitelist: WhitelistConfig::default(),
+            scoring: ScoringConfig::default(),
             llm: LlmSettings::default(),
             output: OutputSettings::default(),
         }
@@ -457,6 +465,48 @@ impl WaveSource {
             WaveSource::GitHubSearch { max_results, .. } => *max_results,
         }
     }
+}
+
+/// Package whitelist configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct WhitelistConfig {
+    /// Packages to never flag (i18n libraries, etc.)
+    #[serde(default)]
+    pub packages: Vec<String>,
+    /// Crypto libraries (blockchain API calls are legitimate)
+    #[serde(default)]
+    pub crypto_packages: Vec<String>,
+    /// Build tools (time delays are legitimate)
+    #[serde(default)]
+    pub build_tools: Vec<String>,
+}
+
+/// Scoring configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScoringConfig {
+    /// Threat score threshold for "malicious" classification
+    #[serde(default = "default_malicious_threshold")]
+    pub malicious_threshold: f32,
+    /// Threat score threshold for "suspicious" classification
+    #[serde(default = "default_suspicious_threshold")]
+    pub suspicious_threshold: f32,
+}
+
+impl Default for ScoringConfig {
+    fn default() -> Self {
+        Self {
+            malicious_threshold: default_malicious_threshold(),
+            suspicious_threshold: default_suspicious_threshold(),
+        }
+    }
+}
+
+fn default_malicious_threshold() -> f32 {
+    7.0
+}
+
+fn default_suspicious_threshold() -> f32 {
+    3.0
 }
 
 /// Whitelist entry.

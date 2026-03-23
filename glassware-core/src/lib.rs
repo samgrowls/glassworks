@@ -114,7 +114,7 @@ pub use classify::{
     is_variation_selector, BidiChar, InvisibleRange, ZeroWidthChar,
 };
 
-pub use config::{DetectorConfig, SensitivityLevel, UnicodeConfig, ScanConfig};
+pub use config::{DetectorConfig, SensitivityLevel, UnicodeConfig, ScanConfig, GlasswareConfig, WhitelistConfig, ScoringConfig, DetectorWeights};
 
 pub use confusables::data::{
     get_base_char, get_confusable_script, get_similarity, is_confusable, ConfusableEntry,
