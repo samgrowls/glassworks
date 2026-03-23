@@ -84,6 +84,7 @@ pub mod wave;
 pub mod executor;
 pub mod checkpoint;
 pub mod report;
+pub mod query;
 
 // Re-export commonly used types for convenience
 pub use types::{

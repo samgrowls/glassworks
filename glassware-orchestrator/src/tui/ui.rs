@@ -5,10 +5,10 @@
 
 use ratatui::{
     prelude::*,
-    widgets::{Block, Borders, Paragraph, Gauge, List, ListItem, Tabs},
+    widgets::{Block, Borders, Paragraph, Gauge, List, ListItem, Clear, Tabs},
 };
 
-use super::app::{App, AppTab};
+use super::app::{App, AppTab, ConcurrencyDialog};
 use glassware_orchestrator::campaign::{
     types::{CampaignStatus, WaveStatus},
     event_bus::CampaignEvent,
@@ -37,7 +37,7 @@ impl Ui {
                 Constraint::Length(3),  // Progress bar
                 Constraint::Min(10),    // Main content (waves/tabs)
                 Constraint::Length(7),  // Recent events
-                Constraint::Length(3),  // Help bar
+                Constraint::Length(3),  // Help bar with command feedback
             ])
             .split(frame.size());
 
@@ -57,8 +57,13 @@ impl Ui {
         // Render recent events
         self.render_event_log(frame, app, chunks[3]);
 
-        // Render help bar
-        self.render_help_bar(frame, chunks[4]);
+        // Render help bar with command feedback
+        self.render_help_bar(frame, app, chunks[4]);
+
+        // Render concurrency dialog if visible
+        if app.concurrency_dialog().is_visible() {
+            self.render_concurrency_dialog(frame, app.concurrency_dialog());
+        }
     }
 
     /// Render the title bar.
@@ -294,17 +299,104 @@ impl Ui {
     }
 
     /// Render the help bar.
-    fn render_help_bar(&self, frame: &mut Frame, area: Rect) {
-        let help_text = "  [p] Pause  [x] Cancel  [s] Skip  [c] Concurrency  [q] Quit  [Tab] Switch Tab  ";
+    fn render_help_bar(&self, frame: &mut Frame, app: &App, area: Rect) {
+        // Build help text with command feedback
+        let help_text = if let Some(feedback) = app.command_feedback() {
+            format!("  {}  |  [p] Pause  [x] Cancel  [r] Resume  [s] Skip  [c] Concurrency  [q] Quit  [Tab] Switch Tab  ", feedback)
+        } else {
+            "  [p] Pause  [x] Cancel  [r] Resume  [s] Skip  [c] Concurrency  [q] Quit  [Tab] Switch Tab  ".to_string()
+        };
+
+        let help_style = if app.command_feedback().is_some() {
+            Style::default().fg(Color::Yellow).bold()
+        } else {
+            Style::default().fg(Color::DarkGray)
+        };
 
         let help = Paragraph::new(help_text)
             .block(Block::default()
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::DarkGray)))
-            .style(Style::default().fg(Color::DarkGray));
+            .style(help_style);
 
         frame.render_widget(help, area);
     }
+
+    /// Render the concurrency adjustment dialog.
+    fn render_concurrency_dialog(&self, frame: &mut Frame, dialog: &ConcurrencyDialog) {
+        // Create centered dialog area
+        let area = centered_rect(50, 30, frame.size());
+
+        // Clear the area behind the dialog
+        frame.render_widget(Clear, area);
+
+        // Build dialog content
+        let mut lines = vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "Adjust Concurrency",
+                Style::default().bold().fg(Color::Cyan),
+            )),
+            Line::from(""),
+            Line::from(format!(
+                "Current: {} concurrent operations",
+                dialog.current_value
+            )),
+            Line::from(""),
+            Line::from("Enter new value (1-100):"),
+            Line::from(""),
+        ];
+
+        // Show input buffer with cursor
+        let input_display = if dialog.input_buffer.is_empty() {
+            Span::styled("_", Style::default().fg(Color::Gray))
+        } else {
+            Span::styled(
+                format!("{}_", dialog.input_buffer),
+                Style::default().fg(Color::Yellow).bold(),
+            )
+        };
+        lines.push(Line::from(input_display));
+
+        lines.extend(vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "Press Enter to confirm, Esc to cancel",
+                Style::default().fg(Color::Gray),
+            )),
+            Line::from(""),
+        ]);
+
+        let dialog_content = Paragraph::new(lines)
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::Cyan))
+                .title(" Concurrency Settings "))
+            .style(Style::default().bg(Color::Black));
+
+        frame.render_widget(dialog_content, area);
+    }
+}
+
+/// Helper to create a centered rectangle.
+fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(area);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1]
 }
 
 impl Default for Ui {

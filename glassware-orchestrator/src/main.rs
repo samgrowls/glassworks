@@ -1356,6 +1356,9 @@ async fn cmd_campaign(cli: &Cli, campaign_cmd: &cli::CampaignCommands) -> Result
         CampaignCommands::Report { case_id, format, output } => {
             cmd_campaign_report(cli, case_id, format, output.as_deref()).await?;
         }
+        CampaignCommands::Query { case_id, question } => {
+            cmd_campaign_query(cli, case_id, question).await?;
+        }
         CampaignCommands::Monitor { case_id } => {
             cmd_campaign_monitor(case_id).await?;
         }
@@ -1752,8 +1755,10 @@ fn reconstruct_campaign_result(checkpoint: &CampaignCheckpoint) -> Result<Campai
 
 /// Launch TUI for monitoring a campaign.
 async fn cmd_campaign_monitor(case_id: &str) -> Result<()> {
-    use glassware_orchestrator::campaign::{EventBus, CommandChannel};
+    use glassware_orchestrator::campaign::{EventBus, CommandChannel, CheckpointManager};
+    use glassware_orchestrator::campaign::types::{CampaignState, CampaignStatus, WaveState, WaveStatus, WaveMode};
     use tui::app::App;
+    use std::path::Path;
 
     info!("Launching TUI monitor for campaign: {}", case_id);
 
@@ -1761,11 +1766,108 @@ async fn cmd_campaign_monitor(case_id: &str) -> Result<()> {
     let event_bus = EventBus::new(512);
     let command_channel = CommandChannel::new();
 
+    // Try to load checkpoint for this campaign
+    let checkpoint_db = Path::new(".glassware-checkpoints.db");
+    let mut state: Option<CampaignState> = None;
+
+    if let Ok(checkpoint_mgr) = CheckpointManager::new(checkpoint_db) {
+        if let Ok(Some(checkpoint)) = checkpoint_mgr.load_checkpoint(case_id) {
+            info!("Loaded checkpoint for campaign: {}", case_id);
+
+            // Reconstruct state from checkpoint
+            let mut campaign_state = CampaignState::new(&checkpoint.case_id, &checkpoint.campaign_name);
+            
+            // Parse status
+            campaign_state.status = match checkpoint.status.as_str() {
+                "running" => CampaignStatus::Running,
+                "paused" => CampaignStatus::Paused,
+                "completed" => CampaignStatus::Completed,
+                "failed" => CampaignStatus::Failed,
+                "cancelled" => CampaignStatus::Cancelled,
+                _ => CampaignStatus::Initializing,
+            };
+
+            // Parse wave states
+            if let Ok(wave_states_json) = serde_json::from_str::<serde_json::Value>(&checkpoint.wave_states) {
+                if let Some(waves) = wave_states_json.as_object() {
+                    for (wave_id, wave_data) in waves {
+                        if let Some(wave_obj) = wave_data.as_object() {
+                            let mut wave = WaveState::new(
+                                wave_id.clone(),
+                                wave_obj.get("name").and_then(|v| v.as_str()).unwrap_or(wave_id),
+                                WaveMode::Hunt,
+                            );
+                            
+                            if let Some(status_str) = wave_obj.get("status").and_then(|v| v.as_str()) {
+                                wave.status = match status_str {
+                                    "running" => WaveStatus::Running,
+                                    "completed" => WaveStatus::Completed,
+                                    "failed" => WaveStatus::Failed,
+                                    "skipped" => WaveStatus::Skipped,
+                                    _ => WaveStatus::Pending,
+                                };
+                            }
+                            
+                            wave.packages_total = wave_obj.get("packages_total").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                            wave.packages_scanned = wave_obj.get("packages_scanned").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                            wave.packages_flagged = wave_obj.get("packages_flagged").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                            wave.packages_malicious = wave_obj.get("packages_malicious").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                            
+                            campaign_state.waves.insert(wave_id.clone(), wave);
+                        }
+                    }
+                }
+            }
+
+            campaign_state.current_wave = checkpoint.current_wave;
+            campaign_state.recalculate_stats();
+            state = Some(campaign_state);
+        }
+    }
+
     // Create and run TUI app
-    let mut app = App::new(case_id.to_string(), event_bus, command_channel);
+    let mut app = if case_id == "demo" || case_id.starts_with("demo-") {
+        // Use sample data for demo
+        info!("Using sample data for demo mode");
+        App::with_sample_data()
+    } else {
+        // Create app with live subscription capability
+        info!("Creating TUI with live event subscription");
+        App::new(case_id.to_string(), event_bus.clone(), command_channel)
+    };
+
+    // If we loaded state from checkpoint, use it
+    if let Some(loaded_state) = state {
+        info!("Using loaded checkpoint state");
+        app.set_state(loaded_state);
+    }
 
     // Run the TUI
     app.run().await.map_err(|e| anyhow::anyhow!("TUI error: {}", e))?;
+
+    Ok(())
+}
+
+/// Query a campaign with a natural language question.
+async fn cmd_campaign_query(_cli: &Cli, case_id: &str, question: &str) -> Result<()> {
+    use glassware_orchestrator::campaign::query::query_campaign;
+
+    info!("Querying campaign '{}' with question: {}", case_id, question);
+
+    // Check for NVIDIA API key
+    if std::env::var("NVIDIA_API_KEY").is_err() {
+        return Err(anyhow::anyhow!(
+            "NVIDIA_API_KEY environment variable not set. \n\
+             Set it with: export NVIDIA_API_KEY=your_api_key\n\
+             Get a key from: https://build.nvidia.com/"
+        ));
+    }
+
+    // Query the campaign
+    let response = query_campaign(case_id, question).await?;
+
+    // Print the response
+    println!("{}", response);
 
     Ok(())
 }

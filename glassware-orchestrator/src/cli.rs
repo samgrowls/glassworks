@@ -14,7 +14,7 @@ pub struct Cli {
     pub command: Commands,
 
     /// Output format.
-    #[arg(short, long, value_enum, default_value = "pretty", global = true)]
+    #[arg(short, long, value_enum, default_value = "pretty")]
     pub format: OutputFormat,
 
     /// Minimum severity to report.
@@ -67,7 +67,7 @@ pub struct Cli {
     pub log_file: Option<String>,
 
     /// Output file path (optional, defaults to stdout).
-    #[arg(short, long, global = true)]
+    #[arg(short, long)]
     pub output: Option<String>,
 
     /// Quiet mode (minimal output).
@@ -205,6 +205,17 @@ pub enum CampaignCommands {
         /// Output file path (defaults to stdout).
         #[arg(short, long)]
         output: Option<String>,
+    },
+
+    /// Query a campaign with a natural language question.
+    Query {
+        /// Campaign case ID.
+        #[arg(required = true)]
+        case_id: String,
+
+        /// Question to ask about the campaign.
+        #[arg(required = true)]
+        question: String,
     },
 
     /// Launch TUI for monitoring a campaign.
