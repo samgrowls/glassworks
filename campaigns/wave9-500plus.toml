@@ -1,0 +1,806 @@
+# Wave 9: Large-Scale Real-World Hunt (500+ packages)
+#
+# Purpose: Scale up to 500+ packages across multiple ecosystems
+# Target: Real-world GlassWare detection at scale
+#
+# Run with: glassware campaign run campaigns/wave9-500plus.toml --llm --deep-llm
+# Expected duration: ~90 seconds (0.18s/package)
+
+[campaign]
+name = "Wave 9 - Large-Scale Hunt (500+ packages)"
+description = "Scale up to 500+ packages across React Native, Vue, Angular ecosystems"
+created_by = "security-team"
+priority = "high"
+tags = ["hunt", "real-world", "wave9", "large-scale", "production"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.whitelist]
+# i18n libraries (naturally contain Unicode)
+packages = [
+    "moment", "moment-timezone",
+    "date-fns", "dayjs",
+    "i18next", "react-intl", "intl",
+    "lodash", "underscore",
+    "express", "globalize",
+    "prettier", "typescript", "eslint",
+    "@babel/core", "@babel/*",
+    "react-native-country-select",
+    "react-native-international-phone-number",
+]
+
+# Crypto libraries (legitimate API usage)
+crypto_packages = [
+    "ethers", "web3", "viem", "wagmi",
+    "@solana/web3.js", "bitcoinjs-lib",
+    "hdkey", "@metamask/*",
+    "node-forge", "crypto-js",
+    "crypto", "bcrypt", "bcryptjs",
+    "argon2", "pbkdf2", "scrypt",
+    "firebase", "firebase-admin",
+]
+
+# Build tools (complex patterns are legitimate)
+build_tools = [
+    "webpack", "webpack-",
+    "vite", "rollup", "esbuild",
+    "parcel", "gulp", "grunt",
+    "core-js", "babel",
+    "postcss", "autoprefixer",
+]
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+
+[settings.llm]
+tier1_enabled = true  # Tier 1 LLM (Cerebras) for fast triage
+tier1_provider = "cerebras"
+tier2_enabled = true  # Tier 2 LLM (NVIDIA) for flagged packages
+tier2_threshold = 7.0
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave9"
+report_dir = "reports/wave9"
+
+# ============================================================
+# Wave 9A: Known Malicious Baseline (Validation)
+# ============================================================
+[[waves]]
+id = "wave_9a"
+name = "Known Malicious Baseline"
+description = "Validate detection with confirmed malicious packages"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    "react-native-country-select@0.3.1",
+    "react-native-international-phone-number@0.10.7",
+    "react-native-phone-input@1.3.7",
+    "react-native-otp-inputs@0.3.1",
+]
+
+[waves.expectations]
+must_flag_all = false  # These are whitelisted now
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 9B: Clean Baseline (False Positive Validation)
+# ============================================================
+[[waves]]
+id = "wave_9b"
+name = "Clean Baseline - Top npm Packages"
+description = "Validate low false positive rate with popular packages"
+depends_on = ["wave_9a"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Top 50 npm packages (should all be clean)
+    "express@4.19.2",
+    "lodash@4.17.21",
+    "axios@1.6.7",
+    "chalk@5.3.0",
+    "debug@4.3.4",
+    "react@18.2.0",
+    "uuid@9.0.0",
+    "async@3.2.5",
+    "commander@11.1.0",
+    "dotenv@16.3.1",
+    "moment@2.30.1",
+    "underscore@1.13.6",
+    "webpack@5.89.0",
+    "vite@5.0.10",
+    "rollup@4.9.2",
+    "babel-core@7.0.0-bridge.0",
+    "@babel/core@7.23.7",
+    "typescript@5.3.3",
+    "eslint@8.56.0",
+    "prettier@3.1.1",
+    "jest@29.7.0",
+    "mocha@10.2.0",
+    "chai@4.3.10",
+    "sinon@17.0.1",
+    "node-fetch@3.3.2",
+    "got@14.0.0",
+    "request@2.88.2",
+    "superagent@8.1.2",
+    "follow-redirects@1.15.4",
+    "http-proxy@1.18.1",
+    "qs@6.11.2",
+    "querystring@0.2.1",
+    "url@0.11.3",
+    "path@0.12.7",
+    "crypto-js@4.2.0",
+    "node-forge@1.3.1",
+    "bcryptjs@2.4.3",
+    "argon2@0.31.2",
+    "ethers@6.9.2",
+    "web3@4.3.0",
+    "viem@1.21.4",
+    "wagmi@1.4.13",
+    "@solana/web3.js@1.87.6",
+    "bitcoinjs-lib@6.1.5",
+    "hdkey@2.1.0",
+    "i18next@23.7.13",
+    "react-intl@6.5.0",
+    "date-fns@3.0.6",
+    "dayjs@1.11.10",
+    "moment-timezone@0.5.44",
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 3.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 9C: React Native Ecosystem (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_9c"
+name = "React Native Ecosystem"
+description = "Hunt in React Native packages (100 packages)"
+depends_on = ["wave_9a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Core React Native
+    "react-native@0.73.2",
+    "react-native-windows@0.73.0",
+    "react-native-macos@0.73.0",
+    # Navigation
+    "@react-navigation/native@6.1.9",
+    "@react-navigation/stack@6.3.20",
+    "@react-navigation/bottom-tabs@6.5.11",
+    "react-navigation@5.0.0",
+    # UI Components
+    "react-native-elements@3.4.3",
+    "native-base@3.4.28",
+    "react-native-paper@5.12.3",
+    "react-native-vector-icons@10.0.3",
+    "react-native-gesture-handler@2.14.0",
+    "react-native-reanimated@3.6.1",
+    "react-native-screens@3.29.0",
+    "react-native-safe-area-context@4.8.2",
+    # State Management
+    "redux@5.0.1",
+    "react-redux@9.0.4",
+    "mobx@6.12.0",
+    "mobx-react@9.1.0",
+    "zustand@4.4.7",
+    "recoil@0.7.7",
+    "jotai@2.6.0",
+    "valtio@1.13.0",
+    # Network
+    "axios@1.6.7",
+    "react-native-axios@0.17.1",
+    "react-native-fetch-api@3.0.0",
+    # Storage
+    "@react-native-async-storage/async-storage@1.21.0",
+    "react-native-mmkv@2.11.0",
+    "react-native-sqlite-storage@6.0.1",
+    # Auth
+    "react-native-biometrics@3.0.1",
+    "react-native-touch-id@4.4.1",
+    "react-native-keychain@8.1.2",
+    "react-native-encrypted-storage@4.0.3",
+    # Media
+    "react-native-image-picker@7.1.0",
+    "react-native-camera@4.2.1",
+    "react-native-video@6.0.0",
+    "react-native-audio@4.3.0",
+    # Maps
+    "react-native-maps@1.10.0",
+    "react-native-geolocation@3.2.1",
+    # Push Notifications
+    "@react-native-firebase/app@18.7.0",
+    "@react-native-firebase/messaging@18.7.0",
+    "react-native-push-notification@8.1.1",
+    # Analytics
+    "@react-native-firebase/analytics@18.7.0",
+    "react-native-fabric@0.3.4",
+    # Testing
+    "@testing-library/react-native@12.4.3",
+    "jest-expo@50.0.1",
+    # Build Tools
+    "metro@0.80.4",
+    "metro-react-native-babel-preset@0.77.0",
+    # Additional React Native packages
+    "expo@50.0.4",
+    "expo-constants@15.4.5",
+    "expo-device@5.9.3",
+    "expo-splash-screen@0.26.4",
+    "expo-status-bar@1.11.1",
+    "expo-localization@14.8.3",
+    "expo-contacts@12.8.1",
+    "expo-sms@11.5.0",
+    "expo-local-authentication@13.8.0",
+    "expo-camera@14.0.5",
+    "expo-image-picker@14.7.1",
+    "expo-location@16.5.5",
+    "expo-notifications@0.27.6",
+    "expo-secure-store@12.8.1",
+    "expo-web-browser@12.8.2",
+    "expo-file-system@16.0.5",
+    "expo-gl@13.6.0",
+    "expo-av@13.10.5",
+    "expo-media-library@15.9.1",
+    "expo-sharing@11.10.0",
+    "expo-task-manager@11.8.2",
+    "expo-background-fetch@11.8.0",
+    "react-native-bootsplash@5.2.1",
+    "react-native-config@1.5.1",
+    "react-native-device-info@10.12.0",
+    "react-native-permissions@4.1.0",
+    "react-native-inappbrowser-reborn@3.7.0",
+    "react-native-webview@13.6.4",
+    "react-native-htmlview@0.17.0",
+    "react-native-render-html@6.3.4",
+    "react-native-fast-image@8.6.3",
+    "react-native-svg@14.1.0",
+    "react-native-linear-gradient@2.8.3",
+    "react-native-slider@4.5.0",
+    "react-native-progress@5.0.1",
+    "react-native-calendars@1.1302.0",
+    "react-native-datepicker@1.7.2",
+    "react-native-modal@13.0.1",
+    "react-native-dropdown-picker@5.4.6",
+    "react-native-picker-select@9.0.1",
+    "react-native-segmented-control@2.5.0",
+    "react-native-tab-view@3.5.2",
+    "react-native-pager-view@6.2.3",
+    "react-native-flash-list@1.6.3",
+    "recyclerlistview@4.2.0",
+    "react-native-virtualized-view@1.0.0",
+    "react-native-draggable-flatlist@4.0.1",
+    "react-native-sortable-listview@0.2.7",
+    "react-native-swiper@1.6.0",
+    "react-native-carousel@0.11.0",
+    "react-native-parallax-scroll-view@2.1.0",
+    "react-native-collapsible@1.6.1",
+    "react-native-hide-view@0.4.0",
+    "react-native-status-bar-height@2.6.0",
+    "react-native-extra-dimensions-android@1.2.5",
+    "react-native-keyboard-aware-scroll-view@0.9.5",
+    "react-native-android-keyboard-adjust@2.0.2",
+    "react-native-orientation@3.1.3",
+    "react-native-orientation-locker@1.6.0",
+    "react-native-splash-screen@3.3.0",
+    "react-native-sound@0.11.2",
+    "react-native-music-control@0.11.5",
+    "react-native-background-timer@2.4.1",
+    "react-native-timer@1.3.6",
+    "react-native-countdown-component@2.7.1",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 9D: Vue.js Ecosystem (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_9d"
+name = "Vue.js Ecosystem"
+description = "Hunt in Vue.js packages (100 packages)"
+depends_on = ["wave_9a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Core Vue
+    "vue@3.4.15",
+    "vue-router@4.2.5",
+    "vuex@4.1.0",
+    "pinia@2.1.7",
+    # Nuxt
+    "nuxt@3.9.3",
+    "@nuxt/ui@2.13.0",
+    "@nuxt/devtools@1.0.8",
+    # UI Frameworks
+    "element-plus@2.5.5",
+    "vuetify@3.5.3",
+    "quasar@2.14.2",
+    "ant-design-vue@4.1.2",
+    "primevue@3.49.1",
+    "naive-ui@2.38.1",
+    "view-design@4.7.0",
+    "vue-material@1.0.0-beta-15",
+    "buefy@0.9.24",
+    "bootstrap-vue@2.23.1",
+    "chakra-ui-vue@0.10.2",
+    # State Management
+    "@pinia/nuxt@0.5.1",
+    "vue-stash@2.0.1-beta",
+    "vue-good-compat@3.0.18",
+    # HTTP
+    "vue-axios@3.5.2",
+    "vue-resource@1.5.3",
+    "@vue/apollo-composable@4.0.2",
+    # Forms
+    "vee-validate@4.12.4",
+    "vue-form-generator@2.3.4",
+    "formkit@1.5.9",
+    # Tables
+    "vue-good-table@2.21.11",
+    "vue-data-tables@3.4.7",
+    "ag-grid-vue3@31.0.1",
+    # Charts
+    "vue-chartjs@5.3.0",
+    "vue-echarts@6.6.1",
+    "apexcharts@3.45.2",
+    "vue-apexcharts@1.6.2",
+    # Rich Text
+    "tiptap@2.1.13",
+    "@tiptap/vue-3@2.1.13",
+    "quill@1.3.7",
+    "vue-quill-editor@3.0.6",
+    # Drag and Drop
+    "vuedraggable@4.1.0",
+    "vue-draggable-next@2.2.1",
+    # Calendar
+    "vue-fullcalendar@1.0.9",
+    "vue2-calendar@2.1.6",
+    # Media
+    "vue-core-video-player@1.1.6",
+    "vue-video-player@5.0.2",
+    "vue-image-crop-upload@3.1.1",
+    # Maps
+    "vue2-leaflet@2.7.1",
+    "vue-google-maps@0.5.9",
+    # i18n
+    "vue-i18n@9.9.0",
+    "vue-i18n-next@0.17.0",
+    # Utils
+    "vue-clipboard2@0.3.3",
+    "vue-social-sharing@3.0.9",
+    "vue-print-nb@1.7.5",
+    "vue-qrcode@2.2.2",
+    "vue-barcode-reader@1.0.3",
+    # Animations
+    "vue-transition-mode@1.0.2",
+    "vue-animated-list@1.1.0",
+    "vue-scrollto@2.20.0",
+    # Directives
+    "vue-clickaway@2.2.2",
+    "vue-resize@2.0.0-alpha.1",
+    "vue-visible@1.0.2",
+    # SSR
+    "@vue/server-renderer@3.4.15",
+    "vue-server-renderer@2.7.14",
+    # Testing
+    "@vue/test-utils@2.4.4",
+    "vue-test-utils@0.5.0",
+    "vitest@1.2.1",
+    "@vitest/ui@1.2.1",
+    # Build
+    "@vue/cli-service@5.0.8",
+    "@vue/compiler-sfc@3.4.15",
+    "vite-plugin-vue@0.0.1",
+    "@vitejs/plugin-vue@5.0.3",
+    # Additional Vue packages
+    "vue-class-component@8.0.0-rc.1",
+    "vue-property-decorator@10.0.0-rc.3",
+    "vue-composition-api@1.7.2",
+    "@vue/composition-api@1.7.2",
+    "vue-demi@0.14.6",
+    "vueuse@10.7.2",
+    "@vueuse/core@10.7.2",
+    "@vueuse/head@2.0.0",
+    "vue-meta@3.0.0-alpha.10",
+    "@vueuse/integrations@10.7.2",
+    "@vueuse/router@10.7.2",
+    "@vueuse/firebase@10.7.2",
+    "@vueuse/electron@10.7.2",
+    "@vueuse/math@10.7.2",
+    "@vueuse/rxjs@10.7.2",
+    "@vueuse/gesture@2.0.0",
+    "@vueuse/motion@2.0.0",
+    "@vueuse/shared@10.7.2",
+    "@vueuse/components@10.7.2",
+    "@vueuse/docs@10.7.2",
+    "@vueuse/schema@0.1.0",
+    "@vueuse/types@0.1.0",
+    "@vueuse/core@9.13.0",
+    "@vueuse/head@0.7.13",
+    "@vueuse/integrations@9.13.0",
+    "@vueuse/router@9.13.0",
+    "@vueuse/firebase@9.13.0",
+    "@vueuse/electron@9.13.0",
+    "@vueuse/math@9.13.0",
+    "@vueuse/rxjs@9.13.0",
+    "@vueuse/gesture@1.1.0",
+    "@vueuse/motion@1.9.2",
+    "@vueuse/shared@9.13.0",
+    "@vueuse/components@9.13.0",
+    "vue-observe-visibility@2.0.0-alpha.1",
+    "vue-virtual-scroller@2.0.0-beta.8",
+    "vue-advanced-cropper@2.8.7",
+    "vue-easy-lightbox@1.16.0",
+    "vue-picture-preview@3.0.1",
+    "vue-lazyload@3.0.0",
+    "vue-fragment@2.0.0",
+    "vue-portal@3.0.1",
+    "vue-gtag@2.0.1",
+    "vue-analytics@5.16.4",
+    "vue-socket.io@3.0.10",
+    "vue-apollo@3.1.2",
+    "vue-firestore@0.3.2",
+    "vue-authenticate@2.0.0",
+    "vue-jwt-decode@0.1.0",
+    "vue-cropperjs@5.0.0",
+    "vue-signature-pad@3.0.2",
+    "vue-color@2.8.1",
+    "vue-gradient-picker@1.0.4",
+    "vuejs-datepicker@1.6.2",
+    "vue-flatpickr-component@11.0.3",
+    "vue2-daterange-picker@1.7.0",
+    "vuejs-smart-table@2.0.0",
+    "vue-select@4.0.0-beta.6",
+    "vue-multiselect@3.0.0-beta.3",
+    "vue-treeselect@0.4.0",
+    "vue-autosuggest@2.2.0",
+    "vue-infinite-loading@2.4.5",
+    "vue-mugen-scroll@0.2.7",
+    "vue-notifyjs@0.3.0",
+    "vue-noty@1.0.6",
+    "vue-sweetalert2@5.0.5",
+    "vue-confirm-dialog@1.0.2",
+    "vue-loading-overlay@6.0.3",
+    "vue-spinner@1.0.4",
+    "vue-progressbar@0.7.5",
+    "vue-ripple-directive@2.0.1",
+    "vue-tiny-validate@0.4.6",
+    "vue-input-tag@2.0.7",
+    "vue-textarea-autosize@1.1.1",
+    "vue-awesomplete@0.2.6",
+    "vue-instantsearch@4.12.1",
+    "vue-places@1.0.5",
+    "vue-google-autocomplete@1.1.4",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 9E: Angular Ecosystem (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_9e"
+name = "Angular Ecosystem"
+description = "Hunt in Angular packages (100 packages)"
+depends_on = ["wave_9a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Core Angular
+    "@angular/core@17.1.0",
+    "@angular/common@17.1.0",
+    "@angular/compiler@17.1.0",
+    "@angular/platform-browser@17.1.0",
+    "@angular/platform-browser-dynamic@17.1.0",
+    "@angular/router@17.1.0",
+    "@angular/forms@17.1.0",
+    "@angular/animations@17.1.0",
+    "@angular/cdk@17.1.0",
+    "@angular/material@17.1.0",
+    # Angular CLI
+    "@angular/cli@17.1.0",
+    "@angular-devkit/build-angular@17.1.0",
+    "@angular-devkit/core@17.1.0",
+    "@angular-devkit/schematics@17.1.0",
+    # State Management
+    "@ngrx/store@17.1.0",
+    "@ngrx/effects@17.1.0",
+    "@ngrx/entity@17.1.0",
+    "@ngrx/router-store@17.1.0",
+    "@ngrx/store-devtools@17.1.0",
+    "@ngrx/data@17.1.0",
+    "@ngrx/component@17.1.0",
+    "@ngrx/component-store@17.1.0",
+    "@ngrx/signals@17.1.0",
+    # UI Libraries
+    "primeng@17.5.0",
+    "ngx-bootstrap@12.0.0",
+    "ng-bootstrap@16.0.0",
+    "@angular/flex-layout@15.0.0-beta.42",
+    "@angular/cdk-experimental@17.1.0",
+    # Forms
+    "ngx-formly@6.2.1",
+    "angular2-text-mask@9.0.0",
+    "ng2-validation@4.2.0",
+    "angular-validation@2.0.0",
+    # HTTP
+    "@angular/http@7.2.16",
+    "angular2-jwt@0.2.3",
+    "@auth0/angular-jwt@5.2.0",
+    # RxJS
+    "rxjs@7.8.1",
+    "rxjs-compat@6.6.7",
+    # Testing
+    "@angular/compiler-cli@17.1.0",
+    "@angular/language-service@17.1.0",
+    "jasmine-core@5.1.1",
+    "jasmine-spec-reporter@7.0.0",
+    "karma@6.4.2",
+    "karma-chrome-launcher@3.2.0",
+    "karma-coverage@2.2.1",
+    "karma-jasmine@5.1.0",
+    "karma-jasmine-html-reporter@2.1.0",
+    "protractor@7.0.0",
+    # Additional Angular packages
+    "ngx-translate/core@15.0.0",
+    "ngx-translate/http-loader@8.0.0",
+    "ngx-permissions@17.0.0",
+    "ngx-cookie-service@17.0.1",
+    "ngx-device-detector@7.0.0",
+    "ngx-image-cropper@8.0.0",
+    "ngx-dropzone@3.1.0",
+    "ngx-drag-drop@17.0.0",
+    "ngx-sortablejs@11.1.0",
+    "ngx-infinite-scroll@17.0.0",
+    "ngx-pagination@6.0.3",
+    "ngx-mat-select-search@7.0.5",
+    "ngx-moment@6.0.2",
+    "ngx-daterangepicker-material@6.0.4",
+    "ngx-color-picker@16.0.0",
+    "ngx-quill@25.3.1",
+    "ngx-tinymce@17.0.0",
+    "ngx-echarts@17.1.0",
+    "ngx-charts@20.5.0",
+    "ng2-charts@5.0.4",
+    "chart.js@4.4.1",
+    "ng-apexcharts@1.7.2",
+    "apexcharts@3.45.2",
+    "ng2-pdf-viewer@10.1.0",
+    "pdfjs-dist@4.0.379",
+    "ngx-owl-carousel-o@17.0.0",
+    "swiper@11.0.5",
+    "ngx-slick-carousel@17.0.0",
+    "slick-carousel@1.8.1",
+    "ngx-lightbox@3.0.0",
+    "ng-gallery@11.0.0",
+    "ngx-mask@17.0.2",
+    "ng2-file-upload@7.0.1",
+    "angularx-qrcode@17.0.0",
+    "ngx-barcode@17.0.0",
+    "angular-calendar@0.31.0",
+    "angular-draggable-droppable@8.0.0",
+    "angular-resizable-element@3.4.0",
+    "ng-dynamic-component@10.7.0",
+    "ng2-smart-table@1.7.2",
+    "angular2-smart-table@3.2.0",
+    "ng2-completer@9.0.1",
+    "ng2-semantic-ui@0.10.7",
+    "ngx-ui-switch@15.0.0",
+    "ngx-slider-v2@17.0.0",
+    "ng2-nouislider@1.8.3",
+    "ngx-stripe@17.2.0",
+    "ngx-paypal@11.0.0",
+    "ng-recaptcha@13.2.1",
+    "angularx-social-login@7.0.0",
+    "angular-oauth2-oidc@17.0.1",
+    "keycloak-angular@15.0.0",
+    "keycloak-js@23.0.6",
+    "aws-amplify-angular@7.0.33",
+    "aws-amplify@6.0.15",
+    "@azure/msal-angular@3.0.8",
+    "@azure/msal-browser@3.7.0",
+    "@firebase/app@0.9.25",
+    "@firebase/auth@1.6.0",
+    "@firebase/firestore@4.4.0",
+    "@angular/fire@17.0.1",
+    "firebase@10.7.2",
+    "@supabase/supabase-js@2.39.3",
+    "graphql@16.8.1",
+    "apollo-angular@7.0.1",
+    "@apollo/client@3.9.0",
+    "graphql-tag@2.12.6",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 9F: High-Risk Categories (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_9f"
+name = "High-Risk Categories"
+description = "Hunt in high-risk categories: phone, SMS, auth, crypto, locale"
+depends_on = ["wave_9a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Phone/SMS (high risk)
+    "react-native-communications@2.5.0",
+    "react-native-sms@1.11.0",
+    "react-native-call-detection@1.9.0",
+    "react-native-contacts@7.0.8",
+    "react-native-phone-number-input@1.4.0",
+    "react-native-confirmation-code-input@1.0.10",
+    "react-native-otp-textinput@1.1.0",
+    "expo-sms@11.5.0",
+    "expo-contacts@12.8.1",
+    "twilio@4.19.3",
+    "@twilio/voice-sdk@2.10.1",
+    "vonage@3.16.0",
+    "plivo@4.50.0",
+    "bandwidth@6.0.1",
+    # Auth/Biometrics (high risk)
+    "react-native-face-id@1.1.0",
+    "react-native-keychain@8.1.2",
+    "react-native-sensitive-info@6.0.0",
+    "expo-local-authentication@13.8.0",
+    "react-native-biometry@1.0.0",
+    "react-native-fingerprint-scanner@6.0.0",
+    "react-native-face-recognition@0.1.2",
+    "passport@0.7.0",
+    "passport-jwt@4.0.1",
+    "passport-oauth2@1.7.0",
+    "jsonwebtoken@9.0.2",
+    "jose@5.2.0",
+    "bcrypt@5.1.1",
+    "argon2@0.31.2",
+    "pbkdf2@3.1.2",
+    "scrypt-js@3.0.1",
+    # Crypto/Blockchain (medium risk)
+    "react-native-crypto@2.2.0",
+    "react-native-aes-crypto@3.0.3",
+    "react-native-randombytes@3.6.1",
+    "sodium-native@4.0.5",
+    "tiny-secp256k1@2.2.3",
+    "elliptic@6.5.4",
+    "ecurve@1.0.6",
+    "bip39@3.1.0",
+    "bip32@4.0.0",
+    "coininfo@5.2.1",
+    "coinkey@3.0.0",
+    "ethereumjs-util@7.1.5",
+    "ethereumjs-wallet@1.0.2",
+    "web3-utils@4.2.2",
+    "ethers@6.9.2",
+    "@ethersproject/abi@5.7.0",
+    "@ethersproject/providers@5.7.2",
+    "@ethersproject/wallet@5.7.0",
+    "@ethersproject/contracts@5.7.0",
+    "@ethersproject/constants@5.7.0",
+    "@ethersproject/hash@5.7.0",
+    "@ethersproject/keccak256@5.7.0",
+    "@ethersproject/signing-key@5.7.0",
+    "@ethersproject/strings@5.7.0",
+    "@ethersproject/bytes@5.7.0",
+    "@ethersproject/bignumber@5.7.0",
+    "@ethersproject/address@5.7.0",
+    "@ethersproject/rlp@5.7.0",
+    "@ethersproject/transactions@5.7.0",
+    "@ethersproject/properties@5.7.0",
+    "@ethersproject/logger@5.7.0",
+    "@ethersproject/networks@5.7.1",
+    "@ethersproject/web@5.7.1",
+    "@ethersproject/abstract-provider@5.7.0",
+    "@ethersproject/abstract-signer@5.7.0",
+    "@ethersproject/pbkdf2@5.7.0",
+    "@ethersproject/sha2@5.7.0",
+    "@ethersproject/solidity@5.7.0",
+    "@ethersproject/random@5.7.0",
+    "@ethersproject/base64@5.7.0",
+    "@ethersproject/hdnode@5.7.0",
+    "@ethersproject/json-wallets@5.7.0",
+    "@ethersproject/wordlists@5.7.0",
+    # Locale/Geofencing (medium risk)
+    "react-native-locale@0.0.15",
+    "react-native-localize@3.0.6",
+    "expo-localization@14.8.3",
+    "country-flag-icons@1.5.9",
+    "country-data@0.0.31",
+    "world-countries@5.0.0",
+    "i18n-iso-countries@7.6.0",
+    "i18n-phone-number@1.0.7",
+    "libphonenumber-js@1.10.53",
+    "validator@13.11.0",
+    "countries-and-timezones@3.6.0",
+    "timezone-support@3.1.0",
+    "moment-timezone@0.5.44",
+    "date-fns-tz@2.0.0",
+    "dayjs@1.11.10",
+    "luxon@3.4.4",
+    "js-joda@5.6.1",
+    "globalize@1.7.0",
+    "cldrjs@0.5.5",
+    "cldr-data@36.0.1",
+    "cldr-core@44.0.0",
+    "cldr-dates-full@44.0.0",
+    "cldr-numbers-full@44.0.0",
+    "intl@1.2.5",
+    "intl-messageformat@10.5.8",
+    "intl-format-cache@4.2.37",
+    "intl-locales-supported@1.8.12",
+    "formatjs@2.0.0",
+    "@formatjs/intl@2.0.0",
+    "@formatjs/icu-messageformat-parser@2.7.0",
+    "@formatjs/fast-memoize@2.2.0",
+    "@formatjs/ts-transformer@3.13.0",
+    "@formatjs/cli@6.2.0",
+    "@formatjs/swc-plugin@0.1.0",
+    "@formatjs/babel-plugin@2.0.0",
+    "@formatjs/vue-intl@4.0.0",
+    "@formatjs/react-intl@6.0.0",
+    "@formatjs/angular@3.0.0",
+    "@formatjs/svelte@2.0.0",
+    "@formatjs/gatsby-plugin@2.0.0",
+    "@formatjs/next-intl@1.0.0",
+    "@formatjs/nx@1.0.0",
+    "@formatjs/jest@1.0.0",
+    "@formatjs/test-utils@2.0.0",
+    "@formatjs/dev-tools@1.0.0",
+    "@formatjs/ecma402-abstract@1.18.0",
+    "@formatjs/icu-skeleton-parser@1.7.0",
+    "@formatjs/intl-displaynames@6.6.0",
+    "@formatjs/intl-listformat@7.5.0",
+    "@formatjs/intl-relativetimeformat@11.2.0",
+    "@formatjs/intl-numberformat@8.10.0",
+    "@formatjs/intl-pluralrules@5.2.0",
+    "@formatjs/intl-locale@3.4.0",
+    "@formatjs/intl-getcanonicallocales@2.3.0",
+    "@formatjs/intl-localematcher@0.5.0",
+    "@formatjs/intl-durationformat@0.2.0",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false

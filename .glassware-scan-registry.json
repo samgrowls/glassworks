@@ -346,6 +346,20 @@
       "findings_count": 5,
       "malicious_count": 1,
       "error": null
+    },
+    {
+      "id": "dab493ca-7dae-4774-a4ce-262d31a33b97",
+      "started_at": "2026-03-23T18:16:29.649872612Z",
+      "completed_at": "2026-03-23T18:16:32.039040741Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-country-select@0.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }
