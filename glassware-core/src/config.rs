@@ -182,7 +182,7 @@ fn default_critical_weight() -> f32 { 4.0 }  // Increased from 3.0
 fn default_high_weight() -> f32 { 2.0 }  // Increased from 1.5
 
 /// Detector weights configuration
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DetectorWeights {
     #[cfg_attr(feature = "serde", serde(default = "default_weight"))]
@@ -207,6 +207,24 @@ pub struct DetectorWeights {
     pub forcememo: f32,
     #[cfg_attr(feature = "serde", serde(default = "default_heavy_weight"))]
     pub jpd_author: f32,
+}
+
+impl Default for DetectorWeights {
+    fn default() -> Self {
+        Self {
+            invisible_char: default_weight(),
+            homoglyph: default_weight(),
+            bidi: default_weight(),
+            blockchain_c2: default_weight(),
+            glassware_pattern: default_heavy_weight(),
+            locale_geofencing: default_weight(),
+            time_delay: default_weight(),
+            encrypted_payload: default_heavy_weight(),
+            rdd: default_heavy_weight(),
+            forcememo: default_heavy_weight(),
+            jpd_author: default_heavy_weight(),
+        }
+    }
 }
 
 fn default_weight() -> f32 { 1.0 }

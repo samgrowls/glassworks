@@ -133,7 +133,19 @@ impl From<crate::config::GlasswareConfig> for ScannerConfig {
                 critical_weight: config.scoring.critical_weight,
                 high_weight: config.scoring.high_weight,
             },
-            detectors: glassware_core::DetectorWeights::default(),
+            detectors: glassware_core::DetectorWeights {
+                invisible_char: config.detectors.invisible_char.weight,
+                homoglyph: config.detectors.homoglyph.weight,
+                bidi: config.detectors.bidi.weight,
+                blockchain_c2: config.detectors.blockchain_c2.weight,
+                glassware_pattern: config.detectors.glassware_pattern.weight,
+                locale_geofencing: if config.detectors.locale_geofencing.enabled { 1.0 } else { 0.0 },
+                time_delay: 1.0,  // Default weight
+                encrypted_payload: 1.0,  // Default weight
+                rdd: 1.0,  // Default weight
+                forcememo: 1.0,  // Default weight
+                jpd_author: 1.0,  // Default weight
+            },
         };
 
         Self {
@@ -499,16 +511,8 @@ impl Scanner {
         // Check if this is a known legitimate package
         let package_lower = package_name.to_lowercase();
 
-        // Check against config whitelists
-        let is_whitelisted = config.whitelist.packages.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase())
-        }) || config.whitelist.crypto_packages.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase())
-        }) || config.whitelist.build_tools.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase())
-        }) || config.whitelist.state_management.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase())
-        });
+        // Check whitelist using precise matching
+        let is_whitelisted = self.is_package_whitelisted(package_name);
 
         let is_crypto_package = config.whitelist.crypto_packages.iter().any(|p| {
             package_lower.contains(&p.to_lowercase())
