@@ -180,13 +180,24 @@ impl Scanner {
         let findings = self.scan_directory(&package.path).await?;
 
         let threat_score = self.calculate_threat_score(&findings, &package.name);
-        let is_malicious = threat_score >= self.config.threat_threshold;
+        
+        // Check whitelist for final malicious determination (defense in depth)
+        let is_whitelisted = self.is_package_whitelisted(&package.name);
+        let is_malicious = if is_whitelisted {
+            // Whitelisted packages are never flagged as malicious regardless of score
+            // This prevents false positives for known legitimate packages (i18n libraries, build tools, etc.)
+            false
+        } else {
+            threat_score >= self.config.threat_threshold
+        };
 
         if is_malicious {
             warn!(
                 "Package {} flagged as malicious (threat score: {:.2})",
                 package.name, threat_score
             );
+        } else if is_whitelisted && !findings.is_empty() {
+            info!("Package {} is whitelisted ({} findings suppressed)", package.name, findings.len());
         }
 
         Ok(PackageScanResult {
@@ -646,6 +657,29 @@ impl Scanner {
             // Default weight for detectors without specific config
             _ => 1.0,
         }
+    }
+
+    /// Check if a package is whitelisted (defense in depth).
+    /// 
+    /// This is checked at scoring time to prevent false positives for known legitimate packages.
+    fn is_package_whitelisted(&self, package_name: &str) -> bool {
+        let package_lower = package_name.to_lowercase();
+        let config = &self.config.glassware_config;
+
+        // Check all whitelist categories
+        config.whitelist.packages.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase()) || 
+            package_lower.starts_with(&p.to_lowercase())
+        }) || config.whitelist.crypto_packages.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase()) ||
+            package_lower.starts_with(&p.to_lowercase())
+        }) || config.whitelist.build_tools.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase()) ||
+            package_lower.starts_with(&p.to_lowercase())
+        }) || config.whitelist.state_management.iter().any(|p| {
+            package_lower.contains(&p.to_lowercase()) ||
+            package_lower.starts_with(&p.to_lowercase())
+        })
     }
 
     /// Check if a file is a locale or data file (where invisible chars are legitimate)

@@ -318,6 +318,20 @@
       "findings_count": 19,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "232dd8f4-a0ed-4603-8005-29f6749b63be",
+      "started_at": "2026-03-23T16:59:17.204635454Z",
+      "completed_at": "2026-03-23T16:59:17.244772492Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "moment@2.30.1"
+      ],
+      "version_policy": null,
+      "findings_count": 194,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }
