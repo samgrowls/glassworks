@@ -692,7 +692,24 @@ impl Scanner {
     /// - Prefix with slash: "@babel/" matches "@babel/core", "@babel/cli"
     /// - Wildcard: "@metamask/*" matches "@metamask/anything"
     fn is_package_whitelisted(&self, package_name: &str) -> bool {
-        let package_lower = package_name.to_lowercase();
+        // Strip version from package name
+        // Examples: "webpack@5.89.0" -> "webpack", "@babel/core@7.23.7" -> "@babel/core"
+        let package_base = if let Some(at_pos) = package_name.rfind('@') {
+            // Only strip if there's a version after @ (not for scoped packages like @babel/core)
+            if at_pos > 0 && !package_name.starts_with('@') {
+                // Regular package with version: "name@version"
+                &package_name[..at_pos]
+            } else if package_name.starts_with('@') && at_pos > 1 {
+                // Scoped package with version: "@scope/name@version" -> "@scope/name"
+                &package_name[..at_pos]
+            } else {
+                // No version or invalid format
+                package_name
+            }
+        } else {
+            package_name
+        };
+        let package_lower = package_base.to_lowercase();
         let config = &self.config.glassware_config;
 
         // Helper to check if package matches a whitelist entry

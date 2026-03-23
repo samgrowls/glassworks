@@ -416,6 +416,104 @@
       "findings_count": 0,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "cb61d2d6-36ba-4718-b935-59cf0fed3890",
+      "started_at": "2026-03-23T20:38:06.368417225Z",
+      "completed_at": "2026-03-23T20:38:08.304500261Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "870afc7a-60fb-4765-9399-41b42a9c57fa",
+      "started_at": "2026-03-23T20:41:59.525775495Z",
+      "completed_at": "2026-03-23T20:41:59.564490025Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "e0106c22-3b74-4509-b1fe-e7850b95026c",
+      "started_at": "2026-03-23T20:41:59.571381345Z",
+      "completed_at": "2026-03-23T20:42:00.762028727Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "moment@2.30.1"
+      ],
+      "version_policy": null,
+      "findings_count": 194,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "b8d3b8b2-4567-48d8-a85e-57c72d3a9e85",
+      "started_at": "2026-03-23T20:42:12.033486068Z",
+      "completed_at": "2026-03-23T20:42:12.072018409Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "8595c626-f5be-4713-a27a-4874f564574f",
+      "started_at": "2026-03-23T20:45:35.935382612Z",
+      "completed_at": "2026-03-23T20:45:37.878282657Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@prisma/client@5.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 25,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "482a060d-fb01-4392-82a8-743c4d30b379",
+      "started_at": "2026-03-23T20:49:15.393551451Z",
+      "completed_at": "2026-03-23T20:49:15.433291197Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@prisma/client@5.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 25,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "87ac8240-5f9c-498d-a782-639c267a6314",
+      "started_at": "2026-03-23T20:49:15.440556247Z",
+      "completed_at": "2026-03-23T20:49:15.480275767Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
     }
   ]
 }

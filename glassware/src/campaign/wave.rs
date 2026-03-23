@@ -60,7 +60,19 @@ impl WaveExecutor {
                 glassware_config: glassware_core::GlasswareConfig {
                     whitelist: whitelist_config,
                     scoring: scoring_config,
-                    ..Default::default()
+                    detectors: glassware_core::DetectorWeights {
+                        invisible_char: 1.0,
+                        homoglyph: 1.0,
+                        bidi: 1.0,
+                        blockchain_c2: 1.0,
+                        glassware_pattern: 3.0,
+                        locale_geofencing: 1.0,
+                        time_delay: 1.0,
+                        encrypted_payload: 3.0,
+                        rdd: 3.0,
+                        forcememo: 3.0,
+                        jpd_author: 3.0,
+                    },
                 },
                 ..Default::default()
             }
