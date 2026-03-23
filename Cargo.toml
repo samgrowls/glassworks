@@ -16,8 +16,20 @@ rust-version = "1.70"
 # Core
 glassware-core = { path = "./glassware-core", version = "0.5.0" }
 
-# Async
-tokio = { version = "1.35", features = ["full"] }
+# Async - use selective features instead of "full" to reduce size
+tokio = { version = "1.35", features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "fs",
+    "io-util",
+    "io-std",
+    "net",
+    "signal",
+    "sync",
+    "time",
+    "process"
+] }
 tokio-retry = "0.3"
 
 # CLI
@@ -61,3 +73,16 @@ version = "0.4"
 
 [workspace.dependencies.tempfile]
 version = "3.8"
+
+# Release profile optimization for smaller binaries
+[profile.release]
+opt-level = 3           # Full optimization
+lto = true              # Link-time optimization
+codegen-units = 1       # Single codegen unit (slower build, smaller binary)
+strip = true            # Strip debug symbols
+panic = "abort"         # Smaller panic handling
+
+# Debug builds remain fast
+[profile.dev]
+opt-level = 0
+debug = true

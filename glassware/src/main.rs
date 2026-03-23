@@ -1,8 +1,10 @@
-//! Glassware Orchestrator CLI
+//! Glassware CLI
 //!
 //! Command-line interface for orchestrating security scans across npm and GitHub.
 
 mod cli;
+
+#[cfg(feature = "tui")]
 mod tui;
 
 use anyhow::Result;
@@ -1359,11 +1361,21 @@ async fn cmd_campaign(cli: &Cli, campaign_cmd: &cli::CampaignCommands) -> Result
         CampaignCommands::Query { case_id, question } => {
             cmd_campaign_query(cli, case_id, question).await?;
         }
+        #[cfg(feature = "tui")]
         CampaignCommands::Monitor { case_id } => {
             cmd_campaign_monitor(case_id).await?;
         }
+        #[cfg(not(feature = "tui"))]
+        CampaignCommands::Monitor { case_id } => {
+            return Err(anyhow::anyhow!("TUI feature not enabled. Build with: cargo build --features tui"));
+        }
+        #[cfg(feature = "tui")]
         CampaignCommands::Demo => {
             cmd_tui_demo().await?;
+        }
+        #[cfg(not(feature = "tui"))]
+        CampaignCommands::Demo => {
+            return Err(anyhow::anyhow!("TUI feature not enabled. Build with: cargo build --features tui"));
         }
     }
 
@@ -1754,6 +1766,7 @@ fn reconstruct_campaign_result(checkpoint: &CampaignCheckpoint) -> Result<Campai
 }
 
 /// Launch TUI for monitoring a campaign.
+#[cfg(feature = "tui")]
 async fn cmd_campaign_monitor(case_id: &str) -> Result<()> {
     use glassware::campaign::{EventBus, CommandChannel, CheckpointManager};
     use glassware::campaign::types::{CampaignState, CampaignStatus, WaveState, WaveStatus, WaveMode};
@@ -1873,6 +1886,7 @@ async fn cmd_campaign_query(_cli: &Cli, case_id: &str, question: &str) -> Result
 }
 
 /// Launch TUI demo with sample data.
+#[cfg(feature = "tui")]
 async fn cmd_tui_demo() -> Result<()> {
     use tui::app::App;
 
