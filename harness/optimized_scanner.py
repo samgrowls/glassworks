@@ -16,7 +16,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 import hashlib
 
-GLASSWARE = "/home/property.sightlines/samgrowls/glassworks/harness/glassware-scanner"
+# Use environment variable or default to built Rust binary
+GLASSWARE = os.environ.get(
+    "GLASSWARE_BINARY",
+    str(Path(__file__).parent.parent / "target" / "release" / "glassware-orchestrator")
+)
 EVIDENCE_DIR = Path(os.environ.get("GLASSWARE_EVIDENCE_DIR", "data/evidence"))
 EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
 

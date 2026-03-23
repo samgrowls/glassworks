@@ -49,9 +49,14 @@ pub struct Cli {
     #[arg(long)]
     pub adversarial: bool,
 
-    /// Enable LLM analysis.
+    /// Enable LLM analysis (Tier 1 - Cerebras fast triage).
     #[arg(long, global = true)]
     pub llm: bool,
+
+    /// Enable deep LLM analysis (Tier 2 - NVIDIA with model fallback).
+    /// Uses NVIDIA_API_KEY environment variable.
+    #[arg(long, global = true)]
+    pub deep_llm: bool,
 
     /// Log level (trace, debug, info, warn, error).
     #[arg(long, default_value = "info")]
@@ -117,9 +122,143 @@ pub enum ConfigCommands {
     Reset,
 }
 
+/// Campaign subcommands
+#[derive(Subcommand, Debug, Clone)]
+pub enum CampaignCommands {
+    /// Run a campaign from a configuration file.
+    Run {
+        /// Path to campaign configuration file (TOML).
+        #[arg(required = true)]
+        config: String,
+
+        /// Override concurrency setting.
+        #[arg(long)]
+        concurrency: Option<usize>,
+
+        /// Override rate limit (requests/second).
+        #[arg(long)]
+        rate_limit: Option<f32>,
+
+        /// Enable Tier 1 LLM (Cerebras) during scan.
+        #[arg(long)]
+        llm: bool,
+
+        /// Enable Tier 2 LLM (NVIDIA) for flagged packages.
+        #[arg(long)]
+        llm_deep: bool,
+    },
+
+    /// Resume an interrupted campaign.
+    Resume {
+        /// Campaign case ID to resume.
+        #[arg(required = true)]
+        case_id: String,
+    },
+
+    /// Show campaign status and progress.
+    Status {
+        /// Campaign case ID.
+        #[arg(required = true)]
+        case_id: String,
+
+        /// Show live updating status.
+        #[arg(long)]
+        live: bool,
+    },
+
+    /// Send a command to a running campaign.
+    Command {
+        /// Campaign case ID.
+        #[arg(required = true)]
+        case_id: String,
+
+        /// Command to send.
+        #[arg(required = true)]
+        command: CampaignCommandArg,
+
+        /// Command argument (for some commands).
+        #[arg()]
+        argument: Option<String>,
+    },
+
+    /// List recent campaigns.
+    List {
+        /// Maximum number of campaigns to show.
+        #[arg(long, default_value = "10")]
+        limit: usize,
+
+        /// Filter by status.
+        #[arg(long, value_enum)]
+        status: Option<CampaignStatusFilter>,
+    },
+
+    /// Generate a report for a completed campaign.
+    Report {
+        /// Campaign case ID.
+        #[arg(required = true)]
+        case_id: String,
+
+        /// Output format.
+        #[arg(long, value_enum, default_value = "markdown")]
+        format: ReportFormat,
+
+        /// Output file path (defaults to stdout).
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+
+    /// Launch TUI for monitoring a campaign.
+    Monitor {
+        /// Campaign case ID to monitor.
+        #[arg(required = true)]
+        case_id: String,
+    },
+
+    /// Launch TUI demo with sample data.
+    Demo,
+}
+
+/// Campaign command types
+#[derive(clap::ValueEnum, Debug, Clone)]
+pub enum CampaignCommandArg {
+    /// Pause campaign execution
+    Pause,
+    /// Resume paused campaign
+    Resume,
+    /// Cancel campaign
+    Cancel,
+    /// Skip current wave
+    SkipWave,
+    /// Set concurrency level
+    SetConcurrency,
+    /// Set rate limit
+    SetRateLimit,
+}
+
+/// Campaign status filter
+#[derive(clap::ValueEnum, Debug, Clone)]
+pub enum CampaignStatusFilter {
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
+/// Report output format
+#[derive(clap::ValueEnum, Debug, Clone)]
+pub enum ReportFormat {
+    Markdown,
+    Json,
+    Sarif,
+}
+
 /// Available commands.
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Run a campaign from configuration.
+    #[command(subcommand)]
+    Campaign(CampaignCommands),
+
     /// Scan npm packages.
     ScanNpm {
         /// Package names to scan.

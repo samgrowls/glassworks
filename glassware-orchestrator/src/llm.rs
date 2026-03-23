@@ -210,6 +210,31 @@ impl LlmAnalyzerConfig {
         }
     }
 
+    /// Create config for NVIDIA API (deep analysis with model fallback).
+    /// Uses NVIDIA_API_KEY environment variable.
+    /// Models in fallback order: Qwen 3.5 (397B) → Kimi K2.5 → GLM-5 → Llama 3.3 (70B)
+    pub fn nvidia_deep_analysis() -> Option<Self> {
+        let api_key = std::env::var("NVIDIA_API_KEY").ok()?;
+        
+        Some(Self {
+            base_url: "https://integrate.api.nvidia.com/v1".to_string(),
+            api_key,
+            model: "qwen/qwen3.5-397b-a17b".to_string(),
+            // NVIDIA models in order of preference (strongest first)
+            models: vec![
+                "qwen/qwen3.5-397b-a17b".to_string(),  // Strongest - 397B
+                "moonshotai/kimi-k2.5".to_string(),     // Kimi K2.5
+                "z-ai/glm5".to_string(),                // GLM-5
+                "meta/llama-3.3-70b-instruct".to_string(), // Fallback - 70B
+            ],
+            timeout_secs: 120,  // Longer timeout for deep analysis
+            max_tokens: 2048,   // More tokens for detailed analysis
+            temperature: 0.1,
+            enable_cache: true,
+            cache_dir: None,
+        })
+    }
+
     /// Create config for Groq API.
     pub fn groq(api_key: String) -> Self {
         Self {
@@ -283,7 +308,7 @@ impl LlmAnalyzer {
             .map_err(|e| OrchestratorError::http(e))?;
 
         let cache = Arc::new(Mutex::new(HashMap::new()));
-        
+
         let analyzer = Self {
             client,
             config,
@@ -294,6 +319,11 @@ impl LlmAnalyzer {
         // For now, we skip disk cache loading in the constructor
 
         Ok(analyzer)
+    }
+
+    /// Get the analyzer configuration.
+    pub fn config(&self) -> &LlmAnalyzerConfig {
+        &self.config
     }
 
     /// Analyze a single finding.

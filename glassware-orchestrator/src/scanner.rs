@@ -15,6 +15,21 @@ use tracing::{debug, error, info, warn};
 use crate::downloader::DownloadedPackage;
 use crate::error::{OrchestratorError, Result};
 
+/// LLM verdict for a finding or package.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct LlmPackageVerdict {
+    /// Whether the package is likely malicious.
+    pub is_malicious: bool,
+    /// Confidence score (0.0-1.0).
+    pub confidence: f32,
+    /// Explanation from LLM.
+    pub explanation: String,
+    /// Recommended actions.
+    pub recommendations: Vec<String>,
+    /// Model used for analysis.
+    pub model_used: String,
+}
+
 /// Scan result for a single package.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PackageScanResult {
@@ -34,6 +49,9 @@ pub struct PackageScanResult {
     pub threat_score: f32,
     /// Whether the package is considered malicious.
     pub is_malicious: bool,
+    /// Optional LLM verdict (if LLM analysis was performed).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub llm_verdict: Option<LlmPackageVerdict>,
 }
 
 /// Configuration for the scanner.
@@ -180,6 +198,7 @@ impl Scanner {
             findings,
             threat_score,
             is_malicious,
+            llm_verdict: None,  // Will be populated by orchestrator if LLM enabled
         })
     }
 
@@ -336,6 +355,7 @@ impl Scanner {
             findings,
             threat_score,
             is_malicious,
+            llm_verdict: None,
         })
     }
 

@@ -1,0 +1,325 @@
+//! UI rendering for the GlassWorm TUI.
+//!
+//! Provides rendering functions for the main screen layout,
+//! progress bars, wave lists, and event logs.
+
+use ratatui::{
+    prelude::*,
+    widgets::{Block, Borders, Paragraph, Gauge, List, ListItem, Tabs},
+};
+
+use super::app::{App, AppTab};
+use glassware_orchestrator::campaign::{
+    types::{CampaignStatus, WaveStatus},
+    event_bus::CampaignEvent,
+};
+
+/// Main UI renderer.
+pub struct Ui {
+    /// Title of the application.
+    title: String,
+}
+
+impl Ui {
+    /// Create a new UI renderer.
+    pub fn new() -> Self {
+        Self {
+            title: "GlassWorm Campaign Monitor".to_string(),
+        }
+    }
+
+    /// Render the UI.
+    pub fn render(&mut self, frame: &mut Frame, app: &App) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),  // Title bar
+                Constraint::Length(3),  // Progress bar
+                Constraint::Min(10),    // Main content (waves/tabs)
+                Constraint::Length(7),  // Recent events
+                Constraint::Length(3),  // Help bar
+            ])
+            .split(frame.size());
+
+        // Render title bar
+        self.render_title_bar(frame, app, chunks[0]);
+
+        // Render progress bar
+        self.render_progress_bar(frame, app, chunks[1]);
+
+        // Render main content based on active tab
+        match app.active_tab() {
+            AppTab::Campaign => self.render_campaign_tab(frame, app, chunks[2]),
+            AppTab::Findings => self.render_findings_tab(frame, app, chunks[2]),
+            AppTab::Logs => self.render_logs_tab(frame, app, chunks[2]),
+        }
+
+        // Render recent events
+        self.render_event_log(frame, app, chunks[3]);
+
+        // Render help bar
+        self.render_help_bar(frame, chunks[4]);
+    }
+
+    /// Render the title bar.
+    fn render_title_bar(&self, frame: &mut Frame, app: &App, area: Rect) {
+        let status = app.state()
+            .map(|s| s.status)
+            .unwrap_or(CampaignStatus::Initializing);
+
+        let status_text = match status {
+            CampaignStatus::Initializing => "Initializing",
+            CampaignStatus::Running => "Running",
+            CampaignStatus::Paused => "Paused",
+            CampaignStatus::Completed => "Completed",
+            CampaignStatus::Failed => "Failed",
+            CampaignStatus::Cancelled => "Cancelled",
+        };
+
+        let campaign_name = app.state()
+            .map(|s| s.campaign_name.as_str())
+            .unwrap_or("Unknown Campaign");
+
+        let status_style = match status {
+            CampaignStatus::Running => Style::default().fg(Color::Green),
+            CampaignStatus::Paused => Style::default().fg(Color::Yellow),
+            CampaignStatus::Completed => Style::default().fg(Color::Blue),
+            CampaignStatus::Failed => Style::default().fg(Color::Red),
+            CampaignStatus::Cancelled => Style::default().fg(Color::Red),
+            CampaignStatus::Initializing => Style::default().fg(Color::Gray),
+        };
+
+        let title = format!(" Campaign: {} ", campaign_name);
+        let status = format!(" [{}] ", status_text);
+
+        let padding_len = area.width.saturating_sub((title.len() + status.len()) as u16);
+        let title_block = Paragraph::new(Line::from(vec![
+            Span::styled(title, Style::default().bold()),
+            Span::raw(" ".repeat(padding_len as usize)),
+            Span::styled(status, status_style),
+        ]))
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Cyan))
+            .title(self.title.as_str())
+            .title_style(Style::default().bold().fg(Color::Cyan)));
+
+        frame.render_widget(title_block, area);
+    }
+
+    /// Render the progress bar.
+    fn render_progress_bar(&self, frame: &mut Frame, app: &App, area: Rect) {
+        let (progress, label) = if let Some(state) = app.state() {
+            let total: usize = state.waves.values().map(|w| w.packages_total).sum();
+            let scanned: usize = state.waves.values().map(|w| w.packages_scanned).sum();
+
+            let ratio = if total > 0 {
+                scanned as f32 / total as f32
+            } else {
+                0.0
+            };
+
+            let percentage = (ratio * 100.0) as u32;
+
+            // Calculate ETA (simplified - based on average scan time)
+            let elapsed = chrono::Utc::now().signed_duration_since(state.started_at).num_seconds() as u64;
+
+            let eta = if scanned > 0 && total > scanned {
+                let avg_time = elapsed as f32 / scanned as f32;
+                let remaining = total - scanned;
+                let eta_seconds = (avg_time * remaining as f32) as u64;
+                format!("{}m {}s", eta_seconds / 60, eta_seconds % 60)
+            } else {
+                "N/A".to_string()
+            };
+
+            (ratio, format!("Progress: {}%  ETA: {}", percentage, eta))
+        } else {
+            (0.0, "Progress: Waiting for data...".to_string())
+        };
+
+        let gauge = Gauge::default()
+            .gauge_style(Style::default().fg(Color::Blue))
+            .percent((progress * 100.0) as u16)
+            .label(label);
+
+        frame.render_widget(gauge, area);
+    }
+
+    /// Render the campaign tab (main view).
+    fn render_campaign_tab(&self, frame: &mut Frame, app: &App, area: Rect) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),  // Tabs
+                Constraint::Min(0),     // Wave list
+            ])
+            .split(area);
+
+        // Render tabs
+        let titles = vec!["Campaign", "Findings", "Logs"];
+        let tabs = Tabs::new(titles)
+            .block(Block::default().borders(Borders::ALL).title("Tabs"))
+            .select(app.active_tab() as usize)
+            .style(Style::default().fg(Color::White))
+            .highlight_style(Style::default().fg(Color::Yellow).bold());
+
+        frame.render_widget(tabs, chunks[0]);
+
+        // Render wave list
+        self.render_wave_list(frame, app, chunks[1]);
+    }
+
+    /// Render the findings tab.
+    fn render_findings_tab(&self, frame: &mut Frame, _app: &App, area: Rect) {
+        let findings = Paragraph::new("Findings view (not yet implemented)")
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .title("Findings"))
+            .style(Style::default().fg(Color::Gray));
+
+        frame.render_widget(findings, area);
+    }
+
+    /// Render the logs tab.
+    fn render_logs_tab(&self, frame: &mut Frame, _app: &App, area: Rect) {
+        let logs = Paragraph::new("Logs view (not yet implemented)")
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .title("Logs"))
+            .style(Style::default().fg(Color::Gray));
+
+        frame.render_widget(logs, area);
+    }
+
+    /// Render the wave list.
+    fn render_wave_list(&self, frame: &mut Frame, app: &App, area: Rect) {
+        let waves: Vec<ListItem> = if let Some(state) = app.state() {
+            state.waves.values()
+                .map(|wave| {
+                    let icon = match wave.status {
+                        WaveStatus::Completed => "✅",
+                        WaveStatus::Running => "🟡",
+                        WaveStatus::Pending => "⏳",
+                        WaveStatus::Failed => "❌",
+                        WaveStatus::Skipped => "⏭️",
+                    };
+
+                    let status_text = match wave.status {
+                        WaveStatus::Completed => format!("{}/{} scanned, {} flagged",
+                            wave.packages_scanned, wave.packages_total, wave.packages_flagged),
+                        WaveStatus::Running => format!("{}/{} scanned, {} flagged",
+                            wave.packages_scanned, wave.packages_total, wave.packages_flagged),
+                        WaveStatus::Pending => format!("{}/{} scanned, {} flagged",
+                            wave.packages_scanned, wave.packages_total, wave.packages_flagged),
+                        WaveStatus::Failed => format!("Failed: {}", wave.error_message.as_deref().unwrap_or("unknown error")),
+                        WaveStatus::Skipped => "Skipped".to_string(),
+                    };
+
+                    let content = format!("{} {}: {}  {}",
+                        icon,
+                        wave.id,
+                        wave.name,
+                        status_text);
+
+                    ListItem::new(content)
+                })
+                .collect()
+        } else {
+            vec![ListItem::new("No waves available")]
+        };
+
+        let wave_list = List::new(waves)
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .title("Waves"))
+            .style(Style::default().fg(Color::White));
+
+        frame.render_widget(wave_list, area);
+    }
+
+    /// Render the recent events log.
+    fn render_event_log(&self, frame: &mut Frame, app: &App, area: Rect) {
+        let events: Vec<ListItem> = app.recent_events()
+            .iter()
+            .rev()  // Show most recent first
+            .take(5)
+            .map(|event| {
+                let timestamp = chrono::Local::now().format("[%H:%M:%S]").to_string();
+                let text = match event {
+                    CampaignEvent::PackageScanned { package, version, wave_id, .. } => {
+                        format!("Wave {}: Package scanned: {}@{}", wave_id, package, version)
+                    }
+                    CampaignEvent::PackageFlagged { package, version, wave_id, findings_count, .. } => {
+                        format!("Wave {}: Package flagged: {}@{} ({} findings)", wave_id, package, version, findings_count)
+                    }
+                    CampaignEvent::PackageMalicious { package, version, wave_id, .. } => {
+                        format!("Wave {}: MALICIOUS: {}@{}", wave_id, package, version)
+                    }
+                    CampaignEvent::WaveCompleted { wave_id, packages_scanned, packages_flagged, .. } => {
+                        format!("Wave {}: Complete ({} scanned, {} flagged)", wave_id, packages_scanned, packages_flagged)
+                    }
+                    CampaignEvent::WaveStarted { name, packages_total, .. } => {
+                        format!("Wave {}: Started ({} packages)", name, packages_total)
+                    }
+                    CampaignEvent::CampaignStarted { campaign_name, .. } => {
+                        format!("Campaign started: {}", campaign_name)
+                    }
+                    CampaignEvent::CampaignCompleted { total_scanned, total_malicious, .. } => {
+                        format!("Campaign completed: {} scanned, {} malicious", total_scanned, total_malicious)
+                    }
+                    _ => format!("{:?}", event),
+                };
+
+                ListItem::new(format!("{} {}", timestamp, text))
+            })
+            .collect();
+
+        if events.is_empty() {
+            let empty = Paragraph::new("No recent events")
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .title("Recent Events (last 5)"))
+                .style(Style::default().fg(Color::Gray));
+            frame.render_widget(empty, area);
+        } else {
+            let event_log = List::new(events)
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .title("Recent Events (last 5)"))
+                .style(Style::default().fg(Color::White));
+
+            frame.render_widget(event_log, area);
+        }
+    }
+
+    /// Render the help bar.
+    fn render_help_bar(&self, frame: &mut Frame, area: Rect) {
+        let help_text = "  [p] Pause  [x] Cancel  [s] Skip  [c] Concurrency  [q] Quit  [Tab] Switch Tab  ";
+
+        let help = Paragraph::new(help_text)
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::DarkGray)))
+            .style(Style::default().fg(Color::DarkGray));
+
+        frame.render_widget(help, area);
+    }
+}
+
+impl Default for Ui {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ui_creation() {
+        let ui = Ui::new();
+        assert_eq!(ui.title, "GlassWorm Campaign Monitor");
+    }
+}

@@ -15,8 +15,15 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 
-GLASSWARE = "/home/property.sightlines/samgrowls/glassworks/harness/glassware-scanner"
-LLM_ANALYZER = "/home/property.sightlines/samgrowls/glassworks/llm-analyzer/analyzer.py"
+# Use environment variable or default to built Rust binary
+GLASSWARE = os.environ.get(
+    "GLASSWARE_BINARY",
+    str(Path(__file__).parent.parent / "target" / "release" / "glassware-orchestrator")
+)
+LLM_ANALYZER = os.environ.get(
+    "LLM_ANALYZER_SCRIPT",
+    str(Path(__file__).parent.parent / "llm-analyzer" / "analyzer.py")
+)
 NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
 EVIDENCE_DIR = Path(os.environ.get("GLASSWARE_LLM_EVIDENCE_DIR", "data/evidence/batch-llm"))
 EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,112 @@
+# Wave 6: Calibration & Validation Campaign
+#
+# Purpose: Validate the campaign pipeline end-to-end with known malicious + clean packages
+# Expected: ~10-15 packages total, should detect known malicious packages
+#
+# Run with: glassware-orchestrator campaign run campaigns/wave6.toml
+
+[campaign]
+name = "Wave 6 Calibration"
+description = "Validate campaign pipeline with known malicious and clean packages"
+created_by = "security-team"
+priority = "high"
+tags = ["calibration", "validation", "wave6"]
+
+[settings]
+concurrency = 10
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+# Lower threshold to catch more suspicious packages
+malicious_threshold = 4.0
+
+[settings.llm]
+tier1_enabled = false  # Disable for initial testing
+tier1_provider = "cerebras"
+tier2_enabled = false  # Enable after baseline established
+tier2_threshold = 5.0
+tier2_models = [
+    "qwen/qwen3.5-397b-a17b",
+    "moonshotai/kimi-k2.5",
+    "z-ai/glm5",
+    "meta/llama-3.3-70b-instruct"
+]
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave6"
+report_dir = "reports/wave6"
+
+# Wave 6A: Known Malicious Baseline
+# These packages are confirmed malicious and MUST be flagged
+[[waves]]
+id = "wave_6a"
+name = "Known Malicious Baseline"
+description = "Validate detection with confirmed malicious GlassWorm packages"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    "react-native-country-select@0.3.1",
+    "react-native-international-phone-number@0.10.7"
+]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# Wave 6B: Clean Baseline
+# These packages are known clean and should NOT be flagged
+[[waves]]
+id = "wave_6b"
+name = "Clean Baseline"
+description = "Validate low false positive rate with known clean packages"
+depends_on = ["wave_6a"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    "express@4.19.2",
+    "lodash@4.17.21",
+    "axios@1.6.7",
+    "chalk@5.3.0",
+    "debug@4.3.4"
+]
+
+[waves.expectations]
+must_flag_all = false
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# Wave 6C: React Native Ecosystem (Small Sample)
+# Hunt for potential GlassWorm patterns in React Native packages
+[[waves]]
+id = "wave_6c"
+name = "React Native Ecosystem"
+description = "Small sample hunt in React Native ecosystem"
+depends_on = ["wave_6a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    "react-native-phone-input@1.3.7",
+    "react-native-otp-inputs@0.3.1",
+    "react-native-locale@0.0.15",
+    "react-native-localize@3.0.6"
+]
+
+[waves.reporting]
+include_clean_summary = false

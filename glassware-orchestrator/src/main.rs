@@ -3,9 +3,10 @@
 //! Command-line interface for orchestrating security scans across npm and GitHub.
 
 mod cli;
+mod tui;
 
 use anyhow::Result;
-use cli::{Cli, Commands, ConfigCommands, OutputFormat, ResumeSource};
+use cli::{Cli, CampaignCommands, Commands, ConfigCommands, OutputFormat, ResumeSource};
 use glassware_orchestrator::{
     Orchestrator, OrchestratorConfig, DownloaderConfig, ScannerConfig,
     PackageScanResult, ScanSummary,
@@ -13,6 +14,7 @@ use glassware_orchestrator::{
     adversarial::AdversarialTester,
     scan_registry::{ScanRegistry, ScanStatus},
     cli_validator, config::GlasswareConfig,
+    campaign::{CampaignResult, ReportGenerator, ConfigSummary, CheckpointManager, CampaignCheckpoint},
 };
 use glassware_core::Severity;
 use tracing::{error, info, warn, Level};
@@ -78,6 +80,9 @@ async fn main() -> Result<()> {
 
     // Run command
     match cli.command {
+        Commands::Campaign(ref campaign_cmd) => {
+            cmd_campaign(&cli, campaign_cmd).await?;
+        }
         Commands::ScanNpm { ref packages, ref versions } => {
             cmd_scan_npm(&cli, packages.clone(), versions.clone()).await?;
         }
@@ -945,9 +950,15 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
         npm_rate_limit,
         github_rate_limit,
         #[cfg(feature = "llm")]
-        enable_llm: cli.llm,
+        enable_llm: cli.llm || cli.deep_llm,
         #[cfg(feature = "llm")]
-        llm_config: if cli.llm {
+        llm_config: if cli.deep_llm {
+            // Tier 2: NVIDIA deep analysis with model fallback
+            info!("Using NVIDIA deep analysis (Tier 2)");
+            glassware_orchestrator::llm::LlmAnalyzerConfig::nvidia_deep_analysis()
+        } else if cli.llm {
+            // Tier 1: Cerebras fast triage (from environment)
+            info!("Using Cerebras fast triage (Tier 1)");
             glassware_orchestrator::llm::LlmAnalyzerConfig::from_env()
         } else {
             None
@@ -1317,4 +1328,459 @@ async fn run_adversarial_test_on_file(
     }
 
     Ok(Some(report))
+}
+
+/// Campaign command handler.
+async fn cmd_campaign(cli: &Cli, campaign_cmd: &cli::CampaignCommands) -> Result<()> {
+    use cli::CampaignCommands;
+    use glassware_orchestrator::campaign::{
+        CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel,
+    };
+
+    match campaign_cmd {
+        CampaignCommands::Run { config, concurrency, rate_limit, llm, llm_deep } => {
+            cmd_campaign_run(cli, config, concurrency, rate_limit, *llm, *llm_deep).await?;
+        }
+        CampaignCommands::Resume { case_id } => {
+            cmd_campaign_resume(cli, case_id).await?;
+        }
+        CampaignCommands::Status { case_id, live } => {
+            cmd_campaign_status(cli, case_id, *live).await?;
+        }
+        CampaignCommands::Command { case_id, command, argument } => {
+            cmd_campaign_command(cli, case_id, command, argument.as_deref()).await?;
+        }
+        CampaignCommands::List { limit, status } => {
+            cmd_campaign_list(cli, *limit, status.clone()).await?;
+        }
+        CampaignCommands::Report { case_id, format, output } => {
+            cmd_campaign_report(cli, case_id, format, output.as_deref()).await?;
+        }
+        CampaignCommands::Monitor { case_id } => {
+            cmd_campaign_monitor(case_id).await?;
+        }
+        CampaignCommands::Demo => {
+            cmd_tui_demo().await?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Run a campaign from configuration.
+async fn cmd_campaign_run(
+    cli: &Cli,
+    config_path: &str,
+    concurrency: &Option<usize>,
+    rate_limit: &Option<f32>,
+    _llm: bool,
+    _llm_deep: bool,
+) -> Result<()> {
+    use glassware_orchestrator::campaign::{CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel};
+    use std::path::Path;
+
+    info!("Loading campaign configuration: {}", config_path);
+
+    // Load and validate configuration
+    let config = CampaignConfig::from_file(Path::new(config_path))
+        .map_err(|e| anyhow::anyhow!("Failed to load campaign config: {}", e))?;
+
+    info!("Loaded campaign '{}' with {} waves", config.campaign.name, config.waves.len());
+
+    // Apply CLI overrides
+    let mut config = config;
+    if let Some(c) = concurrency {
+        config.settings.concurrency = *c;
+    }
+    if let Some(r) = rate_limit {
+        config.settings.rate_limit_npm = *r;
+        config.settings.rate_limit_github = *r;
+    }
+
+    // Create campaign components
+    let case_id = format!("{}-{}", config.campaign.name.to_lowercase().replace(' ', "-"), chrono::Utc::now().format("%Y%m%d-%H%M%S"));
+    let event_bus = EventBus::new(512);
+    let state = StateManager::new(&case_id, &config.campaign.name, event_bus.clone());
+    let command_channel = CommandChannel::new();
+
+    // Set config hash
+    let config_json = serde_json::to_string(&config).unwrap_or_default();
+    let config_hash = format!("{:x}", md5::compute(config_json));
+    state.set_config_hash(config_hash).await;
+
+    // Create executor
+    let executor = CampaignExecutor::new(config, state, event_bus.clone(), command_channel).await;
+
+    // Run campaign
+    info!("🚀 Starting campaign execution...");
+    
+    match executor.run().await {
+        Ok(result) => {
+            println!("\n{}", "=".repeat(60));
+            println!("CAMPAIGN COMPLETE");
+            println!("{}", "=".repeat(60));
+            println!("Case ID: {}", result.case_id);
+            println!("Status: {:?}", result.status);
+            println!("Duration: {:?}", result.duration);
+            println!("Packages scanned: {}", result.total_scanned);
+            println!("Packages flagged: {}", result.total_flagged);
+            println!("Malicious packages: {}", result.total_malicious);
+            println!("{}", "=".repeat(60));
+
+            if result.total_malicious > 0 {
+                eprintln!("\n🚨 Malicious packages detected!");
+                std::process::exit(1);
+            }
+        }
+        Err(e) => {
+            error!("Campaign failed: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    Ok(())
+}
+
+/// Resume a campaign.
+async fn cmd_campaign_resume(_cli: &Cli, case_id: &str) -> Result<()> {
+    use glassware_orchestrator::campaign::{
+        CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel, CheckpointManager,
+    };
+    use std::path::Path;
+
+    let checkpoint_db = Path::new(".glassware-checkpoints.db");
+    let checkpoint_mgr = CheckpointManager::new(checkpoint_db)
+        .map_err(|e| anyhow::anyhow!("Failed to open checkpoint database: {}", e))?;
+
+    // Load checkpoint
+    let checkpoint = checkpoint_mgr.load_checkpoint(case_id)
+        .map_err(|e| anyhow::anyhow!("Failed to load checkpoint: {}", e))?
+        .ok_or_else(|| anyhow::anyhow!("Campaign not found: {}", case_id))?;
+
+    info!("Resuming campaign '{}' from checkpoint", case_id);
+    info!("Completed waves: {:?}", checkpoint.completed_waves);
+    info!("Current wave: {:?}", checkpoint.current_wave);
+
+    // Log which waves will be skipped
+    if !checkpoint.completed_waves.is_empty() {
+        for wave_id in &checkpoint.completed_waves {
+            info!("Skipping wave {} (completed)", wave_id);
+        }
+    }
+
+    // Reload config
+    let config: CampaignConfig = serde_json::from_str(&checkpoint.config_json)
+        .map_err(|e| anyhow::anyhow!("Failed to parse campaign config: {}", e))?;
+
+    // Create campaign components
+    let event_bus = EventBus::new(512);
+    let state = StateManager::new(&checkpoint.case_id, &checkpoint.campaign_name, event_bus.clone());
+    let command_channel = CommandChannel::new();
+
+    // Restore state from checkpoint
+    state.set_config_hash(checkpoint.config_json.clone()).await;
+
+    // Create executor with skip list for completed waves
+    let executor = CampaignExecutor::with_skip_waves(
+        config,
+        state,
+        event_bus.clone(),
+        command_channel,
+        checkpoint.completed_waves.clone(),
+    ).await;
+
+    // Run campaign (will skip completed waves)
+    info!("🚀 Resuming campaign execution...");
+
+    match executor.run().await {
+        Ok(result) => {
+            println!("\n{}", "=".repeat(60));
+            println!("CAMPAIGN COMPLETE (Resumed)");
+            println!("{}", "=".repeat(60));
+            println!("Case ID: {}", result.case_id);
+            println!("Status: {:?}", result.status);
+            println!("Duration: {:?}", result.duration);
+            println!("Packages scanned: {}", result.total_scanned);
+            println!("Packages flagged: {}", result.total_flagged);
+            println!("Malicious packages: {}", result.total_malicious);
+            println!("{}", "=".repeat(60));
+
+            if result.total_malicious > 0 {
+                eprintln!("\n🚨 Malicious packages detected!");
+                std::process::exit(1);
+            }
+        }
+        Err(e) => {
+            error!("Campaign failed: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    Ok(())
+}
+
+/// Show campaign status.
+async fn cmd_campaign_status(cli: &Cli, case_id: &str, _live: bool) -> Result<()> {
+    use glassware_orchestrator::campaign::StateManager;
+    
+    // For now, show scan registry info
+    let registry = glassware_orchestrator::scan_registry::ScanRegistry::new(None)?;
+    
+    if let Some(scan) = registry.get_scan(case_id) {
+        match cli.format {
+            cli::OutputFormat::Pretty => {
+                println!("Campaign: {}", case_id);
+                println!("Status: {:?}", scan.status);
+                println!("Command: {}", scan.command);
+                println!("Findings: {}", scan.findings_count);
+                println!("Malicious: {}", scan.malicious_count);
+                println!("Started: {}", scan.started_at);
+                if let Some(completed) = scan.completed_at {
+                    println!("Completed: {}", completed);
+                }
+            }
+            cli::OutputFormat::Json => {
+                let json = serde_json::json!({
+                    "case_id": case_id,
+                    "status": format!("{:?}", scan.status),
+                    "command": scan.command,
+                    "findings_count": scan.findings_count,
+                    "malicious_count": scan.malicious_count,
+                    "started_at": scan.started_at,
+                    "completed_at": scan.completed_at,
+                });
+                println!("{}", serde_json::to_string_pretty(&json)?);
+            }
+            _ => anyhow::bail!("Only pretty and JSON formats supported"),
+        }
+    } else {
+        anyhow::bail!("Campaign not found: {}", case_id);
+    }
+
+    Ok(())
+}
+
+/// Send command to running campaign.
+async fn cmd_campaign_command(_cli: &Cli, _case_id: &str, _command: &cli::CampaignCommandArg, _argument: Option<&str>) -> Result<()> {
+    // Live command steering requires a running campaign handle
+    // This will be implemented with the TUI in Phase 3
+    // For now, provide helpful message
+    
+    eprintln!("Live command steering requires a running campaign session.");
+    eprintln!();
+    eprintln!("Commands will be available in Phase 3 with the TUI:");
+    eprintln!("  - Pause/Resume campaign execution");
+    eprintln!("  - Cancel with checkpoint");
+    eprintln!("  - Skip waves");
+    eprintln!("  - Adjust concurrency/rate limits");
+    eprintln!();
+    eprintln!("For now, use Ctrl+C to interrupt and 'campaign resume' to continue.");
+    
+    Ok(())
+}
+
+/// List recent campaigns.
+async fn cmd_campaign_list(cli: &Cli, limit: usize, _status: Option<cli::CampaignStatusFilter>) -> Result<()> {
+    let registry = glassware_orchestrator::scan_registry::ScanRegistry::new(None)?;
+
+    let scans = registry.list_scans(None);
+    let scans: Vec<_> = scans.into_iter().take(limit).collect();
+
+    match cli.format {
+        cli::OutputFormat::Pretty => {
+            if scans.is_empty() {
+                println!("No campaigns found");
+                return Ok(());
+            }
+
+            println!("{:<40} {:<12} {:<8} {:<8} {:<20}", "Case ID", "Status", "Findings", "Malicious", "Started");
+            println!("{}", "-".repeat(90));
+
+            for scan in &scans {
+                println!("{:<40} {:<12} {:<8} {:<8} {:<20}",
+                    &scan.id[..8.min(scan.id.len())],
+                    format!("{:?}", scan.status),
+                    scan.findings_count,
+                    scan.malicious_count,
+                    scan.started_at
+                );
+            }
+        }
+        cli::OutputFormat::Json => {
+            let json_scans: Vec<_> = scans.iter().map(|s| {
+                serde_json::json!({
+                    "case_id": s.id,
+                    "status": format!("{:?}", s.status),
+                    "findings_count": s.findings_count,
+                    "malicious_count": s.malicious_count,
+                    "started_at": s.started_at,
+                })
+            }).collect();
+
+            println!("{}", serde_json::to_string_pretty(&json_scans)?);
+        }
+        _ => anyhow::bail!("Only pretty and JSON formats supported"),
+    }
+
+    Ok(())
+}
+
+/// Generate campaign report.
+async fn cmd_campaign_report(cli: &Cli, case_id: &str, format: &cli::ReportFormat, output: Option<&str>) -> Result<()> {
+    use std::path::Path;
+
+    info!("Generating campaign report for case: {}", case_id);
+
+    // Only markdown format is supported for campaign reports
+    if !matches!(format, cli::ReportFormat::Markdown) {
+        anyhow::bail!("Campaign reports only support Markdown format. Use --format markdown");
+    }
+
+    // Load campaign checkpoint to get results
+    let checkpoint_db = Path::new(".glassware-checkpoints.db");
+    let checkpoint_mgr = CheckpointManager::new(checkpoint_db)
+        .map_err(|e| anyhow::anyhow!("Failed to open checkpoint database: {}", e))?;
+
+    // Load checkpoint
+    let checkpoint = checkpoint_mgr.load_checkpoint(case_id)
+        .map_err(|e| anyhow::anyhow!("Failed to load checkpoint: {}", e))?
+        .ok_or_else(|| anyhow::anyhow!("Campaign not found: {}. Run 'campaign list' to see available campaigns.", case_id))?;
+
+    info!("Loaded checkpoint for campaign: {} (status: {})", checkpoint.case_id, checkpoint.status);
+
+    // Reconstruct CampaignResult from checkpoint
+    // Note: For full wave results, we'd need to store them in checkpoint
+    // For now, we create a minimal result from available data
+    let campaign_result = reconstruct_campaign_result(&checkpoint)?;
+
+    // Load config to get settings
+    let config: glassware_orchestrator::campaign::CampaignConfig = 
+        serde_json::from_str(&checkpoint.config_json)
+            .map_err(|e| anyhow::anyhow!("Failed to parse campaign config: {}", e))?;
+
+    // Create config summary
+    let config_summary = ConfigSummary {
+        concurrency: config.settings.concurrency,
+        rate_limit: config.settings.rate_limit_npm as u32,
+        llm_enabled: config.settings.llm.tier1_enabled,
+        threat_threshold: 7.0, // Default threshold
+    };
+
+    // Create report generator
+    let generator = ReportGenerator::new()
+        .map_err(|e| anyhow::anyhow!("Failed to create report generator: {}", e))?;
+
+    // Generate report
+    let report = generator.generate_report(&campaign_result, config_summary)
+        .map_err(|e| anyhow::anyhow!("Failed to generate report: {}", e))?;
+
+    // Output report
+    match output {
+        Some(output_path) => {
+            // Save to file
+            std::fs::write(output_path, &report)
+                .map_err(|e| anyhow::anyhow!("Failed to write report to {}: {}", output_path, e))?;
+            println!("Report saved to: {}", output_path);
+        }
+        None => {
+            // Default: save to reports/<case-id>/report.md
+            let default_path = format!("reports/{}/report.md", case_id);
+            std::fs::create_dir_all(format!("reports/{}", case_id))
+                .map_err(|e| anyhow::anyhow!("Failed to create reports directory: {}", e))?;
+            std::fs::write(&default_path, &report)
+                .map_err(|e| anyhow::anyhow!("Failed to write report: {}", e))?;
+            println!("Report saved to: {}", default_path);
+            
+            // Also print to stdout if not quiet
+            if !cli.quiet {
+                println!("\n{}", report);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Reconstruct CampaignResult from checkpoint data.
+/// 
+/// Note: This is a simplified reconstruction. For full wave results with
+/// detailed findings, the checkpoint would need to store additional data.
+fn reconstruct_campaign_result(checkpoint: &CampaignCheckpoint) -> Result<CampaignResult, anyhow::Error> {
+    use glassware_orchestrator::campaign::{CampaignStatus, WaveResult};
+    use std::time::Duration;
+
+    // Parse status string back to enum
+    let status = match checkpoint.status.as_str() {
+        "completed" => CampaignStatus::Completed,
+        "failed" => CampaignStatus::Failed,
+        "cancelled" => CampaignStatus::Cancelled,
+        "paused" => CampaignStatus::Paused,
+        "running" => CampaignStatus::Running,
+        _ => CampaignStatus::Initializing,
+    };
+
+    // Create wave results from completed waves
+    // Note: This is minimal - full implementation would store per-wave stats
+    let wave_results: Vec<WaveResult> = checkpoint.completed_waves.iter().map(|wave_id: &String| {
+        WaveResult {
+            wave_id: wave_id.clone(),
+            packages_scanned: 0, // Would need to be stored in checkpoint
+            packages_flagged: 0,
+            packages_malicious: 0,
+        }
+    }).collect();
+
+    // Calculate totals from wave results
+    let total_scanned: usize = wave_results.iter().map(|w| w.packages_scanned).sum();
+    let total_flagged: usize = wave_results.iter().map(|w| w.packages_flagged).sum();
+    let total_malicious: usize = wave_results.iter().map(|w| w.packages_malicious).sum();
+
+    // Calculate duration from timestamps
+    let duration = Duration::from_secs(0); // Would need start/end times in checkpoint
+
+    Ok(CampaignResult {
+        case_id: checkpoint.case_id.clone(),
+        campaign_name: checkpoint.campaign_name.clone(),
+        status,
+        total_scanned,
+        total_flagged,
+        total_malicious,
+        duration,
+        wave_results,
+    })
+}
+
+/// Launch TUI for monitoring a campaign.
+async fn cmd_campaign_monitor(case_id: &str) -> Result<()> {
+    use glassware_orchestrator::campaign::{EventBus, CommandChannel};
+    use tui::app::App;
+
+    info!("Launching TUI monitor for campaign: {}", case_id);
+
+    // Create event bus and command channel
+    let event_bus = EventBus::new(512);
+    let command_channel = CommandChannel::new();
+
+    // Create and run TUI app
+    let mut app = App::new(case_id.to_string(), event_bus, command_channel);
+
+    // Run the TUI
+    app.run().await.map_err(|e| anyhow::anyhow!("TUI error: {}", e))?;
+
+    Ok(())
+}
+
+/// Launch TUI demo with sample data.
+async fn cmd_tui_demo() -> Result<()> {
+    use tui::app::App;
+
+    info!("Launching TUI demo with sample data");
+
+    // Create TUI app with sample data
+    let mut app = App::with_sample_data();
+
+    // Run the TUI
+    app.run().await.map_err(|e| anyhow::anyhow!("TUI error: {}", e))?;
+
+    Ok(())
 }

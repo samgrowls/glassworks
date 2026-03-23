@@ -29,6 +29,8 @@ use crate::progress::{ProgressStats, ProgressTracker, ProgressTrackerBuilder};
 use crate::rate_limiter::ThrottleLimiter;
 use crate::retry::{RetryConfig, RetryConfigBuilder};
 use crate::scanner::{Scanner, ScannerConfig, PackageScanResult, ScanSummary};
+use futures::stream::{self, StreamExt};
+use std::collections::HashSet;
 
 /// Scan progress information.
 #[derive(Debug, Clone)]
@@ -330,15 +332,16 @@ impl Orchestrator {
     pub async fn analyze_with_llm(&self, results: &[PackageScanResult]) -> Result<Vec<LlmVerdict>> {
         if let Some(ref analyzer) = self.llm_analyzer {
             let mut verdicts = Vec::new();
-            
+
             for result in results {
                 for finding in &result.findings {
-                    let llm_finding = crate::llm::LlmFinding::from(finding);
+                    // LlmFinding is created but analyze_finding takes the original finding
+                    let _llm_finding = crate::llm::LlmFinding::from(finding);
                     let verdict = analyzer.analyze_finding(finding).await?;
                     verdicts.push(verdict);
                 }
             }
-            
+
             Ok(verdicts)
         } else {
             Err(OrchestratorError::config_error("LLM analyzer not configured".to_string()))
@@ -405,32 +408,40 @@ impl Orchestrator {
         }
     }
 
-    /// Scan npm packages.
+    /// Scan npm packages in parallel with deduplication.
     pub async fn scan_npm_packages(
         &self,
         packages: &[String],
     ) -> Vec<Result<PackageScanResult>> {
         info!("Scanning {} npm packages", packages.len());
 
-        // Initialize progress tracker
-        self.progress_tracker.set_status(format!("Starting scan of {} packages", packages.len()));
+        // Deduplicate packages
+        let mut seen = HashSet::new();
+        let unique_packages: Vec<String> = packages
+            .iter()
+            .filter(|p| seen.insert((*p).clone()))
+            .cloned()
+            .collect();
         
-        let mut results = Vec::new();
-
-        for (i, package) in packages.iter().enumerate() {
-            self.update_progress(format!("Processing {}/{}: {}", i + 1, packages.len(), package))
-                .await;
-
-            match self.scan_npm_package(package).await {
-                Ok(result) => results.push(Ok(result)),
-                Err(e) => {
-                    error!("Failed to scan package {}: {}", package, e);
-                    results.push(Err(e));
-                }
-            }
-
-            self.increment_completed().await;
+        if unique_packages.len() != packages.len() {
+            info!("Deduplicated {} packages to {} (removed {} duplicates)", 
+                  packages.len(), unique_packages.len(), packages.len() - unique_packages.len());
         }
+
+        // Initialize progress tracker
+        self.progress_tracker.set_status(format!("Starting scan of {} packages", unique_packages.len()));
+
+        // Get concurrency limit from config
+        let concurrency = self.config.scanner.max_concurrent.max(1);
+
+        // Scan packages in parallel using futures stream
+        let results = stream::iter(unique_packages)
+            .map(|package| async move {
+                self.scan_npm_package(&package).await
+            })
+            .buffered(concurrency)
+            .collect::<Vec<_>>()
+            .await;
 
         results
     }
@@ -457,7 +468,38 @@ impl Orchestrator {
         let downloaded = self.downloader.download_npm_package(package).await?;
 
         // Scan package
-        let scan_result = self.scanner.scan_package(&downloaded).await?;
+        let mut scan_result = self.scanner.scan_package(&downloaded).await?;
+
+        // Run LLM analysis if enabled and findings exist
+        #[cfg(feature = "llm")]
+        if let Some(ref analyzer) = self.llm_analyzer {
+            if !scan_result.findings.is_empty() {
+                debug!("Running LLM analysis on {} findings", scan_result.findings.len());
+                
+                use crate::llm::LlmFinding;
+                let llm_findings: Vec<LlmFinding> = scan_result.findings.iter()
+                    .map(LlmFinding::from)
+                    .collect();
+                
+                match analyzer.analyze(&llm_findings).await {
+                    Ok(verdict) => {
+                        info!("LLM analysis complete: is_malicious={}, confidence={:.2}", 
+                              verdict.is_malicious, verdict.confidence);
+                        scan_result.llm_verdict = Some(crate::scanner::LlmPackageVerdict {
+                            is_malicious: verdict.is_malicious,
+                            confidence: verdict.confidence,
+                            explanation: verdict.explanation,
+                            recommendations: verdict.recommendations,
+                            model_used: analyzer.config().model.clone(),
+                        });
+                    }
+                    Err(e) => {
+                        warn!("LLM analysis failed: {}", e);
+                        // Continue without LLM verdict
+                    }
+                }
+            }
+        }
 
         // Cache result
         if let Some(ref cacher) = self.cacher {

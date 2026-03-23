@@ -201,6 +201,7 @@
 //! ```
 
 pub mod adversarial;
+pub mod campaign;
 pub mod cacher;
 pub mod checkpoint;
 pub mod cli;
@@ -228,6 +229,12 @@ pub use adversarial::{
     AdversarialTester, AdversarialReport, MutationEngine, FuzzerEngine,
     MutationEngineConfig, FuzzerEngineConfig, MutationStrategy, FuzzStrategy,
     MutationTestResult, FuzzTestResult, RiskLevel,
+};
+
+pub use campaign::{
+    CampaignStatus, CampaignState, CampaignStats, CampaignEvent, CampaignCommand,
+    EventBus, StateManager, CommandChannel, CommandSender,
+    WaveState, WaveMode, WaveStatus, Priority, CaseId, PackageStage,
 };
 
 pub use cacher::{CacheEntry, CacheStats, Cacher};
