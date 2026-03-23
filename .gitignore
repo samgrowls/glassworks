@@ -47,6 +47,8 @@ data/github-clones-*/
 
 # Evidence data (large binary files)
 data/evidence/
+evidence/
+evidence-archive/
 
 # Binary builds
 glassware-scanner

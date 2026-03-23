@@ -36,10 +36,10 @@ packages = [
 malicious_threshold = 7.0
 
 [settings.llm]
-tier1_enabled = false
+tier1_enabled = true  # Enable Tier 1 LLM (Cerebras) for fast triage
 tier1_provider = "cerebras"
-tier2_enabled = false
-tier2_threshold = 8.0
+tier2_enabled = true  # Enable Tier 2 LLM (NVIDIA) for flagged packages
+tier2_threshold = 7.0
 
 [settings.output]
 formats = ["json", "markdown"]

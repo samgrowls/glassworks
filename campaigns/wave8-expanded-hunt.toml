@@ -1,0 +1,381 @@
+# Wave 8: Expanded Real-World Hunt (100+ packages)
+#
+# Purpose: Scale up detection to 100+ packages across high-risk categories
+# Target: Real-world GlassWare steganographic attacks in production npm packages
+#
+# Run with: glassware campaign run campaigns/wave8-expanded-hunt.toml --llm --deep-llm
+#
+# Campaign Ramp-up Plan:
+# - Wave 6: 11 packages (calibration) ✅
+# - Wave 7: 24 packages (real-world hunt) ✅
+# - Wave 8: 100+ packages (expanded hunt) ← THIS
+# - Wave 9: 500+ packages (large-scale hunt)
+# - Wave 10: 1000+ packages (production-scale)
+
+[campaign]
+name = "Wave 8 - Expanded Real-World Hunt"
+description = "Scale up to 100+ packages across high-risk categories with full LLM analysis"
+created_by = "security-team"
+priority = "high"
+tags = ["hunt", "real-world", "wave8", "expanded", "production"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.whitelist]
+# Known false positives - i18n libraries naturally contain Unicode
+packages = [
+    "moment",
+    "moment-timezone",
+    "date-fns",
+    "dayjs",
+    "i18next",
+    "react-intl",
+    "lodash",
+    "express",
+    "globalize",
+    "prettier",
+    "typescript",
+    "eslint",
+    "@babel/core",
+    "@babel/*",
+]
+
+# Crypto libraries (blockchain API calls are legitimate)
+crypto_packages = [
+    "ethers",
+    "web3",
+    "viem",
+    "wagmi",
+    "@solana/web3.js",
+    "bitcoinjs-lib",
+    "hdkey",
+    "@metamask/*"
+]
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+
+[settings.llm]
+tier1_enabled = true  # Tier 1 LLM (Cerebras) for fast triage during scan
+tier1_provider = "cerebras"
+tier2_enabled = true  # Tier 2 LLM (NVIDIA) for deep analysis of flagged
+tier2_threshold = 7.0
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave8"
+report_dir = "reports/wave8"
+
+# ============================================================
+# Wave 8A: Known Malicious Baseline (Validation)
+# ============================================================
+# These are confirmed malicious packages - MUST be flagged
+[[waves]]
+id = "wave_8a"
+name = "Known Malicious Baseline"
+description = "Validate detection with confirmed GlassWare malicious packages"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # GlassWorm research confirmed malicious
+    "react-native-country-select@0.3.1",
+    "react-native-international-phone-number@0.10.7",
+    # Additional confirmed malicious
+    "react-native-phone-input@1.3.7",
+    "react-native-otp-inputs@0.3.1",
+]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 8B: Clean Baseline (False Positive Validation)
+# ============================================================
+# Popular safe packages - should NOT be flagged
+[[waves]]
+id = "wave_8b"
+name = "Clean Baseline - Popular Packages"
+description = "Validate low false positive rate with known clean popular packages"
+depends_on = ["wave_8a"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Top npm packages (should be clean)
+    "express@4.19.2",
+    "lodash@4.17.21",
+    "axios@1.6.7",
+    "chalk@5.3.0",
+    "debug@4.3.4",
+    "react@18.2.0",
+    "uuid@9.0.0",
+    "async@3.2.5",
+    "commander@11.1.0",
+    "dotenv@16.3.1",
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 3.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 8C: Phone/SMS Category (High Risk)
+# ============================================================
+# Phone and SMS packages are common attack vectors
+[[waves]]
+id = "wave_8c"
+name = "Phone & SMS Category"
+description = "Hunt in phone/SMS related packages (high-risk category)"
+depends_on = ["wave_8a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Phone/SMS handling
+    "react-native-communications@2.5.0",
+    "react-native-sms@1.11.0",
+    "react-native-call-detection@1.9.0",
+    "react-native-contacts@7.0.8",
+    "react-native-phone-number-input@1.4.0",
+    "react-native-confirmation-code-input@1.0.10",
+    "react-native-otp-textinput@1.1.0",
+    "expo-sms@11.5.0",
+    "expo-contacts@12.8.1",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 8D: Auth/Biometrics Category (High Risk)
+# ============================================================
+# Authentication packages can hide credential theft
+[[waves]]
+id = "wave_8d"
+name = "Auth & Biometrics Category"
+description = "Hunt in auth/biometric packages (credential theft risk)"
+depends_on = ["wave_8a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Biometrics and auth
+    "react-native-biometrics@3.0.1",
+    "react-native-touch-id@4.4.1",
+    "react-native-face-id@1.1.0",
+    "expo-local-authentication@13.8.0",
+    "react-native-keychain@8.1.2",
+    "react-native-sensitive-info@6.0.0",
+    "react-native-encrypted-storage@4.0.3",
+    "rn-secure-storage@1.0.15",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 8E: Crypto/Blockchain Category (Medium Risk)
+# ============================================================
+# Crypto packages can hide C2 communication
+[[waves]]
+id = "wave_8e"
+name = "Crypto & Blockchain Category"
+description = "Hunt in crypto packages (C2 communication risk)"
+depends_on = ["wave_8a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Crypto (non-whitelisted)
+    "react-native-crypto@2.2.0",
+    "react-native-aes-crypto@3.0.3",
+    "react-native-randombytes@3.6.1",
+    "crypto-js@4.2.0",
+    "bcryptjs@2.4.3",
+    "node-forge@1.3.1",
+    "tweetnacl@1.0.3",
+    "sodium-native@4.0.5",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 8F: Locale/Geofencing Category (Medium Risk)
+# ============================================================
+# Locale packages can hide geofencing logic
+[[waves]]
+id = "wave_8f"
+name = "Locale & Geofencing Category"
+description = "Hunt in locale packages (geofencing risk)"
+depends_on = ["wave_8a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Locale (whitelisted ones excluded)
+    "react-native-localize@3.0.6",
+    "react-native-locale@0.0.15",
+    "expo-localization@14.8.3",
+    "country-flag-icons@1.5.9",
+    "country-data@0.0.31",
+    "world-countries@5.0.0",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 8G: React Native UI Components (Medium Risk)
+# ============================================================
+# UI packages can hide invisible characters
+[[waves]]
+id = "wave_8g"
+name = "React Native UI Components"
+description = "Hunt in UI component packages (invisible character risk)"
+depends_on = ["wave_8a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # UI components
+    "react-native-elements@3.4.3",
+    "native-base@3.4.28",
+    "react-native-paper@5.12.3",
+    "react-native-vector-icons@10.0.3",
+    "react-native-gesture-handler@2.14.0",
+    "react-native-reanimated@3.6.1",
+    "react-native-screens@3.29.0",
+    "react-native-safe-area-context@4.8.2",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 8H: Build/Dev Tools (Low Risk - Validation)
+# ============================================================
+# Build tools should be clean (whitelisted)
+[[waves]]
+id = "wave_8h"
+name = "Build & Dev Tools"
+description = "Validate build tools are clean (whitelisted packages)"
+depends_on = ["wave_8a"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Build tools (should be whitelisted)
+    "webpack@5.89.0",
+    "vite@5.0.10",
+    "rollup@4.9.2",
+    "esbuild@0.19.11",
+    "babel-core@7.0.0-bridge.0",
+    "@babel/core@7.23.7",
+]
+
+[waves.expectations]
+must_flag_all = false
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 8I: Utility Packages (Medium Risk)
+# ============================================================
+# Utility packages can hide malicious logic
+[[waves]]
+id = "wave_8i"
+name = "Utility Packages"
+description = "Hunt in utility packages (general risk)"
+depends_on = ["wave_8a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # General utilities
+    "underscore@1.13.6",
+    "ramda@0.29.1",
+    "immutable@4.3.4",
+    "classnames@2.5.1",
+    "qs@6.11.2",
+    "querystring@0.2.1",
+    "url@0.11.3",
+    "path@0.12.7",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 8J: Network/HTTP Category (Medium Risk)
+# ============================================================
+# Network packages can hide C2 communication
+[[waves]]
+id = "wave_8j"
+name = "Network & HTTP Category"
+description = "Hunt in network packages (C2 communication risk)"
+depends_on = ["wave_8a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Network/HTTP
+    "node-fetch@3.3.2",
+    "got@14.0.0",
+    "axios@1.6.7",
+    "superagent@8.1.2",
+    "request@2.88.2",
+    "http-proxy@1.18.1",
+    "follow-redirects@1.15.4",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
