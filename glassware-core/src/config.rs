@@ -175,11 +175,11 @@ impl Default for ScoringConfig {
     }
 }
 
-fn default_malicious_threshold() -> f32 { 7.0 }
-fn default_suspicious_threshold() -> f32 { 3.0 }
-fn default_category_weight() -> f32 { 2.0 }
-fn default_critical_weight() -> f32 { 3.0 }
-fn default_high_weight() -> f32 { 1.5 }
+fn default_malicious_threshold() -> f32 { 5.0 }  // Lowered from 7.0 for better sensitivity
+fn default_suspicious_threshold() -> f32 { 2.0 }  // Lowered from 3.0
+fn default_category_weight() -> f32 { 3.0 }  // Increased from 2.0 - more weight per category
+fn default_critical_weight() -> f32 { 4.0 }  // Increased from 3.0
+fn default_high_weight() -> f32 { 2.0 }  // Increased from 1.5
 
 /// Detector weights configuration
 #[derive(Debug, Clone, Default)]

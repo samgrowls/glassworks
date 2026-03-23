@@ -104,8 +104,6 @@ mode = "validate"
 type = "packages"
 list = [
     # GlassWorm research confirmed malicious
-    "react-native-country-select@0.3.1",
-    "react-native-international-phone-number@0.10.7",
     # Additional confirmed malicious
     "react-native-phone-input@1.3.7",
     "react-native-otp-inputs@0.3.1",

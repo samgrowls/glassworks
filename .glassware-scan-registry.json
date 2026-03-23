@@ -360,6 +360,62 @@
       "findings_count": 1,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "9dd8f9de-f749-41cd-b1a3-f8eb08a6e8f1",
+      "started_at": "2026-03-23T18:59:46.107300668Z",
+      "completed_at": "2026-03-23T18:59:46.162803740Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-country-select@0.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "bcd0d4c2-bb1b-48c5-aae9-6224a29c0ae8",
+      "started_at": "2026-03-23T18:59:54.581278982Z",
+      "completed_at": "2026-03-23T18:59:58.328923025Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-country-select@0.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "c5c55f31-db77-434b-89a2-e44959bd2876",
+      "started_at": "2026-03-23T19:04:03.554109456Z",
+      "completed_at": "2026-03-23T19:04:04.453464215Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-country-select@0.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "c63ead65-6e00-48cf-a14f-159bdfca50bf",
+      "started_at": "2026-03-23T19:04:04.460522539Z",
+      "completed_at": "2026-03-23T19:04:04.949690199Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-international-phone-number@0.10.7"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }

@@ -110,7 +110,7 @@ impl Default for ScannerConfig {
                 "__pycache__".to_string(),
                 ".cache".to_string(),
             ],
-            threat_threshold: 7.0,  // Updated to match config default
+            threat_threshold: 5.0,  // Updated for better sensitivity
             glassware_config: glassware_core::GlasswareConfig::default(),
         }
     }
@@ -680,26 +680,50 @@ impl Scanner {
     }
 
     /// Check if a package is whitelisted (defense in depth).
-    /// 
+    ///
     /// This is checked at scoring time to prevent false positives for known legitimate packages.
+    /// Matching rules:
+    /// - Exact match: "lodash" matches "lodash"
+    /// - Prefix with dash: "webpack-" matches "webpack", "webpack-cli"
+    /// - Prefix with slash: "@babel/" matches "@babel/core", "@babel/cli"
+    /// - Wildcard: "@metamask/*" matches "@metamask/anything"
     fn is_package_whitelisted(&self, package_name: &str) -> bool {
         let package_lower = package_name.to_lowercase();
         let config = &self.config.glassware_config;
 
+        // Helper to check if package matches a whitelist entry
+        let matches_entry = |entry: &str| -> bool {
+            let entry_lower = entry.to_lowercase();
+            
+            // Exact match
+            if package_lower == entry_lower {
+                return true;
+            }
+            
+            // Wildcard match (@metamask/* matches @metamask/anything)
+            if entry_lower.ends_with("/*") {
+                let prefix = &entry_lower[..entry_lower.len()-2]; // "@metamask/"
+                return package_lower.starts_with(prefix);
+            }
+            
+            // Prefix match with dash (webpack- matches webpack-cli)
+            if entry_lower.ends_with('-') {
+                return package_lower.starts_with(&entry_lower);
+            }
+            
+            // Prefix match with slash (@babel/ matches @babel/core)
+            if entry_lower.ends_with('/') {
+                return package_lower.starts_with(&entry_lower);
+            }
+            
+            false
+        };
+
         // Check all whitelist categories
-        config.whitelist.packages.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase()) || 
-            package_lower.starts_with(&p.to_lowercase())
-        }) || config.whitelist.crypto_packages.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase()) ||
-            package_lower.starts_with(&p.to_lowercase())
-        }) || config.whitelist.build_tools.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase()) ||
-            package_lower.starts_with(&p.to_lowercase())
-        }) || config.whitelist.state_management.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase()) ||
-            package_lower.starts_with(&p.to_lowercase())
-        })
+        config.whitelist.packages.iter().any(|p| matches_entry(p))
+            || config.whitelist.crypto_packages.iter().any(|p| matches_entry(p))
+            || config.whitelist.build_tools.iter().any(|p| matches_entry(p))
+            || config.whitelist.state_management.iter().any(|p| matches_entry(p))
     }
 
     /// Check if a file is a locale or data file (where invisible chars are legitimate)

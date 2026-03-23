@@ -30,8 +30,6 @@ packages = [
     "express", "globalize",
     "prettier", "typescript", "eslint",
     "@babel/core", "@babel/*",
-    "react-native-country-select",
-    "react-native-international-phone-number",
     "validator", "validate",
 ]
 
@@ -86,8 +84,6 @@ mode = "validate"
 [[waves.sources]]
 type = "packages"
 list = [
-    "react-native-country-select@0.3.1",
-    "react-native-international-phone-number@0.10.7",
 ]
 
 [waves.expectations]
