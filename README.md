@@ -1,6 +1,9 @@
 # glassware — Autonomous GlassWare Detection System
 
-**Multi-provider LLM orchestration, GitHub repo scanning, and comprehensive threat intelligence for detecting GlassWare attacks.**
+**Production-ready Rust-based campaign orchestration for detecting GlassWare steganographic attacks in npm packages and GitHub repositories.**
+
+[![Release](https://img.shields.io/github/v/release/samgrowls/glassworks)](https://github.com/samgrowls/glassworks/releases)
+[![License](https://img.shields.io/github/license/samgrowls/glassworks)](LICENSE)
 
 ---
 
@@ -8,116 +11,58 @@
 
 **glassware** detects steganographic payloads, invisible Unicode characters, bidirectional text attacks, and behavioral evasion patterns in source code and repositories.
 
-**Current capabilities:**
-- ✅ **npm package scanning** - Detect malicious packages before install
-- ✅ **GitHub repository scanning** - Detect malware in source code
-- ✅ **13 L1 detectors** - Regex-based pattern detection
-- ✅ **4 L2 detectors** - Semantic analysis (JS/TS)
-- ✅ **LLM review layer** - Intent-level reasoning
-- ✅ **Behavioral detection** - Locale geofencing, time delays, blockchain C2
-- ✅ **PhantomRaven detection** - RDD + JPD author signature
-- ✅ **ForceMemo detection** - Python repo injection
+### Key Features
+
+- ✅ **Campaign Orchestration** - Run large-scale scanning campaigns (100k+ packages)
+- ✅ **Checkpoint/Resume** - Reliable interruption recovery
+- ✅ **Interactive TUI** - Live monitoring with command palette
+- ✅ **LLM-Powered Analysis** - Natural language queries about findings
+- ✅ **Markdown Reports** - Professional stakeholder reports
+- ✅ **13+ Detectors** - Unicode, behavioral, and semantic analysis
 
 ---
 
 ## 🚀 Quick Start
 
-### Scan npm Packages
+### Install
 
 ```bash
-cd harness
-python3 diverse_sampling.py --samples-per-keyword 10 -o packages.txt
-python3 optimized_scanner.py packages.txt -w 10 -o results.json
-cat results.json | jq '{scanned, flagged}'
-```
-
-### Scan GitHub Repositories
-
-```bash
-cd harness
-python3 github_scanner.py --queries "mcp" "vscode" --max-repos 100
-cat github-results.json | jq '{scanned, flagged}'
-```
-
-### Scan with LLM Analysis
-
-```bash
-export NVIDIA_API_KEY="nvapi-..."
-python3 batch_llm_analyzer.py flagged.txt -w 2 -o llm-results.json
-```
-
----
-
-## 📊 Detection Coverage
-
-| Campaign | Detection Method | Coverage |
-|----------|------------------|----------|
-| **GlassWorm Core** | Unicode stego + behavioral | ✅ 100% |
-| **PhantomRaven** | RDD + JPD author | ✅ 100% |
-| **ForceMemo** | Python markers | ✅ 100% |
-| **Chrome RAT** | Blockchain C2 | ✅ 100% |
-| **React Native** | Encrypted payload | ✅ 100% |
-
-**Total detectors:** 17 (13 L1 + 4 L2)  
-**False positive rate:** <5%  
-**Detection accuracy:** 100% on confirmed malicious
-
----
-
-## 📁 Project Structure
-
-```
-glassworks/
-├── harness/                    # Python scanning tools
-│   ├── github_scanner.py       # GitHub repo scanner ⭐ NEW
-│   ├── optimized_scanner.py    # npm package scanner
-│   ├── diverse_sampling.py     # Category sampling
-│   ├── batch_llm_analyzer.py   # LLM analysis
-│   └── glassware-scanner       # Rust binary
-│
-├── glassware-core/             # Core detection library
-│   └── src/
-│       ├── rdd_detector.rs     # RDD detection ⭐ NEW
-│       ├── jpd_author_detector.rs # JPD signature ⭐ NEW
-│       ├── forcememo_detector.rs # Python injection ⭐ NEW
-│       └── ...
-│
-├── llm-analyzer/               # LLM analysis module
-├── docs/                       # Documentation
-└── HANDOFF.md                  # Current status & workflow
-```
-
----
-
-## 🔧 Installation
-
-### Prerequisites
-
-- Rust 1.70+
-- Python 3.10+
-- NVIDIA API key (for LLM analysis, optional)
-
-### Build
-
-```bash
-# Build entire workspace
+# Build from source
 cargo build --release
 
-# Build with all features
-cargo build --features "full,llm"
-
-# Run tests
-cargo test --features "full,llm"
+# Binary location
+./target/release/glassware-orchestrator --help
 ```
 
-### Python Setup
+### Run Your First Campaign
 
 ```bash
-cd harness
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+# Run Wave 6 calibration campaign
+./target/release/glassware-orchestrator campaign run campaigns/wave6.toml
+
+# Monitor in TUI (in another terminal)
+./target/release/glassware-orchestrator campaign monitor <case-id>
+
+# Generate report after completion
+./target/release/glassware-orchestrator campaign report <case-id>
 ```
+
+### TUI Demo
+
+```bash
+# Launch TUI demo with sample data
+./target/release/glassware-orchestrator campaign demo
+```
+
+**Keyboard shortcuts:**
+- `q` - Quit
+- `Tab` - Switch tabs
+- `p` - Pause/Resume
+- `x` - Cancel
+- `c` - Adjust concurrency
+- `Enter` - Drill down into package
+- `l` - Run LLM analysis
+- `?` - Ask question about package
 
 ---
 
@@ -125,82 +70,156 @@ pip install -r requirements.txt
 
 | Document | Purpose |
 |----------|---------|
-| **[HANDOFF.md](HANDOFF.md)** | **Current status & quick start** |
-| [docs/WORKFLOW-GUIDE.md](docs/WORKFLOW-GUIDE.md) | Complete scan/analyze/improve workflow |
-| [DOCUMENTATION-CATALOG.md](DOCUMENTATION-CATALOG.md) | All documents catalogued |
-| [harness/reports/](harness/reports/) | Scan reports & analysis |
+| **[HANDOFF/README.md](HANDOFF/README.md)** | **Developer handoff & getting started** |
+| [docs/CAMPAIGN-USER-GUIDE.md](docs/CAMPAIGN-USER-GUIDE.md) | Complete user guide |
+| [HANDOFF/FINAL-SESSION-SUMMARY.md](HANDOFF/FINAL-SESSION-SUMMARY.md) | Session summary |
+| [HANDOFF/FUTURE/ROADMAP-2026.md](HANDOFF/FUTURE/ROADMAP-2026.md) | Strategic roadmap |
 
 ---
 
-## 🎯 Current Status
+## 📁 Project Structure
 
-### Active Scans
-
-| Scan | Target | Status | ETA |
-|------|--------|--------|-----|
-| **GitHub Mixed** | 900 repos | 🟡 Running | 2-4 hours |
-
-### Recent Results
-
-| Scan | Packages | Flagged | Malicious |
-|------|----------|---------|-----------|
-| High-risk 622 | 622 | 6 | 0 |
-| VSCode extensions | 176 | 11 | 0 |
-| 30k batch 1 | 2,242 | 91 | 1 (@iflow-mcp) |
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-cargo test --features "full,llm"
-
-# Test specific detector
-cargo test --lib rdd_detector
-cargo test --lib forcememo_detector
-cargo test --lib jpd_author_detector
-
-# Test with coverage
-cargo test --features "full,llm" -- --test-threads=1
+```
+glassworks/
+├── glassware-core/              # Detection engine (library)
+├── glassware-orchestrator/      # Campaign orchestrator (binary)
+├── glassware-cli/               # Simple scanner (binary)
+├── campaigns/                   # Campaign configurations
+│   └── wave6.toml              # Calibration campaign
+├── docs/                        # User documentation
+├── design/                      # Architecture docs
+├── HANDOFF/                     # Developer documentation
+└── harness/                     # Python tools (legacy)
 ```
 
-**Test results:** 147 passing, 7 ignored (pre-existing severity expectation changes)
+---
+
+## 🎮 Commands Reference
+
+### Campaign Management
+
+```bash
+# Run campaign
+glassware-orchestrator campaign run campaigns/wave6.toml
+
+# Resume interrupted campaign
+glassware-orchestrator campaign resume <case-id>
+
+# List campaigns
+glassware-orchestrator campaign list
+
+# Show status
+glassware-orchestrator campaign status <case-id>
+
+# TUI monitoring
+glassware-orchestrator campaign demo              # Demo mode
+glassware-orchestrator campaign monitor <case-id> # Live monitoring
+```
+
+### Analysis & Reporting
+
+```bash
+# Generate markdown report
+glassware-orchestrator campaign report <case-id>
+
+# Ask LLM questions
+glassware-orchestrator campaign query <case-id> "Why was express flagged?"
+
+# Send commands
+glassware-orchestrator campaign command <case-id> pause
+```
+
+---
+
+## 🔬 Detection Capabilities
+
+### L1 Detectors (Primary)
+- Invisible character detection
+- Homoglyph/confusable character detection
+- Bidirectional text override detection
+- Unicode tag character detection
+
+### L2 Detectors (Secondary)
+- GlassWare pattern detection
+- Encrypted payload detection
+- RDD (URL dependency) detection
+- JPD author signature detection
+
+### L3 Detectors (Behavioral)
+- Locale geofencing detection
+- Time delay sandbox evasion
+- Blockchain C2 detection
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Campaign Executor                         │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐ │
+│  │ Wave 6A      │────►│ Wave 6B      │────►│ Wave 6C      │ │
+│  │ (validate)   │     │ (validate)   │     │ (hunt)       │ │
+│  └──────────────┘     └──────────────┘     └──────────────┘ │
+│                           │                                  │
+│                  ┌────────▼────────┐                         │
+│                  │ Event Bus       │                         │
+│                  │ (pub/sub)       │                         │
+│                  └────────┬────────┘                         │
+│                           │                                  │
+│         ┌─────────────────┼─────────────────┐               │
+│         │                 │                 │               │
+│   ┌─────▼─────┐   ┌──────▼──────┐   ┌──────▼──────┐        │
+│   │ State     │   │ Command     │   │    TUI      │        │
+│   │ Manager   │   │ Channel     │   │             │        │
+│   └───────────┘   └─────────────┘   └──────────────┘        │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 🤝 Contributing
 
-### Adding New Detectors
+### For Users
 
-1. Create detector in `glassware-core/src/`
-2. Implement `Detector` trait
-3. Register in `engine.rs`
-4. Add to `finding.rs` categories
-5. Write tests
-6. Update `HANDOFF.md`
+1. **Report bugs** via GitHub Issues
+2. **Request features** via GitHub Issues
+3. **Share findings** and detection patterns
 
-### Adding New Scan Categories
+### For Developers
 
-1. Add to `harness/diverse_sampling.py` `CATEGORY_BUCKETS`
-2. Test sampling
-3. Update documentation
+1. **Read HANDOFF/README.md** for developer onboarding
+2. **Review ROADMAP-2026.md** for strategic direction
+3. **Start with good first issues**
+
+### Building
+
+```bash
+# Debug build
+cargo build -p glassware-orchestrator
+
+# Release build (optimized)
+cargo build -p glassware-orchestrator --release
+
+# Run tests
+cargo test --features "full,llm"
+```
 
 ---
 
-## 📈 Performance
+## 📊 Performance
 
 | Metric | Value |
 |--------|-------|
-| Binary size | ~11 MB |
+| Binary size | ~25MB |
 | Scan speed | ~50k LOC/sec |
-| npm scan | ~0.5s per package (with cache) |
+| npm scan | ~0.5s per package |
 | GitHub scan | ~5-20s per repo |
-| Cache hit rate | 15-70% |
+| Memory usage | ~50MB during scan |
 
 ---
 
-## 🛡️ Security
+## 🔐 Security
 
 **This tool is for defensive security research only.**
 
@@ -226,6 +245,14 @@ MIT License - see [LICENSE](LICENSE)
 
 ---
 
-**Last updated:** 2026-03-19 17:00 UTC  
-**Version:** 0.2.0  
-**Status:** Production-ready
+## 📬 Contact
+
+- **GitHub:** https://github.com/samgrowls/glassworks
+- **Issues:** https://github.com/samgrowls/glassworks/issues
+- **Documentation:** See `HANDOFF/` and `docs/` directories
+
+---
+
+**Last updated:** March 23, 2026
+**Version:** 0.15.0
+**Status:** Production ready
