@@ -1,13 +1,13 @@
-//! CLI module for glassware-orchestrator.
+//! CLI module for glassware.
 
 use clap::{Parser, Subcommand, ValueEnum};
 
-/// Glassware Orchestrator - Security scanning for npm and GitHub.
+/// Glassware - Unified GlassWare attack detection and campaign orchestration.
 #[derive(Parser, Debug)]
-#[command(name = "glassware-orchestrator")]
+#[command(name = "glassware")]
 #[command(author = "glassware contributors")]
 #[command(version = env!("CARGO_PKG_VERSION"))]
-#[command(about = "Security scanning for npm and GitHub", long_about = None)]
+#[command(about = "Unified GlassWare attack detection and campaign orchestration", long_about = None)]
 pub struct Cli {
     /// Subcommand to execute.
     #[command(subcommand)]

@@ -869,6 +869,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "glassware"
+version = "0.8.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "crossterm",
+ "dirs",
+ "flate2",
+ "futures",
+ "glassware-core",
+ "governor",
+ "md5",
+ "nonzero_ext",
+ "parking_lot",
+ "rand 0.8.5",
+ "ratatui",
+ "reqwest 0.11.27",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tar",
+ "tempfile",
+ "tera",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-retry",
+ "tokio-test",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
+ "urlencoding",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
 name = "glassware-cli"
 version = "0.5.0"
 dependencies = [
@@ -906,44 +944,6 @@ dependencies = [
  "sha2",
  "tempfile",
  "unicode-script",
-]
-
-[[package]]
-name = "glassware-orchestrator"
-version = "0.8.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "crossterm",
- "dirs",
- "flate2",
- "futures",
- "glassware-core",
- "governor",
- "md5",
- "nonzero_ext",
- "parking_lot",
- "rand 0.8.5",
- "ratatui",
- "reqwest 0.11.27",
- "rusqlite",
- "serde",
- "serde_json",
- "sqlx",
- "tar",
- "tempfile",
- "tera",
- "thiserror 1.0.69",
- "tokio",
- "tokio-retry",
- "tokio-test",
- "toml",
- "tracing",
- "tracing-subscriber",
- "urlencoding",
- "uuid",
- "walkdir",
 ]
 
 [[package]]

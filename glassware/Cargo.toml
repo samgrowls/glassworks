@@ -1,10 +1,10 @@
 [package]
-name = "glassware-orchestrator"
+name = "glassware"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Rust-based package scanning orchestrator"
+description = "Unified GlassWare attack detection and campaign orchestration"
 authors = ["glassware team"]
 
 [dependencies]
@@ -71,7 +71,7 @@ crossterm = "0.27"
 tokio-test = { workspace = true }
 
 [[bin]]
-name = "glassware-orchestrator"
+name = "glassware"
 path = "src/main.rs"
 
 [features]

@@ -2,7 +2,7 @@
 members = [
     "glassware-core",
     "glassware-cli",
-    "glassware-orchestrator",
+    "glassware",
 ]
 resolver = "2"
 

@@ -147,6 +147,13 @@ struct JsonSummary {
 }
 
 fn main() {
+    // DEPRECATION WARNING
+    eprintln!("{}", "⚠️  DEPRECATION WARNING".yellow().bold());
+    eprintln!("{}", "The 'glassware' binary is deprecated and will be removed in v1.0.0.".yellow());
+    eprintln!("{}", "Please use 'glassware scan-file' instead:".yellow());
+    eprintln!("{}", "  glassware scan-file /path/to/code --format json".yellow());
+    eprintln!();
+
     let args = Args::parse();
 
     // Disable colors if requested

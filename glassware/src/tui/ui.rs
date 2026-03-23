@@ -9,7 +9,7 @@ use ratatui::{
 };
 
 use super::app::{App, AppTab, ConcurrencyDialog, FlaggedPackage, Severity, PackageDetailView, PackageQueryDialog};
-use glassware_orchestrator::campaign::{
+use glassware::campaign::{
     types::{CampaignStatus, WaveStatus},
     event_bus::CampaignEvent,
 };

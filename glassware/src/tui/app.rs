@@ -13,12 +13,12 @@ use ratatui::prelude::*;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 
-use glassware_orchestrator::campaign::{
+use glassware::campaign::{
     event_bus::{EventBus, CampaignEvent, CampaignCommand},
     command_channel::{CommandChannel, CommandSender},
     types::{CampaignState, CampaignStatus, WaveStatus, WaveMode, WaveState},
 };
-use glassware_orchestrator::llm::LlmVerdict;
+use glassware::llm::LlmVerdict;
 
 use super::ui::Ui;
 
@@ -704,13 +704,13 @@ impl App {
             let sender_clone = sender.clone();
             tokio::spawn(async move {
                 match sender_clone.send(command).await {
-                    glassware_orchestrator::campaign::command_channel::CommandResponse::Accepted { .. } => {
+                    glassware::campaign::command_channel::CommandResponse::Accepted { .. } => {
                         info!("Command '{}' accepted", command_name);
                     }
-                    glassware_orchestrator::campaign::command_channel::CommandResponse::Completed { result, .. } => {
+                    glassware::campaign::command_channel::CommandResponse::Completed { result, .. } => {
                         info!("Command '{}' completed: {}", command_name, result);
                     }
-                    glassware_orchestrator::campaign::command_channel::CommandResponse::Rejected { reason, .. } => {
+                    glassware::campaign::command_channel::CommandResponse::Rejected { reason, .. } => {
                         error!("Command '{}' rejected: {}", command_name, reason);
                     }
                 }

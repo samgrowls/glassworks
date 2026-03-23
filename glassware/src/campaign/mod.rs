@@ -39,7 +39,7 @@
 //! # Quick Start
 //!
 //! ```rust,no_run
-//! use glassware_orchestrator::campaign::{
+//! use glassware::campaign::{
 //!     CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel,
 //! };
 //!

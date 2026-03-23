@@ -7,7 +7,7 @@ mod tui;
 
 use anyhow::Result;
 use cli::{Cli, CampaignCommands, Commands, ConfigCommands, OutputFormat, ResumeSource};
-use glassware_orchestrator::{
+use glassware::{
     Orchestrator, OrchestratorConfig, DownloaderConfig, ScannerConfig,
     PackageScanResult, ScanSummary,
     streaming::StreamingWriter,
@@ -39,29 +39,29 @@ async fn main() -> Result<()> {
         }
     };
 
-    let tracing_config = glassware_orchestrator::tracing::TracingConfig {
+    let tracing_config = glassware::tracing::TracingConfig {
         level: log_level,
         format: if cli.quiet {
-            glassware_orchestrator::tracing::TracingFormat::Minimal
+            glassware::tracing::TracingFormat::Minimal
         } else if cli.verbose {
-            glassware_orchestrator::tracing::TracingFormat::Pretty
+            glassware::tracing::TracingFormat::Pretty
         } else {
-            glassware_orchestrator::tracing::TracingFormat::Compact
+            glassware::tracing::TracingFormat::Compact
         },
         output: if let Some(ref log_file) = cli.log_file {
-            glassware_orchestrator::tracing::TracingOutput::File(log_file.clone().into())
+            glassware::tracing::TracingOutput::File(log_file.clone().into())
         } else {
-            glassware_orchestrator::tracing::TracingOutput::Stdout
+            glassware::tracing::TracingOutput::Stdout
         },
         with_ansi: !cli.no_color && !cli.quiet,
         ..Default::default()
     };
 
-    if let Err(e) = glassware_orchestrator::tracing::init_tracing(&tracing_config) {
+    if let Err(e) = glassware::tracing::init_tracing(&tracing_config) {
         eprintln!("Warning: Failed to initialize tracing: {}", e);
     }
 
-    info!("Glassware Orchestrator v{}", glassware_orchestrator::VERSION);
+    info!("Glassware Orchestrator v{}", glassware::VERSION);
 
     // Validate CLI flags
     if let Err(e) = cli_validator::validate_cli(cli.llm, cli.no_cache, &cli.cache_db, cli.concurrency) {
@@ -138,7 +138,7 @@ async fn cmd_scan_tarball(cli: &Cli, files: Vec<String>) -> Result<()> {
 
     // Create scanner with config
     let config = GlasswareConfig::load().unwrap_or_default();
-    let mut scanner = glassware_orchestrator::Scanner::with_config(config.into());
+    let mut scanner = glassware::Scanner::with_config(config.into());
     
     // Enable LLM if requested
     if cli.llm {
@@ -201,7 +201,7 @@ async fn cmd_config(_cli: &Cli, command: &ConfigCommands) -> Result<()> {
             if let Some(config_path) = GlasswareConfig::user_config_file() {
                 if config_path.exists() {
                     eprintln!("Configuration file already exists: {:?}", config_path);
-                    eprintln!("Use 'glassware-orchestrator config reset' to reset to defaults");
+                    eprintln!("Use 'glassware config reset' to reset to defaults");
                     return Ok(());
                 }
 
@@ -430,8 +430,8 @@ async fn cmd_scan_npm(cli: &Cli, packages: Vec<String>, versions: Option<String>
     if let Some(version_policy) = versions {
         info!("Scanning multiple versions with policy: {}", version_policy);
         
-        let policy = glassware_orchestrator::version_scanner::VersionPolicy::from_str(&version_policy)?;
-        let version_scanner = glassware_orchestrator::version_scanner::VersionScanner::new()?;
+        let policy = glassware::version_scanner::VersionPolicy::from_str(&version_policy)?;
+        let version_scanner = glassware::version_scanner::VersionScanner::new()?;
         
         let mut total_findings = 0;
         let mut total_malicious = 0;
@@ -727,7 +727,7 @@ async fn cmd_sample_packages(
     samples: usize,
     output: Option<&str>,
 ) -> Result<()> {
-    use glassware_orchestrator::sampler::PackageSampler;
+    use glassware::sampler::PackageSampler;
     use std::path::Path;
 
     info!("Sampling {} packages per category from {:?}", samples, categories);
@@ -946,7 +946,7 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
         enable_checkpoint: true,
         checkpoint_dir: Some(cli.checkpoint_dir.clone()),
         checkpoint_interval: 10,
-        retry_config: glassware_orchestrator::retry::RetryConfig::default(),
+        retry_config: glassware::retry::RetryConfig::default(),
         npm_rate_limit,
         github_rate_limit,
         #[cfg(feature = "llm")]
@@ -955,11 +955,11 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
         llm_config: if cli.deep_llm {
             // Tier 2: NVIDIA deep analysis with model fallback
             info!("Using NVIDIA deep analysis (Tier 2)");
-            glassware_orchestrator::llm::LlmAnalyzerConfig::nvidia_deep_analysis()
+            glassware::llm::LlmAnalyzerConfig::nvidia_deep_analysis()
         } else if cli.llm {
             // Tier 1: Cerebras fast triage (from environment)
             info!("Using Cerebras fast triage (Tier 1)");
-            glassware_orchestrator::llm::LlmAnalyzerConfig::from_env()
+            glassware::llm::LlmAnalyzerConfig::from_env()
         } else {
             None
         },
@@ -983,7 +983,7 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
 }
 
 /// Print scan results.
-fn print_results(cli: &Cli, results: &[glassware_orchestrator::Result<PackageScanResult>]) -> Result<()> {
+fn print_results(cli: &Cli, results: &[glassware::Result<PackageScanResult>]) -> Result<()> {
     if cli.quiet {
         // Quiet mode: only print summary
         let success_count = results.iter().filter(|r| r.is_ok()).count();
@@ -1169,7 +1169,7 @@ fn print_pretty_summary(summary: &ScanSummary) {
 /// Build SARIF output.
 fn build_sarif(
     results: &[&PackageScanResult],
-    errors: &[&glassware_orchestrator::error::OrchestratorError],
+    errors: &[&glassware::error::OrchestratorError],
 ) -> Result<serde_json::Value> {
     let mut sarif_results = Vec::new();
 
@@ -1208,8 +1208,8 @@ fn build_sarif(
         "runs": [{
             "tool": {
                 "driver": {
-                    "name": "glassware-orchestrator",
-                    "version": glassware_orchestrator::VERSION,
+                    "name": "glassware",
+                    "version": glassware::VERSION,
                     "informationUri": "https://github.com/glassware/glassworks",
                     "rules": [
                         {
@@ -1274,7 +1274,7 @@ fn severity_to_sarif_level(severity: Severity) -> &'static str {
 
 /// Run adversarial tests on all scanned results.
 async fn run_adversarial_tests(
-    results: &[glassware_orchestrator::Result<PackageScanResult>],
+    results: &[glassware::Result<PackageScanResult>],
 ) -> Result<()> {
     info!("Running adversarial tests on scanned packages...");
 
@@ -1308,7 +1308,7 @@ async fn run_adversarial_tests(
 /// Run adversarial test on a single file.
 async fn run_adversarial_test_on_file(
     path: &str,
-) -> Result<Option<glassware_orchestrator::adversarial::AdversarialReport>> {
+) -> Result<Option<glassware::adversarial::AdversarialReport>> {
     use std::path::Path as StdPath;
 
     let path_obj = StdPath::new(path);
@@ -1333,7 +1333,7 @@ async fn run_adversarial_test_on_file(
 /// Campaign command handler.
 async fn cmd_campaign(cli: &Cli, campaign_cmd: &cli::CampaignCommands) -> Result<()> {
     use cli::CampaignCommands;
-    use glassware_orchestrator::campaign::{
+    use glassware::campaign::{
         CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel,
     };
 
@@ -1379,7 +1379,7 @@ async fn cmd_campaign_run(
     _llm: bool,
     _llm_deep: bool,
 ) -> Result<()> {
-    use glassware_orchestrator::campaign::{CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel};
+    use glassware::campaign::{CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel};
     use std::path::Path;
 
     info!("Loading campaign configuration: {}", config_path);
@@ -1446,7 +1446,7 @@ async fn cmd_campaign_run(
 
 /// Resume a campaign.
 async fn cmd_campaign_resume(_cli: &Cli, case_id: &str) -> Result<()> {
-    use glassware_orchestrator::campaign::{
+    use glassware::campaign::{
         CampaignConfig, CampaignExecutor, EventBus, StateManager, CommandChannel, CheckpointManager,
     };
     use std::path::Path;
@@ -1524,10 +1524,10 @@ async fn cmd_campaign_resume(_cli: &Cli, case_id: &str) -> Result<()> {
 
 /// Show campaign status.
 async fn cmd_campaign_status(cli: &Cli, case_id: &str, _live: bool) -> Result<()> {
-    use glassware_orchestrator::campaign::StateManager;
+    use glassware::campaign::StateManager;
     
     // For now, show scan registry info
-    let registry = glassware_orchestrator::scan_registry::ScanRegistry::new(None)?;
+    let registry = glassware::scan_registry::ScanRegistry::new(None)?;
     
     if let Some(scan) = registry.get_scan(case_id) {
         match cli.format {
@@ -1584,7 +1584,7 @@ async fn cmd_campaign_command(_cli: &Cli, _case_id: &str, _command: &cli::Campai
 
 /// List recent campaigns.
 async fn cmd_campaign_list(cli: &Cli, limit: usize, _status: Option<cli::CampaignStatusFilter>) -> Result<()> {
-    let registry = glassware_orchestrator::scan_registry::ScanRegistry::new(None)?;
+    let registry = glassware::scan_registry::ScanRegistry::new(None)?;
 
     let scans = registry.list_scans(None);
     let scans: Vec<_> = scans.into_iter().take(limit).collect();
@@ -1657,7 +1657,7 @@ async fn cmd_campaign_report(cli: &Cli, case_id: &str, format: &cli::ReportForma
     let campaign_result = reconstruct_campaign_result(&checkpoint)?;
 
     // Load config to get settings
-    let config: glassware_orchestrator::campaign::CampaignConfig = 
+    let config: glassware::campaign::CampaignConfig = 
         serde_json::from_str(&checkpoint.config_json)
             .map_err(|e| anyhow::anyhow!("Failed to parse campaign config: {}", e))?;
 
@@ -1709,7 +1709,7 @@ async fn cmd_campaign_report(cli: &Cli, case_id: &str, format: &cli::ReportForma
 /// Note: This is a simplified reconstruction. For full wave results with
 /// detailed findings, the checkpoint would need to store additional data.
 fn reconstruct_campaign_result(checkpoint: &CampaignCheckpoint) -> Result<CampaignResult, anyhow::Error> {
-    use glassware_orchestrator::campaign::{CampaignStatus, WaveResult};
+    use glassware::campaign::{CampaignStatus, WaveResult};
     use std::time::Duration;
 
     // Parse status string back to enum
@@ -1755,8 +1755,8 @@ fn reconstruct_campaign_result(checkpoint: &CampaignCheckpoint) -> Result<Campai
 
 /// Launch TUI for monitoring a campaign.
 async fn cmd_campaign_monitor(case_id: &str) -> Result<()> {
-    use glassware_orchestrator::campaign::{EventBus, CommandChannel, CheckpointManager};
-    use glassware_orchestrator::campaign::types::{CampaignState, CampaignStatus, WaveState, WaveStatus, WaveMode};
+    use glassware::campaign::{EventBus, CommandChannel, CheckpointManager};
+    use glassware::campaign::types::{CampaignState, CampaignStatus, WaveState, WaveStatus, WaveMode};
     use tui::app::App;
     use std::path::Path;
 
@@ -1850,7 +1850,7 @@ async fn cmd_campaign_monitor(case_id: &str) -> Result<()> {
 
 /// Query a campaign with a natural language question.
 async fn cmd_campaign_query(_cli: &Cli, case_id: &str, question: &str) -> Result<()> {
-    use glassware_orchestrator::campaign::query::query_campaign;
+    use glassware::campaign::query::query_campaign;
 
     info!("Querying campaign '{}' with question: {}", case_id, question);
 
