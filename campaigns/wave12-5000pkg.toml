@@ -1,0 +1,189 @@
+# Wave 12: Large-Scale Scan (5000 packages)
+#
+# Purpose: Production-scale detection across high-risk categories
+# Target: 5000 packages from high-risk ecosystems
+#
+# Run with: glassware campaign run campaigns/wave12-5000pkg.toml --llm --deep-llm
+# Expected duration: ~25-30 minutes
+
+[campaign]
+name = "Wave 12 - Large-Scale Scan (5000 packages)"
+description = "Production-scale scan across high-risk package categories"
+created_by = "security-team"
+priority = "high"
+tags = ["hunt", "real-world", "wave12", "large-scale", "5000pkg"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.whitelist]
+# i18n libraries (naturally contain Unicode)
+packages = [
+    "moment", "moment-timezone",
+    "date-fns", "dayjs",
+    "i18next", "react-intl", "intl",
+    "lodash", "underscore",
+    "express", "globalize",
+    "prettier", "typescript", "eslint",
+    "@babel/core", "@babel/*",
+    "validator", "validate",
+    "dotenv",
+]
+
+# Crypto libraries (legitimate API usage)
+crypto_packages = [
+    "ethers", "web3", "viem", "wagmi",
+    "@solana/web3.js", "bitcoinjs-lib",
+    "hdkey", "@metamask/*",
+    "node-forge", "crypto-js",
+    "crypto", "bcrypt", "bcryptjs",
+    "argon2", "pbkdf2", "scrypt",
+    "firebase", "firebase-admin",
+    "twilio", "vonage",
+]
+
+# Build tools (complex patterns are legitimate)
+build_tools = [
+    "webpack", "webpack-",
+    "vite", "rollup", "esbuild",
+    "parcel", "gulp", "grunt",
+    "core-js", "babel",
+    "postcss", "autoprefixer",
+    "metro", "metro-",
+    "prisma", "@prisma/*",
+]
+
+[settings.scoring]
+malicious_threshold = 5.0
+suspicious_threshold = 2.0
+
+[settings.llm]
+tier1_enabled = true
+tier1_provider = "cerebras"
+tier2_enabled = true
+tier2_threshold = 7.0
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave12"
+report_dir = "reports/wave12"
+
+# ============================================================
+# Wave 12A: React Native Ecosystem (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_12a"
+name = "React Native Ecosystem"
+description = "Scan 1000 React Native packages"
+depends_on = []
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_category"
+category = "react-native"
+samples = 1000
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 12B: Vue.js Ecosystem (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_12b"
+name = "Vue.js Ecosystem"
+description = "Scan 1000 Vue.js packages"
+depends_on = ["wave_12a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_category"
+category = "vue"
+samples = 1000
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 12C: Angular Ecosystem (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_12c"
+name = "Angular Ecosystem"
+description = "Scan 1000 Angular packages"
+depends_on = ["wave_12b"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_category"
+category = "angular"
+samples = 1000
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 12D: Crypto/Blockchain (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_12d"
+name = "Crypto & Blockchain"
+description = "Scan 1000 crypto/blockchain packages"
+depends_on = ["wave_12c"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_category"
+category = "cryptocurrency"
+samples = 1000
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 12E: Phone/SMS/Auth (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_12e"
+name = "Phone SMS Auth"
+description = "Scan 1000 phone/SMS/auth packages"
+depends_on = ["wave_12d"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_category"
+category = "authentication"
+samples = 500
+
+[[waves.sources]]
+type = "npm_category"
+category = "sms"
+samples = 250
+
+[[waves.sources]]
+type = "npm_category"
+category = "phone"
+samples = 250
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = false
