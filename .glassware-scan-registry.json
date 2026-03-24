@@ -1396,6 +1396,832 @@
       "findings_count": 9,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "8fadcbf7-6d49-4119-9c9f-b66614d39062",
+      "started_at": "2026-03-24T16:17:19.878818779Z",
+      "completed_at": "2026-03-24T16:17:20.640530697Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "f4a5b5b0-3f39-4632-b74f-c888adcf28f0",
+      "started_at": "2026-03-24T16:17:20.648473386Z",
+      "completed_at": "2026-03-24T16:17:21.979325687Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular-devkit/build-angular@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 20,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "9efd3b51-0538-4bf1-958a-f9aa73352fd2",
+      "started_at": "2026-03-24T16:17:21.986712935Z",
+      "completed_at": "2026-03-24T16:17:29.880904786Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 86,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "f50a5a79-bdfe-47b3-9a6f-21b83a9ea124",
+      "started_at": "2026-03-24T16:17:29.895822275Z",
+      "completed_at": "2026-03-24T16:17:30.908700210Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "e488a048-0278-427b-a8bb-9cf611d28430",
+      "started_at": "2026-03-24T16:17:30.917063883Z",
+      "completed_at": "2026-03-24T16:17:31.407965050Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "mobx@6.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 10,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "ebb63698-3103-42f9-b3a2-6960308e5fc9",
+      "started_at": "2026-03-24T16:17:44.381938868Z",
+      "completed_at": "2026-03-24T16:17:44.988535786Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "62f82e58-ea48-46e7-843f-eab612908723",
+      "started_at": "2026-03-24T16:17:45.083291521Z",
+      "completed_at": "2026-03-24T16:17:52.903395550Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 86,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "1f91f8ee-7a7e-4f69-928b-7283e24bec4d",
+      "started_at": "2026-03-24T16:17:53.107527226Z",
+      "completed_at": "2026-03-24T16:17:53.572974185Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "mobx@6.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 10,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "bc652340-8870-4e9c-9618-f9a509ff5540",
+      "started_at": "2026-03-24T16:18:19.194267987Z",
+      "completed_at": "2026-03-24T16:18:22.415793705Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native@0.73.2"
+      ],
+      "version_policy": null,
+      "findings_count": 4,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "32ab7b85-1300-48f6-8215-540b0f34d17b",
+      "started_at": "2026-03-24T16:18:22.526458928Z",
+      "completed_at": "2026-03-24T16:18:23.361462137Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "node-rdkafka@2.17.0"
+      ],
+      "version_policy": null,
+      "findings_count": 13,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "37264d3b-0a9b-4de9-b981-e4b0d098d72f",
+      "started_at": "2026-03-24T16:18:23.466359410Z",
+      "completed_at": "2026-03-24T16:18:23.778514428Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "rewire@7.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 6,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "349e5bc3-4fbd-42a1-bb85-4364ed82d456",
+      "started_at": "2026-03-24T16:18:57.768243821Z",
+      "completed_at": "2026-03-24T16:18:58.541782901Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ngx-lightbox@3.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 68,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "67540230-8237-4b6f-a16e-a4acc4561e9e",
+      "started_at": "2026-03-24T16:18:58.549934629Z",
+      "completed_at": "2026-03-24T16:18:59.241823891Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-render-html@6.3.4"
+      ],
+      "version_policy": null,
+      "findings_count": 6,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "56fe1d8d-d02f-4637-8066-900d6cb0e8fb",
+      "started_at": "2026-03-24T16:18:59.249347666Z",
+      "completed_at": "2026-03-24T16:19:00.408091545Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "615f718d-81ed-4097-93a8-96993bd1c711",
+      "started_at": "2026-03-24T16:24:22.548078200Z",
+      "completed_at": "2026-03-24T16:24:23.396005883Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "node-rdkafka@2.17.0"
+      ],
+      "version_policy": null,
+      "findings_count": 13,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "2328c6de-c88f-4fd6-8326-690f34c7e95c",
+      "started_at": "2026-03-24T16:34:00.578991095Z",
+      "completed_at": "2026-03-24T16:34:01.381482034Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "node-rdkafka@2.17.0"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "18ee6c5e-590d-4990-bed0-184f62736ead",
+      "started_at": "2026-03-24T16:37:47.233259913Z",
+      "completed_at": "2026-03-24T16:37:48.004620784Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 7,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "52fffa9a-8ee7-428f-9719-5e213aa5ed4e",
+      "started_at": "2026-03-24T16:37:48.012700933Z",
+      "completed_at": "2026-03-24T16:37:48.662275345Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "node-rdkafka@2.17.0"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "e1c1c8f9-af89-458d-ad83-a795be0b574b",
+      "started_at": "2026-03-24T16:37:48.670169766Z",
+      "completed_at": "2026-03-24T16:37:54.923348139Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 46,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "a09bf777-3215-4f12-b1b6-bfc96365f5be",
+      "started_at": "2026-03-24T16:37:54.931494244Z",
+      "completed_at": "2026-03-24T16:37:56.102172161Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 10,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "304517d4-c55f-4acc-9853-1ea62e539c87",
+      "started_at": "2026-03-24T16:37:56.110909039Z",
+      "completed_at": "2026-03-24T16:37:56.514613689Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "mobx@6.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "fd030edf-8233-46f7-8304-4f14972e4ecf",
+      "started_at": "2026-03-24T16:38:09.905622968Z",
+      "completed_at": "2026-03-24T16:38:16.017483644Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 46,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "06a9d201-e1ad-45f8-8f6a-95cab903a542",
+      "started_at": "2026-03-24T16:38:28.694227881Z",
+      "completed_at": "2026-03-24T16:38:29.662378690Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 10,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "784bd14d-b0b3-4469-b847-6de6a0d5beaa",
+      "started_at": "2026-03-24T16:38:38.794723502Z",
+      "completed_at": "2026-03-24T16:38:39.752030124Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 10,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "7b65b067-fbde-4805-a08f-714d60693ef9",
+      "started_at": "2026-03-24T16:45:28.367012776Z",
+      "completed_at": "2026-03-24T16:45:29.429309356Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1d85fe26-10ae-4180-9474-403c23625b4a",
+      "started_at": "2026-03-24T16:47:30.852669066Z",
+      "completed_at": "2026-03-24T16:47:36.928451627Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 46,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "eecdfb34-10c6-4c0d-90dd-dceabd4794e8",
+      "started_at": "2026-03-24T16:49:16.216713539Z",
+      "completed_at": "2026-03-24T16:49:22.449808829Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 46,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "bcfdd700-7ccf-421a-ada8-72bec5da5acb",
+      "started_at": "2026-03-24T16:49:34.522335053Z",
+      "completed_at": "2026-03-24T16:49:35.608529334Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "moment@2.30.1"
+      ],
+      "version_policy": null,
+      "findings_count": 194,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "c79a754a-dbf0-407d-ab3c-323b4c7f6776",
+      "started_at": "2026-03-24T16:50:17.428084317Z",
+      "completed_at": "2026-03-24T16:50:23.547774659Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 46,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "8d517848-1efd-4f97-af5a-c24381b15a67",
+      "started_at": "2026-03-24T16:51:35.062672120Z",
+      "completed_at": "2026-03-24T16:51:35.754399056Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 7,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "d429f04c-2ab6-40a1-b70a-edb8f483f16d",
+      "started_at": "2026-03-24T16:51:35.762119770Z",
+      "completed_at": "2026-03-24T16:51:37.050459576Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular-devkit/build-angular@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "f7f1c9d3-1e2b-4b8a-8989-59bd6d5684b3",
+      "started_at": "2026-03-24T16:51:37.058819335Z",
+      "completed_at": "2026-03-24T16:51:43.504883736Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 46,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "7359ebb7-fea3-4ca9-84af-65464c52b3ed",
+      "started_at": "2026-03-24T16:51:43.513806102Z",
+      "completed_at": "2026-03-24T16:51:44.656031550Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "5b2e42dd-d7fe-4645-a256-2b07e9d34b46",
+      "started_at": "2026-03-24T16:51:44.664359225Z",
+      "completed_at": "2026-03-24T16:51:45.254627625Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "mobx@6.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "3ff25597-c40c-4371-92f9-e1fa0a3b3766",
+      "started_at": "2026-03-24T16:51:45.262486359Z",
+      "completed_at": "2026-03-24T16:51:46.259056145Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ngx-lightbox@3.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 68,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "ccd362f7-716a-412e-beef-02b5821dd1f3",
+      "started_at": "2026-03-24T16:51:46.274315625Z",
+      "completed_at": "2026-03-24T16:51:47.115516929Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "node-rdkafka@2.17.0"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "919a14d4-5cf1-4cec-879c-fa5564bf79c7",
+      "started_at": "2026-03-24T16:51:47.129973128Z",
+      "completed_at": "2026-03-24T16:51:48.488859435Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native@0.73.2"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "f8d95c86-3c70-4eff-9be1-83f4a442eefd",
+      "started_at": "2026-03-24T16:51:48.497229234Z",
+      "completed_at": "2026-03-24T16:51:48.949736056Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-render-html@6.3.4"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "72a0f84b-bf8b-4376-9978-e14b30e10b07",
+      "started_at": "2026-03-24T16:51:48.964473104Z",
+      "completed_at": "2026-03-24T16:51:49.404242335Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "rewire@7.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "213b8a8c-38a9-463c-974e-0896c9d5aa45",
+      "started_at": "2026-03-24T16:51:49.416890291Z",
+      "completed_at": "2026-03-24T16:51:50.090743637Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "view-design@4.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 7,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "12784cdf-ac17-437b-89a9-00b1e9b789d6",
+      "started_at": "2026-03-24T16:52:11.019610696Z",
+      "completed_at": "2026-03-24T16:52:11.899965770Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular-devkit/build-angular@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "2923c186-29e6-498c-ad6d-b94303610443",
+      "started_at": "2026-03-24T16:52:11.973806919Z",
+      "completed_at": "2026-03-24T16:52:12.563743297Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ngx-lightbox@3.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "2b49da73-040e-4160-aa1b-51b3997e8294",
+      "started_at": "2026-03-24T16:54:37.495640224Z",
+      "completed_at": "2026-03-24T16:54:38.387533352Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular-devkit/build-angular@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "81800d14-f18e-4f4a-88cd-991cdd352984",
+      "started_at": "2026-03-24T16:54:38.395131580Z",
+      "completed_at": "2026-03-24T16:54:39.158761389Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ngx-lightbox@3.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 68,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "d4dbe5bf-24d9-4dfc-9a02-45eb7dd25580",
+      "started_at": "2026-03-24T16:54:51.304768021Z",
+      "completed_at": "2026-03-24T16:54:52.182701343Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular-devkit/build-angular@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "893ec054-a427-4cac-a870-ba2dd7193ece",
+      "started_at": "2026-03-24T16:55:20.147708766Z",
+      "completed_at": "2026-03-24T16:55:20.936044781Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular-devkit/build-angular@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "b6b689dc-6c1e-4706-9698-e8bd6aa707d4",
+      "started_at": "2026-03-24T16:55:20.943906637Z",
+      "completed_at": "2026-03-24T16:55:21.749043028Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ngx-lightbox@3.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 68,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "e434bb75-9810-436f-99d7-3c474cf645f8",
+      "started_at": "2026-03-24T16:55:37.905627235Z",
+      "completed_at": "2026-03-24T16:55:38.687263604Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ngx-lightbox@3.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 68,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "548aa885-ce67-47f1-82fc-883aff8b9415",
+      "started_at": "2026-03-24T16:56:11.986373359Z",
+      "completed_at": "2026-03-24T16:56:12.692541275Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 7,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "40f04ba3-1b1a-4a96-876d-457bfc0ac420",
+      "started_at": "2026-03-24T16:56:12.700367871Z",
+      "completed_at": "2026-03-24T16:56:13.553962699Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular-devkit/build-angular@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 14,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "9f988e51-7130-4cbe-9020-d0e1df854aa7",
+      "started_at": "2026-03-24T16:56:13.562677567Z",
+      "completed_at": "2026-03-24T16:56:19.674520401Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ant-design-vue@4.1.2"
+      ],
+      "version_policy": null,
+      "findings_count": 46,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "48c1125e-d38c-486e-a794-022906f66a5d",
+      "started_at": "2026-03-24T16:56:19.682721449Z",
+      "completed_at": "2026-03-24T16:56:20.607401012Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@azure/msal-browser@3.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "664d7f69-65ae-48ed-81fc-f751ba8e3da1",
+      "started_at": "2026-03-24T16:56:20.616317158Z",
+      "completed_at": "2026-03-24T16:56:21.090421197Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "mobx@6.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "b944dafd-ae31-4e05-b367-0c0af4dd5170",
+      "started_at": "2026-03-24T16:56:21.098017051Z",
+      "completed_at": "2026-03-24T16:56:21.905364612Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ngx-lightbox@3.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 68,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "984827f3-275b-4321-a592-11e132928ac2",
+      "started_at": "2026-03-24T16:56:21.913331638Z",
+      "completed_at": "2026-03-24T16:56:22.606663027Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "node-rdkafka@2.17.0"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "023766b9-e3c7-4bda-8bc0-865bf38ba5ba",
+      "started_at": "2026-03-24T16:56:22.617962705Z",
+      "completed_at": "2026-03-24T16:56:25.539470095Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native@0.73.2"
+      ],
+      "version_policy": null,
+      "findings_count": 4,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "55a9092f-b837-4f60-8e1f-6f30a043d9dc",
+      "started_at": "2026-03-24T16:56:25.549468391Z",
+      "completed_at": "2026-03-24T16:56:26.056182950Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-render-html@6.3.4"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "8c745d1c-2881-4ccd-a1df-8f24feaee8b6",
+      "started_at": "2026-03-24T16:56:26.064095516Z",
+      "completed_at": "2026-03-24T16:56:26.353318117Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "rewire@7.0.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "49955c1b-179b-4725-b103-d700cd3e7d3c",
+      "started_at": "2026-03-24T16:56:26.361376263Z",
+      "completed_at": "2026-03-24T16:56:26.955822646Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "view-design@4.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 7,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }

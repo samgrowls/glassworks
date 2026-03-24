@@ -68,6 +68,9 @@ const CRYPTO_PACKAGE_WHITELIST: &[&str] = &[
     "bitcoinjs", "bip39", "hdkey", "@metamask", "@walletconnect",
     // Common crypto module patterns
     "solana-web3", "ethers.js", "web3.js", "web3-utils",
+    // Official cloud SDKs that may have blockchain integration
+    "@azure/", "@microsoft/", "@aws-sdk/", "@google-cloud/",
+    "firebase", "firebase-admin",
 ];
 
 /// Patterns for blockchain C2 detection

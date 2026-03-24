@@ -105,6 +105,18 @@ impl GlasswareDetector {
     fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
 
+        // Skip non-JS/TS files (C++, Python, etc.) - these are not in scope for Glassware detection
+        let path_lower = file_path.to_lowercase();
+        if !path_lower.ends_with(".js") &&
+           !path_lower.ends_with(".mjs") &&
+           !path_lower.ends_with(".cjs") &&
+           !path_lower.ends_with(".ts") &&
+           !path_lower.ends_with(".tsx") &&
+           !path_lower.ends_with(".jsx") &&
+           !path_lower.ends_with(".json") {
+            return findings;  // Skip non-JS/TS files
+        }
+
         // 1. Detect dense VS codepoint runs (steganographic payloads)
         findings.extend(self.detect_stego_runs(content, file_path));
 
