@@ -1,19 +1,19 @@
 # Glassworks Detection Documentation
 
-**Version:** 0.32.0
+**Version:** 0.35.0
 **Last Updated:** March 24, 2026
 
 ---
 
 ## Overview
 
-Glassworks uses a multi-layered detection approach with 13+ detectors organized into 3 tiers:
+Glassworks uses a multi-layered detection approach with 26 detectors organized into 3 tiers:
 
 | Tier | Purpose | Detectors |
 |------|---------|-----------|
-| **L1** | Primary indicators | InvisibleChar, Homoglyph, BidirectionalOverride, UnicodeTags |
-| **L2** | Secondary patterns | GlasswarePattern, EncryptedPayload, RDD, JPD Author |
-| **L3** | Behavioral analysis | TimeDelay, LocaleGeofencing, BlockchainC2, HeaderC2 |
+| **L1** | Primary indicators | InvisibleChar, Homoglyph, BidirectionalOverride, UnicodeTags, **UnicodeSteganographyV2** |
+| **L2** | Secondary patterns | GlasswarePattern, EncryptedPayload, RDD, JPD Author, **BlockchainPolling**, **Exfiltration** |
+| **L3** | Behavioral analysis | TimeDelay, LocaleGeofencing, BlockchainC2, HeaderC2, **SandboxEvasion** |
 
 ---
 
@@ -310,6 +310,112 @@ Package Input (npm/tarball/directory)
 - 48-96 hour delays
 - CI/CD bypass
 - Multi-stage payload
+
+---
+
+## Phase 8: GlassWorm-Specific Detectors
+
+Based on intelligence from: https://codeberg.org/tip-o-deincognito/glassworm-writeup
+
+### UnicodeSteganographyV2 Detector (GW012)
+
+**File:** `glassware-core/src/detectors/unicode_steganography_v2.rs`
+
+**Detects GlassWorm-specific steganography:**
+
+| Pattern | Severity | Confidence |
+|---------|----------|------------|
+| ZWSP/ZWNJ binary encoding (balanced ratio 0.5-2.0) | **Critical** | 0.85 |
+| Hidden data in package.json fields | **Critical** | 0.90 |
+| Base64 in comments with invisible chars | **Critical** | 0.88 |
+
+**GlassWorm Signature:**
+- Uses U+200B (ZWSP) for binary 0
+- Uses U+200C (ZWNJ) for binary 1
+- Balanced ratio suggests intentional encoding
+
+---
+
+### BlockchainPolling Detector (GW013)
+
+**File:** `glassware-core/src/detectors/blockchain_polling.rs`
+
+**Detects GlassWorm C2 polling mechanism:**
+
+| Pattern | Severity | Confidence |
+|---------|----------|------------|
+| `getSignaturesForAddress + setInterval` | **Critical** | 0.92 |
+| Solana RPC endpoint with polling | High | 0.75 |
+| Transaction metadata parsing | High | 0.70 |
+| Memo instruction usage | Medium | 0.55 |
+
+**GlassWorm Signature:**
+- 5-minute polling interval (300000ms)
+- Solana blockchain for decentralized C2
+- Commands encoded in transaction metadata
+
+---
+
+### SandboxEvasion Detector (GW014)
+
+**File:** `glassware-core/src/detectors/sandbox_evasion.rs`
+
+**Detects GlassWorm sandbox evasion:**
+
+| Pattern | Severity | Confidence |
+|---------|----------|------------|
+| CI + VM detection combination | **Critical** | 0.90 |
+| CPU count check (< 2 CPUs) | High | 0.80 |
+| Memory check (< 2GB RAM) | High | 0.80 |
+| Silent exit in sandbox | **Critical** | 0.88 |
+
+**GlassWorm Signature:**
+- Checks `process.env.CI` AND `os.cpus().length`
+- Exits silently if sandbox detected
+- Only executes in production environments
+
+---
+
+### Exfiltration Detector (GW015)
+
+**File:** `glassware-core/src/detectors/exfiltration.rs`
+
+**Detects GlassWorm data exfiltration:**
+
+| Pattern | Severity | Confidence |
+|---------|----------|------------|
+| Custom HTTP headers (X-Exfil-ID, X-Session-Token) | **Critical** | 0.92 |
+| Base64-encoded env vars in HTTP requests | **Critical** | 0.88 |
+| DNS TXT record queries | High | 0.70 |
+| GitHub API for exfil (gists, issues) | High | 0.65 |
+| Blockchain transfer with memo | High | 0.75 |
+
+**GlassWorm Signature:**
+- Environment variables → Base64 → HTTP headers
+- Multiple exfil channels (HTTP, DNS, GitHub, blockchain)
+- Memo instructions for data hiding
+
+---
+
+## GlassWorm Attack Chain
+
+```
+Stage 1: Unicode Steganography
+    ↓ (ZWSP/ZWNJ binary encoding)
+Stage 2: Invisible Character Encoding
+    ↓ (decoder extracts C2 wallet)
+Stage 3: Blockchain Polling
+    ↓ (getSignaturesForAddress every 5min)
+Stage 4: CI/Sandbox Evasion
+    ↓ (CI + VM detection)
+Stage 5: Data Exfiltration
+    ↓ (HTTP headers, DNS, GitHub, blockchain)
+```
+
+**Detection Strategy:**
+- Any single stage = suspicious (score 4.0-7.0)
+- Multiple stages = malicious (score 8.0-10.0)
+- Full chain = confirmed GlassWorm (score 10.0)
 
 ---
 

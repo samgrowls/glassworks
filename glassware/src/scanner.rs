@@ -751,33 +751,67 @@ impl Scanner {
 
         // ⚠️ PHASE 3: Scoring System Revision - Exceptions for high-confidence attacks
         // Some attack patterns are so distinctive they should score high regardless of category diversity
-        
+
         // Track exceptional patterns during finding iteration
         let mut has_known_c2 = false;
         let mut has_invisible_decoder = false;
         let mut has_high_confidence_critical = false;
         
+        // GlassWorm-specific exceptional patterns (Phase 8-10)
+        let mut has_glassworm_c2_polling = false;
+        let mut has_glassworm_exfiltration = false;
+        let mut has_glassworm_sandbox_evasion = false;
+        let mut has_glassworm_steg_v2 = false;
+
         for finding in findings {
             // Known C2 indicators (wallets, IPs) - always high score
-            if finding.category == DetectionCategory::BlockchainC2 
+            if finding.category == DetectionCategory::BlockchainC2
                 && finding.severity == Severity::Critical
                 && (finding.description.contains("Known C2") || finding.description.contains("GlassWorm")) {
                 has_known_c2 = true;
             }
-            
+
             // Invisible characters + decoder pattern = steganography
             if finding.category == DetectionCategory::InvisibleCharacter
                 && finding.severity == Severity::Critical
                 && finding.description.contains("decoder") {
                 has_invisible_decoder = true;
             }
-            
+
             // High confidence critical findings
             if finding.confidence.map_or(false, |c| c >= 0.90) && finding.severity == Severity::Critical {
                 has_high_confidence_critical = true;
             }
+            
+            // GlassWorm C2 polling (getSignaturesForAddress + setInterval) - very high confidence
+            if finding.category == DetectionCategory::BlockchainC2
+                && finding.severity == Severity::Critical
+                && finding.description.contains("polling") {
+                has_glassworm_c2_polling = true;
+            }
+            
+            // GlassWorm exfiltration (HTTP headers, DNS, GitHub) - critical
+            if finding.category == DetectionCategory::HeaderC2
+                && finding.severity == Severity::Critical
+                && (finding.description.contains("Exfiltration") || finding.description.contains("X-Exfil") || finding.description.contains("exfil")) {
+                has_glassworm_exfiltration = true;
+            }
+            
+            // GlassWorm sandbox evasion (CI + VM detection) - high confidence
+            if finding.category == DetectionCategory::TimeDelaySandboxEvasion
+                && finding.severity == Severity::Critical
+                && (finding.description.contains("CI") || finding.description.contains("VM") || finding.description.contains("sandbox")) {
+                has_glassworm_sandbox_evasion = true;
+            }
+            
+            // GlassWorm steganography v2 (ZWSP/ZWNJ encoding) - high confidence
+            if finding.category == DetectionCategory::SteganoPayload
+                && finding.severity == Severity::Critical
+                && (finding.description.contains("GlassWorm") || finding.description.contains("ZWSP") || finding.description.contains("ZWNJ") || finding.description.contains("binary encoding")) {
+                has_glassworm_steg_v2 = true;
+            }
         }
-        
+
         // Apply exceptions - these override category diversity caps
         if has_known_c2 {
             // Known C2 wallets/IPs are confirmed malicious - always score high
@@ -785,12 +819,36 @@ impl Scanner {
             return score.min(10.0);
         }
         
+        if has_glassworm_c2_polling {
+            // GlassWorm C2 polling (getSignaturesForAddress + setInterval) = definitive GlassWorm
+            score = score.max(9.0);
+            return score.min(10.0);
+        }
+        
+        if has_glassworm_exfiltration {
+            // Active data exfiltration = critical threat
+            score = score.max(9.0);
+            return score.min(10.0);
+        }
+
         if has_invisible_decoder {
             // Invisible chars + decoder = steganography (GlassWare signature)
             score = score.max(8.0);
             return score.min(10.0);
         }
         
+        if has_glassworm_steg_v2 {
+            // GlassWorm binary encoding via ZWSP/ZWNJ
+            score = score.max(8.5);
+            return score.min(10.0);
+        }
+        
+        if has_glassworm_sandbox_evasion {
+            // CI + VM detection combination = GlassWorm evasion
+            score = score.max(8.5);
+            return score.min(10.0);
+        }
+
         if has_high_confidence_critical {
             // High confidence critical findings - likely real attack
             score = score.max(7.5);

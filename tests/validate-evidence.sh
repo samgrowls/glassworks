@@ -27,6 +27,7 @@ TOTAL=0
 DETECTED=0
 MISSED=()
 
+# Test tarballs in root evidence directory
 for tarball in "$EVIDENCE_DIR"/*.tgz; do
     if [ ! -f "$tarball" ]; then
         continue
@@ -50,6 +51,49 @@ for tarball in "$EVIDENCE_DIR"/*.tgz; do
         SCORE=$(echo "$OUTPUT" | grep -oP "threat score: \K[0-9.]+" || echo "unknown")
         echo "  ✗ MISSED (score: $SCORE)"
     fi
+    echo ""
+done
+
+# Test packages in subdirectories (GlassWorm evidence)
+for category_dir in "$EVIDENCE_DIR"/*/; do
+    if [ ! -d "$category_dir" ]; then
+        continue
+    fi
+    
+    category=$(basename "$category_dir")
+    echo "=== Category: $category ==="
+    
+    for package_dir in "$category_dir"*/; do
+        if [ ! -d "$package_dir" ]; then
+            continue
+        fi
+        
+        PACKAGE=$(basename "$package_dir")
+        TOTAL=$((TOTAL + 1))
+        
+        echo "Testing: $category/$PACKAGE"
+        
+        # Create temporary tarball for scanning
+        TEMP_TARBALL="/tmp/${category}_${PACKAGE}.tgz"
+        tar -czf "$TEMP_TARBALL" -C "$package_dir" . 2>/dev/null
+        
+        # Run scan and capture output
+        OUTPUT=$("$BINARY" scan-tarball "$TEMP_TARBALL" 2>&1 || true)
+        
+        # Clean up temp tarball
+        rm -f "$TEMP_TARBALL"
+        
+        # Check if flagged as malicious
+        if echo "$OUTPUT" | grep -q "malicious\|flagged"; then
+            DETECTED=$((DETECTED + 1))
+            SCORE=$(echo "$OUTPUT" | grep -oP "threat score: \K[0-9.]+" || echo "unknown")
+            echo "  ✓ DETECTED (score: $SCORE)"
+        else
+            MISSED+=("$category/$PACKAGE")
+            SCORE=$(echo "$OUTPUT" | grep -oP "threat score: \K[0-9.]+" || echo "unknown")
+            echo "  ✗ MISSED (score: $SCORE)"
+        fi
+    done
     echo ""
 done
 
