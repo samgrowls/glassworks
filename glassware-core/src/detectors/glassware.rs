@@ -317,6 +317,24 @@ impl GlasswareDetector {
     #[cfg(feature = "regex")]
     fn detect_glassware_patterns(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
+        
+        // Skip minified/bundled files (high FP rate)
+        let path_lower = file_path.to_lowercase();
+        let is_minified = path_lower.contains(".min.")
+            || path_lower.contains("/dist/")
+            || path_lower.contains("/build/")
+            || path_lower.contains("/bundle")
+            || path_lower.ends_with(".bundle.js");
+        
+        if is_minified {
+            return findings;
+        }
+        
+        // Skip if file appears to be minified (short variable names, no whitespace)
+        if self.is_minified_content(content) {
+            return findings;
+        }
+        
         let mut indicators = Vec::new();
 
         for (line_num, line) in content.lines().enumerate() {
@@ -386,6 +404,35 @@ impl GlasswareDetector {
     #[cfg(not(feature = "regex"))]
     fn detect_glassware_patterns(&self, _content: &str, _file_path: &str) -> Vec<Finding> {
         Vec::new()
+    }
+
+    /// Check if content appears to be minified (heuristic)
+    #[cfg(feature = "regex")]
+    fn is_minified_content(&self, content: &str) -> bool {
+        // Check for minification markers
+        let lines: Vec<&str> = content.lines().collect();
+        
+        // If average line length is very long (>200 chars), likely minified
+        if !lines.is_empty() {
+            let avg_line_len = content.len() / lines.len();
+            if avg_line_len > 200 {
+                return true;
+            }
+        }
+        
+        // Check for very short variable names (a, b, c, etc.) in function definitions
+        let short_var_pattern = Regex::new(r"function\s*\([a-z],[a-z]").unwrap();
+        if short_var_pattern.is_match(content) {
+            return true;
+        }
+        
+        // Check for lack of whitespace (minified)
+        let whitespace_ratio = content.chars().filter(|c| c.is_whitespace()).count() as f32 / content.len() as f32;
+        if whitespace_ratio < 0.1 {
+            return true;
+        }
+        
+        false
     }
 
     #[cfg(feature = "regex")]

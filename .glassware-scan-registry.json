@@ -976,6 +976,34 @@
       "findings_count": 9,
       "malicious_count": 1,
       "error": null
+    },
+    {
+      "id": "59e1d967-1ccd-437c-b574-4c8d03535a4b",
+      "started_at": "2026-03-24T10:54:07.517342545Z",
+      "completed_at": "2026-03-24T10:54:10.418438956Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "137ca5e1-6253-466c-8ee6-c6188f4a1321",
+      "started_at": "2026-03-24T10:55:01.621215366Z",
+      "completed_at": "2026-03-24T10:55:04.673451327Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }
