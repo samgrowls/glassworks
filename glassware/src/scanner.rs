@@ -749,11 +749,59 @@ impl Scanner {
                     (critical_hits * config.scoring.critical_weight) +
                     (high_hits * config.scoring.high_weight);
 
-        // Cap score for single-category detections to prevent false positives
+        // ⚠️ PHASE 3: Scoring System Revision - Exceptions for high-confidence attacks
+        // Some attack patterns are so distinctive they should score high regardless of category diversity
+        
+        // Track exceptional patterns during finding iteration
+        let mut has_known_c2 = false;
+        let mut has_invisible_decoder = false;
+        let mut has_high_confidence_critical = false;
+        
+        for finding in findings {
+            // Known C2 indicators (wallets, IPs) - always high score
+            if finding.category == DetectionCategory::BlockchainC2 
+                && finding.severity == Severity::Critical
+                && (finding.description.contains("Known C2") || finding.description.contains("GlassWorm")) {
+                has_known_c2 = true;
+            }
+            
+            // Invisible characters + decoder pattern = steganography
+            if finding.category == DetectionCategory::InvisibleCharacter
+                && finding.severity == Severity::Critical
+                && finding.description.contains("decoder") {
+                has_invisible_decoder = true;
+            }
+            
+            // High confidence critical findings
+            if finding.confidence.map_or(false, |c| c >= 0.90) && finding.severity == Severity::Critical {
+                has_high_confidence_critical = true;
+            }
+        }
+        
+        // Apply exceptions - these override category diversity caps
+        if has_known_c2 {
+            // Known C2 wallets/IPs are confirmed malicious - always score high
+            score = score.max(8.5);
+            return score.min(10.0);
+        }
+        
+        if has_invisible_decoder {
+            // Invisible chars + decoder = steganography (GlassWare signature)
+            score = score.max(8.0);
+            return score.min(10.0);
+        }
+        
+        if has_high_confidence_critical {
+            // High confidence critical findings - likely real attack
+            score = score.max(7.5);
+            return score.min(10.0);
+        }
+
+        // Category diversity scoring (for non-exceptional cases)
         // Real attacks typically involve multiple attack vectors
         if category_count == 1.0 {
             // Single category: cap at 4.0 (suspicious, not malicious)
-            // This prevents FPs from legitimate libraries
+            // This prevents FPs from legitimate libraries with single-pattern detections
             score = score.min(4.0);
         } else if category_count == 2.0 {
             // Two categories: max 7.0 (borderline malicious)
