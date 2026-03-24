@@ -1046,6 +1046,34 @@
       "findings_count": 8,
       "malicious_count": 1,
       "error": null
+    },
+    {
+      "id": "f250fd3d-60d5-4238-8f8c-931a2ee82076",
+      "started_at": "2026-03-24T12:01:56.967498741Z",
+      "completed_at": "2026-03-24T12:01:57.692614944Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "a90b43ba-208b-4704-be83-d3af47d07fd9",
+      "started_at": "2026-03-24T12:12:54.551306572Z",
+      "completed_at": "2026-03-24T12:12:54.831831263Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "react-native-country-select@0.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }

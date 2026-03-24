@@ -238,10 +238,10 @@ impl WaveExecutor {
             WaveSource::NpmSearch { keywords, samples_per_keyword, days_recent, max_downloads } => {
                 // Search npm registry
                 let mut packages = Vec::new();
-                
+
                 for keyword in keywords {
                     debug!("Searching npm for keyword: {}", keyword);
-                    
+
                     match self.search_npm(keyword, *samples_per_keyword).await {
                         Ok(results) => {
                             for pkg in results {
@@ -260,15 +260,21 @@ impl WaveExecutor {
                         }
                     }
                 }
-                
+
                 Ok(packages)
             }
 
             WaveSource::NpmCategory { category, samples, sort_by } => {
-                // Sample from npm category
-                // TODO: Implement category sampling
+                // Sample from npm category using search API
                 debug!("Sampling {} packages from category '{}'", samples, category);
-                Ok(Vec::new()) // Placeholder
+                
+                match self.search_npm(category, *samples).await {
+                    Ok(results) => Ok(results),
+                    Err(e) => {
+                        warn!("Failed to sample category '{}': {}", category, e);
+                        Ok(Vec::new())
+                    }
+                }
             }
 
             WaveSource::GitHubSearch { query, max_results, sort_by } => {
@@ -282,10 +288,64 @@ impl WaveExecutor {
 
     /// Search npm registry for packages.
     async fn search_npm(&self, keyword: &str, limit: usize) -> Result<Vec<PackageSpec>, WaveError> {
-        // TODO: Implement npm search API call
-        // For now, return empty list
+        use reqwest::Client;
+        use serde::Deserialize;
+        
         debug!("npm search for '{}' (limit: {})", keyword, limit);
-        Ok(Vec::new())
+        
+        let client = Client::new();
+        let url = format!(
+            "https://registry.npmjs.org/-/v1/search?text={}&size={}",
+            keyword, limit
+        );
+        
+        #[derive(Debug, Deserialize)]
+        struct NpmSearchResponse {
+            objects: Vec<NpmSearchObject>,
+        }
+        
+        #[derive(Debug, Deserialize)]
+        struct NpmSearchObject {
+            package: NpmPackageInfo,
+        }
+        
+        #[derive(Debug, Deserialize)]
+        struct NpmPackageInfo {
+            name: String,
+            version: String,
+        }
+        
+        match client.get(&url).send().await {
+            Ok(response) => {
+                if response.status().is_success() {
+                    match response.json::<NpmSearchResponse>().await {
+                        Ok(search_result) => {
+                            let packages: Vec<PackageSpec> = search_result.objects
+                                .into_iter()
+                                .map(|obj| PackageSpec {
+                                    name: obj.package.name,
+                                    version: obj.package.version,
+                                })
+                                .collect();
+                            
+                            debug!("Found {} packages for keyword '{}'", packages.len(), keyword);
+                            Ok(packages)
+                        }
+                        Err(e) => {
+                            warn!("Failed to parse npm search response: {}", e);
+                            Err(WaveError::CollectionError(format!("Failed to parse npm response: {}", e)))
+                        }
+                    }
+                } else {
+                    warn!("npm search returned status {}: {}", response.status(), keyword);
+                    Err(WaveError::CollectionError(format!("npm API returned status {}", response.status())))
+                }
+            }
+            Err(e) => {
+                warn!("Failed to call npm search API: {}", e);
+                Err(WaveError::CollectionError(format!("npm API call failed: {}", e)))
+            }
+        }
     }
 
     /// Scan a single package.
