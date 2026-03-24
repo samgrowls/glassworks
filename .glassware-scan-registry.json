@@ -934,6 +934,48 @@
       "findings_count": 4,
       "malicious_count": 1,
       "error": null
+    },
+    {
+      "id": "61c732b1-1c12-426d-8547-418f8ee49842",
+      "started_at": "2026-03-24T10:49:28.456259865Z",
+      "completed_at": "2026-03-24T10:49:31.541456648Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "7465e65e-9e98-44cd-97f8-6d793be3d8b4",
+      "started_at": "2026-03-24T10:49:48.728274145Z",
+      "completed_at": "2026-03-24T10:49:51.589122110Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "c6c92ab1-162c-410b-a9cd-626990f9585f",
+      "started_at": "2026-03-24T10:50:01.978195236Z",
+      "completed_at": "2026-03-24T10:50:04.931794042Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
     }
   ]
 }

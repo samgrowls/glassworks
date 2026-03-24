@@ -60,13 +60,18 @@ impl InvisibleCharDetector {
             || path_lower.ends_with(".cjs")
             || path_lower.contains(".min.")
             || path_lower.contains(".bundle.");
-        
+
         if is_bundled {
             return findings;
         }
 
         // Skip ClojureScript compiled output (cljs_deps.js marker)
         if path_lower.contains("cljs_deps.js") || path_lower.contains("/com/cognitect/transit/") {
+            return findings;
+        }
+
+        // Skip TypeScript definition files and JSON files (high FP rate for i18n data)
+        if path_lower.ends_with(".d.ts") || path_lower.ends_with(".json") {
             return findings;
         }
 
@@ -78,6 +83,19 @@ impl InvisibleCharDetector {
                 let code_point = ch as u32;
 
                 if is_in_invisible_range(code_point) {
+                    // Skip U+FFFD (replacement character) - common in i18n data, not malicious
+                    if code_point == 0xFFFD {
+                        continue;
+                    }
+
+                    // Skip variation selectors in i18n data files (legitimate usage)
+                    if code_point >= 0xFE00 && code_point <= 0xFE0F {
+                        // Variation selectors 1-16 - often used in locale data
+                        if is_i18n_context || path_lower.ends_with(".json") {
+                            continue;
+                        }
+                    }
+
                     // Check if this is in a legitimate emoji context
                     if self.is_emoji_context(line, col_num) {
                         continue;
