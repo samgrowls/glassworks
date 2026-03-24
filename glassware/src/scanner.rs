@@ -210,24 +210,19 @@ impl Scanner {
         let findings = self.scan_directory(&package.path).await?;
 
         let threat_score = self.calculate_threat_score(&findings, &package.name);
+
+        // ⚠️ DISABLED 2026-03-24: Package-level whitelisting removed
+        // All packages are evaluated equally - no whitelist bypass
+        // let is_whitelisted = self.is_package_whitelisted(&package.name);
+        let _is_whitelisted = false;
         
-        // Check whitelist for final malicious determination (defense in depth)
-        let is_whitelisted = self.is_package_whitelisted(&package.name);
-        let is_malicious = if is_whitelisted {
-            // Whitelisted packages are never flagged as malicious regardless of score
-            // This prevents false positives for known legitimate packages (i18n libraries, build tools, etc.)
-            false
-        } else {
-            threat_score >= self.config.threat_threshold
-        };
+        let is_malicious = threat_score >= self.config.threat_threshold;
 
         if is_malicious {
             warn!(
                 "Package {} flagged as malicious (threat score: {:.2})",
                 package.name, threat_score
             );
-        } else if is_whitelisted && !findings.is_empty() {
-            info!("Package {} is whitelisted ({} findings suppressed)", package.name, findings.len());
         }
 
         Ok(PackageScanResult {
@@ -615,19 +610,19 @@ impl Scanner {
 
         let config = &self.config.glassware_config;
 
-        // Check if this is a known legitimate package
-        let package_lower = package_name.to_lowercase();
-
-        // Check whitelist using precise matching
-        let is_whitelisted = self.is_package_whitelisted(package_name);
-
-        let is_crypto_package = config.whitelist.crypto_packages.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase())
-        });
-
-        let is_build_tool = config.whitelist.build_tools.iter().any(|p| {
-            package_lower.contains(&p.to_lowercase())
-        });
+        // ⚠️ DISABLED 2026-03-24: Package-level whitelisting removed
+        // All packages now go through the same detection logic
+        // Context-aware detection in individual detectors prevents FPs
+        // let is_whitelisted = self.is_package_whitelisted(package_name);
+        // let is_crypto_package = config.whitelist.crypto_packages.iter().any(|p| {
+        //     package_lower.contains(&p.to_lowercase())
+        // });
+        // let is_build_tool = config.whitelist.build_tools.iter().any(|p| {
+        //     package_lower.contains(&p.to_lowercase())
+        // });
+        let _is_whitelisted = false;  // Always false - no whitelisting
+        let _is_crypto_package = false;  // Detectors handle context internally
+        let _is_build_tool = false;  // Detectors handle context internally
 
         // Track which signal categories are present
         let mut categories = std::collections::HashSet::new();
@@ -637,53 +632,45 @@ impl Scanner {
         for finding in findings {
             // Get detector weight from config (default 1.0 if not specified)
             let detector_weight = self.get_detector_weight(&finding.category);
-            
+
             // Categorize each finding
+            // Note: is_whitelisted, is_crypto_package, is_build_tool are always false now
             match finding.category {
                 // === Obfuscation Category ===
                 DetectionCategory::InvisibleCharacter => {
                     categories.insert("obfuscation");
-                    if !is_whitelisted {
-                        high_hits += detector_weight;
-                    }
+                    high_hits += detector_weight;
                 }
                 DetectionCategory::Homoglyph => {
                     categories.insert("obfuscation");
-                    if !is_whitelisted {
-                        high_hits += detector_weight;
-                    }
+                    high_hits += detector_weight;
                 }
                 DetectionCategory::BidirectionalOverride => {
                     categories.insert("obfuscation");
-                    if !is_whitelisted {
-                        high_hits += detector_weight;
-                    }
+                    high_hits += detector_weight;
                 }
 
                 // === Evasion Category ===
                 DetectionCategory::LocaleGeofencing => {
                     categories.insert("evasion");
-                    // Skip for whitelisted i18n packages
-                    if !is_whitelisted {
-                        high_hits += detector_weight;
-                    }
+                    // Context-aware detection in detector handles i18n packages
+                    high_hits += detector_weight;
                 }
                 DetectionCategory::TimeDelaySandboxEvasion => {
                     categories.insert("evasion");
-                    if !is_build_tool && !is_whitelisted {
-                        high_hits += detector_weight;
-                    }
+                    // Context-aware detection in detector handles build tools
+                    high_hits += detector_weight;
                 }
 
                 // === C2 Infrastructure Category ===
                 DetectionCategory::BlockchainC2 => {
                     // Only count if CRITICAL severity (known wallet/IP)
+                    // Context-aware detection in detector handles crypto packages
                     if finding.severity == Severity::Critical {
                         categories.insert("c2");
                         critical_hits += detector_weight;
-                    } else if !is_crypto_package {
+                    } else {
                         // INFO/MEDIUM severity = just API usage, not C2
-                        // Skip for crypto packages where API usage is legitimate
                         categories.insert("c2_weak");
                     }
                 }
@@ -697,19 +684,15 @@ impl Scanner {
                 // === Execution Category ===
                 DetectionCategory::GlasswarePattern => {
                     categories.insert("execution");
-                    if !is_whitelisted {
-                        if finding.severity == Severity::Critical {
-                            critical_hits += detector_weight;
-                        } else {
-                            high_hits += detector_weight;
-                        }
+                    if finding.severity == Severity::Critical {
+                        critical_hits += detector_weight;
+                    } else {
+                        high_hits += detector_weight;
                     }
                 }
                 DetectionCategory::EncryptedPayload => {
                     categories.insert("execution");
-                    if !is_whitelisted {
-                        high_hits += detector_weight;
-                    }
+                    high_hits += detector_weight;
                 }
                 DetectionCategory::HeaderC2 => {
                     categories.insert("execution");
@@ -804,66 +787,23 @@ impl Scanner {
 
     /// Check if a package is whitelisted (defense in depth).
     ///
-    /// This is checked at scoring time to prevent false positives for known legitimate packages.
-    /// Matching rules:
+    /// ⚠️ **DISABLED 2026-03-24**: Package-level whitelisting is dangerous for supply chain security.
+    /// Attackers target popular packages specifically (webpack, babel, express, etc.).
+    /// 
+    /// Context-aware detection (in detectors) should be used instead of blanket whitelisting.
+    /// See: Phase 1 - Emergency Whitelist Removal (PROMPT.md)
+    ///
+    /// Previous matching rules (DEPRECATED):
     /// - Exact match: "lodash" matches "lodash"
     /// - Prefix with dash: "webpack-" matches "webpack", "webpack-cli"
     /// - Prefix with slash: "@babel/" matches "@babel/core", "@babel/cli"
     /// - Wildcard: "@metamask/*" matches "@metamask/anything"
-    fn is_package_whitelisted(&self, package_name: &str) -> bool {
-        // Strip version from package name
-        // Examples: "webpack@5.89.0" -> "webpack", "@babel/core@7.23.7" -> "@babel/core"
-        let package_base = if let Some(at_pos) = package_name.rfind('@') {
-            // Only strip if there's a version after @ (not for scoped packages like @babel/core)
-            if at_pos > 0 && !package_name.starts_with('@') {
-                // Regular package with version: "name@version"
-                &package_name[..at_pos]
-            } else if package_name.starts_with('@') && at_pos > 1 {
-                // Scoped package with version: "@scope/name@version" -> "@scope/name"
-                &package_name[..at_pos]
-            } else {
-                // No version or invalid format
-                package_name
-            }
-        } else {
-            package_name
-        };
-        let package_lower = package_base.to_lowercase();
-        let config = &self.config.glassware_config;
-
-        // Helper to check if package matches a whitelist entry
-        let matches_entry = |entry: &str| -> bool {
-            let entry_lower = entry.to_lowercase();
-
-            // Exact match
-            if package_lower == entry_lower {
-                return true;
-            }
-
-            // Wildcard match (@metamask/* matches @metamask/anything)
-            if entry_lower.ends_with("/*") {
-                let prefix = &entry_lower[..entry_lower.len()-2]; // "@metamask/"
-                return package_lower.starts_with(prefix);
-            }
-
-            // Prefix match with dash (webpack- matches webpack-cli)
-            if entry_lower.ends_with('-') {
-                return package_lower.starts_with(&entry_lower);
-            }
-
-            // Prefix match with slash (@babel/ matches @babel/core)
-            if entry_lower.ends_with('/') {
-                return package_lower.starts_with(&entry_lower);
-            }
-
-            false
-        };
-
-        // Check all whitelist categories
-        config.whitelist.packages.iter().any(|p| matches_entry(p))
-            || config.whitelist.crypto_packages.iter().any(|p| matches_entry(p))
-            || config.whitelist.build_tools.iter().any(|p| matches_entry(p))
-            || config.whitelist.state_management.iter().any(|p| matches_entry(p))
+    #[allow(dead_code)]
+    fn is_package_whitelisted(&self, _package_name: &str) -> bool {
+        // DISABLED: Always return false - no package-level whitelisting
+        // This forces all packages through the same detection logic
+        // Context-aware detection in individual detectors prevents FPs
+        false
     }
 
     /// Check if a file is a locale or data file (where invisible chars are legitimate)

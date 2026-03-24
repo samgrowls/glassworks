@@ -27,7 +27,12 @@ cache_enabled = true
 cache_ttl_days = 7
 
 [settings.whitelist]
-# Known false positives - i18n libraries naturally contain Unicode
+# ⚠️ UPDATED 2026-03-24: Package-level whitelisting DISABLED in scanner
+# These entries are kept for documentation/backward compatibility only
+# All packages now go through the same detection logic
+# Context-aware detection in individual detectors prevents FPs
+
+# i18n libraries (naturally contain Unicode) - KEPT for reference
 packages = [
     "moment",
     "moment-timezone",
@@ -35,18 +40,10 @@ packages = [
     "dayjs",
     "i18next",
     "react-intl",
-    "lodash",
-    "underscore",
-    "express",
     "globalize",
-    "prettier",
-    "typescript",
-    "eslint",
-    "@babel/core",
-    "@babel/*",
 ]
 
-# Crypto libraries (blockchain API calls are legitimate)
+# Crypto libraries (legitimate blockchain API usage) - MINIMAL LIST
 crypto_packages = [
     "ethers",
     "web3",
@@ -56,21 +53,10 @@ crypto_packages = [
     "bitcoinjs-lib",
     "hdkey",
     "@metamask/*",
-    "node-forge",
-    "crypto-js",
 ]
 
-# Build tools (time delays are legitimate for watch mode, debouncing)
+# Build tools - REMOVED ALL (detectors use context-aware logic now)
 build_tools = [
-    "webpack",
-    "webpack-",
-    "vite",
-    "rollup",
-    "esbuild",
-    "parcel",
-    "gulp",
-    "grunt",
-    "core-js",
 ]
 
 [settings.scoring]

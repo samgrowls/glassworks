@@ -21,40 +21,29 @@ cache_enabled = true
 cache_ttl_days = 7
 
 [settings.whitelist]
-# i18n libraries (naturally contain Unicode)
+# ⚠️ UPDATED 2026-03-24: Package-level whitelisting DISABLED in scanner
+# These entries are kept for documentation/backward compatibility only
+# All packages now go through the same detection logic
+# Context-aware detection in individual detectors prevents FPs
+
+# i18n libraries (naturally contain Unicode) - KEPT for reference
 packages = [
     "moment", "moment-timezone",
     "date-fns", "dayjs",
     "i18next", "react-intl", "intl",
-    "lodash", "underscore",
-    "express", "globalize",
-    "prettier", "typescript", "eslint",
-    "@babel/core", "@babel/*",
-    "validator", "validate",
-    "dotenv",
+    "globalize",
 ]
 
-# Crypto libraries (legitimate API usage)
+# Crypto libraries (legitimate blockchain API usage) - MINIMAL LIST
+# Only core crypto/web3 libraries kept
 crypto_packages = [
     "ethers", "web3", "viem", "wagmi",
     "@solana/web3.js", "bitcoinjs-lib",
     "hdkey", "@metamask/*",
-    "node-forge", "crypto-js",
-    "crypto", "bcrypt", "bcryptjs",
-    "argon2", "pbkdf2", "scrypt",
-    "firebase", "firebase-admin",
-    "twilio", "vonage",
 ]
 
-# Build tools (complex patterns are legitimate)
+# Build tools - REMOVED ALL (detectors use context-aware logic now)
 build_tools = [
-    "webpack", "webpack-",
-    "vite", "rollup", "esbuild",
-    "parcel", "gulp", "grunt",
-    "core-js", "babel",
-    "postcss", "autoprefixer",
-    "metro", "metro-",
-    "prisma", "@prisma/*",
 ]
 
 [settings.scoring]
