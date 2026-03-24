@@ -17,6 +17,8 @@ use crate::campaign::event_bus::{EventBus, CampaignEvent, EventBusExt};
 use crate::campaign::state_manager::StateManager;
 use crate::campaign::types::{WaveStatus, PackageStage, ActivePackage};
 use crate::downloader::DownloadedPackage;
+#[cfg(feature = "llm")]
+use crate::llm::{LlmAnalyzer, LlmAnalyzerConfig};
 
 /// Wave executor for running individual waves.
 pub struct WaveExecutor {
@@ -26,6 +28,8 @@ pub struct WaveExecutor {
     event_bus: EventBus,
     concurrency_semaphore: Arc<Semaphore>,
     scanner: crate::scanner::Scanner,
+    #[cfg(feature = "llm")]
+    llm_analyzer: Option<LlmAnalyzer>,
 }
 
 impl WaveExecutor {
@@ -78,6 +82,16 @@ impl WaveExecutor {
             }
         );
 
+        // Initialize LLM analyzer if enabled in settings
+        #[cfg(feature = "llm")]
+        let llm_analyzer = if settings.llm.tier1_enabled {
+            info!("Wave executor: Tier 1 LLM enabled ({})", settings.llm.tier1_provider);
+            LlmAnalyzerConfig::from_env()
+                .and_then(|config| LlmAnalyzer::with_config(config).ok())
+        } else {
+            None
+        };
+
         Self {
             config,
             settings,
@@ -85,6 +99,8 @@ impl WaveExecutor {
             event_bus,
             concurrency_semaphore: Arc::new(Semaphore::new(max_concurrency)),
             scanner,
+            #[cfg(feature = "llm")]
+            llm_analyzer,
         }
     }
 
@@ -275,7 +291,7 @@ impl WaveExecutor {
     /// Scan a single package.
     async fn scan_package(&self, package: &PackageSpec) -> Result<ScanResult, WaveError> {
         info!("Scanning package: {}@{}", package.name, package.version);
-        
+
         // Acquire concurrency permit
         let _permit = self.concurrency_semaphore
             .acquire()
@@ -286,11 +302,48 @@ impl WaveExecutor {
 
         // Download the package
         let downloaded = self.download_package(&package.name, &package.version).await?;
-        
+
         // Scan the downloaded package
-        let scan_result = self.scanner.scan_package(&downloaded).await
+        let mut scan_result = self.scanner.scan_package(&downloaded).await
             .map_err(|e| WaveError::ExecutorError(format!("Scan failed: {}", e)))?;
-        
+
+        // Run LLM analysis if enabled and findings exist
+        #[cfg(feature = "llm")]
+        if let Some(ref analyzer) = self.llm_analyzer {
+            if !scan_result.findings.is_empty() {
+                debug!("Running LLM analysis on {} findings", scan_result.findings.len());
+
+                use crate::llm::LlmFinding;
+                let llm_findings: Vec<LlmFinding> = scan_result.findings.iter()
+                    .map(LlmFinding::from)
+                    .collect();
+
+                match analyzer.analyze(&llm_findings).await {
+                    Ok(verdict) => {
+                        info!("LLM analysis complete: is_malicious={}, confidence={:.2}",
+                              verdict.is_malicious, verdict.confidence);
+                        
+                        // Use LLM verdict to override score-based flagging when confidence is high
+                        if verdict.confidence >= 0.75 {
+                            scan_result.is_malicious = verdict.is_malicious;
+                            info!("LLM high confidence ({:.2}) - overriding is_malicious to {}",
+                                  verdict.confidence, verdict.is_malicious);
+                        } else if verdict.confidence <= 0.25 {
+                            if scan_result.is_malicious {
+                                scan_result.is_malicious = false;
+                                info!("LLM low confidence ({:.2}) - overriding is_malicious to false (likely FP)",
+                                      verdict.confidence);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        warn!("LLM analysis failed: {}", e);
+                        // Continue without LLM verdict
+                    }
+                }
+            }
+        }
+
         info!(
             "Package {}@{} scanned: {} findings, threat_score={:.2}, malicious={}",
             package.name, package.version,

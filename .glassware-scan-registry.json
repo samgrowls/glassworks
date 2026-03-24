@@ -682,6 +682,202 @@
       "findings_count": 16,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "4788f633-472e-4fe1-ad19-d31bf4800b99",
+      "started_at": "2026-03-24T08:13:05.987188605Z",
+      "completed_at": null,
+      "status": "running",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "9f546407-0c88-4a5d-8bad-7e253bc8933a",
+      "started_at": "2026-03-24T08:13:50.248640731Z",
+      "completed_at": "2026-03-24T08:13:50.693507721Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "mobx@6.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 10,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "b9fc5825-12d0-4f2e-b6da-224a1a3b4d70",
+      "started_at": "2026-03-24T08:13:50.758935410Z",
+      "completed_at": "2026-03-24T08:13:51.001417302Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dotenv@16.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "b86c553b-3c99-4e2c-b3bf-5e06c2f413a9",
+      "started_at": "2026-03-24T08:14:13.263591941Z",
+      "completed_at": "2026-03-24T08:14:14.558456053Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "mobx@6.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 10,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "2851e196-349a-44ac-b883-77702ae78275",
+      "started_at": "2026-03-24T08:20:00.812055764Z",
+      "completed_at": "2026-03-24T08:20:08.403028633Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 114,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "b05a4320-1206-4d45-bd7d-012cba4ac20c",
+      "started_at": "2026-03-24T08:20:17.397752049Z",
+      "completed_at": "2026-03-24T08:20:18.405648483Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dotenv@16.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "37a4333a-4150-4e27-ac0e-dbfaaeb06be8",
+      "started_at": "2026-03-24T08:20:18.490862485Z",
+      "completed_at": "2026-03-24T08:20:20.609701713Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "a86031c5-fc53-4372-a73b-f1708e9d53ff",
+      "started_at": "2026-03-24T08:20:20.675140340Z",
+      "completed_at": "2026-03-24T08:20:21.961557083Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ethereumjs-wallet@1.0.2"
+      ],
+      "version_policy": null,
+      "findings_count": 4,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "15502c98-748f-46c4-9f41-bde7b3b98dfd",
+      "started_at": "2026-03-24T08:20:33.968709585Z",
+      "completed_at": "2026-03-24T08:20:35.062009492Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dotenv@16.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "def06837-624b-4ab9-bf08-08a1ee23b6ec",
+      "started_at": "2026-03-24T08:31:32.139264650Z",
+      "completed_at": "2026-03-24T08:31:35.497234963Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 114,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "5fb91943-ab25-47d3-9eb0-9f04e0fc7430",
+      "started_at": "2026-03-24T08:31:35.577381445Z",
+      "completed_at": "2026-03-24T08:31:50.404776969Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1e75c560-49ea-4f59-b352-f0c0cba811ca",
+      "started_at": "2026-03-24T08:31:50.524804516Z",
+      "completed_at": "2026-03-24T08:31:51.093821430Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dotenv@16.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "e2288330-d49d-44b4-aefe-9401d17bea40",
+      "started_at": "2026-03-24T08:32:12.419235479Z",
+      "completed_at": "2026-03-24T08:32:21.313267424Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 114,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "79f5e19d-5509-4fa0-9b2f-0986361a24ec",
+      "started_at": "2026-03-24T08:32:58.021667617Z",
+      "completed_at": "2026-03-24T08:32:59.070826651Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dotenv@16.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 1,
+      "error": null
     }
   ]
 }

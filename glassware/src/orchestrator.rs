@@ -483,7 +483,7 @@ impl Orchestrator {
                 
                 match analyzer.analyze(&llm_findings).await {
                     Ok(verdict) => {
-                        info!("LLM analysis complete: is_malicious={}, confidence={:.2}", 
+                        info!("LLM analysis complete: is_malicious={}, confidence={:.2}",
                               verdict.is_malicious, verdict.confidence);
                         scan_result.llm_verdict = Some(crate::scanner::LlmPackageVerdict {
                             is_malicious: verdict.is_malicious,
@@ -492,6 +492,23 @@ impl Orchestrator {
                             recommendations: verdict.recommendations,
                             model_used: analyzer.config().model.clone(),
                         });
+                        
+                        // Use LLM verdict to override score-based flagging when confidence is high
+                        // This prevents false positives when LLM is confident the package is safe
+                        if verdict.confidence >= 0.75 {
+                            // High confidence: trust LLM verdict
+                            scan_result.is_malicious = verdict.is_malicious;
+                            info!("LLM high confidence ({:.2}) - overriding is_malicious to {}",
+                                  verdict.confidence, verdict.is_malicious);
+                        } else if verdict.confidence <= 0.25 {
+                            // Low confidence: assume safe (likely false positive)
+                            if scan_result.is_malicious {
+                                scan_result.is_malicious = false;
+                                info!("LLM low confidence ({:.2}) - overriding is_malicious to false (likely FP)",
+                                      verdict.confidence);
+                            }
+                        }
+                        // Medium confidence (0.25-0.75): use score-based flagging
                     }
                     Err(e) => {
                         warn!("LLM analysis failed: {}", e);
