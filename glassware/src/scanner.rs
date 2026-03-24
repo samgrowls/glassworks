@@ -298,6 +298,64 @@ impl Scanner {
         Ok(all_findings)
     }
 
+    /// Scan a directory for tarballs (don't skip dist/build directories).
+    ///
+    /// For tarball scans, we want to scan ALL files including compiled output
+    /// in /dist/ and /build/ directories since that's what gets distributed.
+    pub async fn scan_directory_for_tarball(&self, path: &str) -> Result<Vec<Finding>> {
+        let path = Path::new(path);
+
+        if !path.exists() {
+            return Err(OrchestratorError::invalid_path(format!(
+                "Path does not exist: {}",
+                path.display()
+            )));
+        }
+
+        let mut all_findings = Vec::new();
+        let mut files_scanned = 0;
+
+        // Create scan engine with all detectors
+        let engine = ScanEngine::default_detectors();
+
+        // Walk directory recursively (don't skip dist/build for tarballs)
+        let mut entries: Vec<PathBuf> = Vec::new();
+        self.collect_files_for_tarball(path, &mut entries)?;
+
+        for entry_path in entries {
+            if let Some(content) = self.read_file(&entry_path).await? {
+                let relative_path = entry_path
+                    .strip_prefix(path)
+                    .unwrap_or(&entry_path)
+                    .to_string_lossy()
+                    .to_string();
+
+                debug!("Scanning file: {}", relative_path);
+
+                let findings = engine.scan(path, &content);
+
+                all_findings.extend(findings);
+                files_scanned += 1;
+            }
+        }
+
+        info!(
+            "Scanned {} files, found {} issues",
+            files_scanned,
+            all_findings.len()
+        );
+
+        // Sort findings by severity and location
+        all_findings.sort_by(|a, b| {
+            b.severity
+                .cmp(&a.severity)
+                .then_with(|| a.file.cmp(&b.file))
+                .then_with(|| a.line.cmp(&b.line))
+        });
+
+        Ok(all_findings)
+    }
+
     /// Scan a tarball file.
     pub async fn scan_tarball(&self, tarball_path: &str) -> Result<PackageScanResult> {
         let tarball_path = Path::new(tarball_path);
@@ -373,8 +431,9 @@ impl Scanner {
 
         info!("Scanning package: {} ({})", name, version);
 
-        // Scan the extracted directory
-        let findings = self.scan_directory(scan_path.to_str().unwrap()).await?;
+        // Scan the extracted directory with special config for tarballs
+        // Don't skip /dist/ or /build/ for tarballs (these ARE the distributed files)
+        let findings = self.scan_directory_for_tarball(scan_path.to_str().unwrap()).await?;
 
         // Calculate threat score
         let threat_score = self.calculate_threat_score(&findings, &name);
@@ -468,6 +527,54 @@ impl Scanner {
                     }
                 }
                 self.collect_files(&path, files)?;
+            } else if path.is_file() {
+                // Check file extension
+                if let Some(ext) = path.extension() {
+                    let ext_str = ext.to_string_lossy().to_string();
+                    if self.config.extensions.contains(&ext_str) {
+                        files.push(path);
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Collect files to scan from a directory for tarballs (don't skip dist/build).
+    fn collect_files_for_tarball(&self, dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
+        if !dir.is_dir() {
+            return Ok(());
+        }
+
+        let entries = std::fs::read_dir(dir).map_err(|e| {
+            OrchestratorError::scan_failed(
+                dir.to_string_lossy().to_string(),
+                format!("Failed to read directory: {}", e)
+            )
+        })?;
+
+        for entry in entries {
+            let entry = entry.map_err(|e| {
+                OrchestratorError::scan_failed(
+                    dir.to_string_lossy().to_string(),
+                    format!("Failed to read entry: {}", e)
+                )
+            })?;
+
+            let path = entry.path();
+
+            // For tarballs, only skip node_modules and .git (not dist/build)
+            if path.is_dir() {
+                if let Some(dir_name) = path.file_name() {
+                    let dir_name_str = dir_name.to_string_lossy().to_string();
+                    // Only skip node_modules and .git for tarballs
+                    if dir_name_str == "node_modules" || dir_name_str == ".git" {
+                        debug!("Skipping excluded directory: {}", dir_name_str);
+                        continue;
+                    }
+                }
+                self.collect_files_for_tarball(&path, files)?;
             } else if path.is_file() {
                 // Check file extension
                 if let Some(ext) = path.extension() {
