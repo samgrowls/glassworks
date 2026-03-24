@@ -1,0 +1,314 @@
+# Phase A: Controlled Campaign - Package List
+# 
+# 200 curated high-popularity npm packages for pre-production validation
+# Expected: All packages should be clean (≤5% false positive rate)
+#
+# Format: package@version (versions are latest stable as of March 2024)
+#
+# Tiers:
+# - Ultra-Popular (1-50): Top tier packages with massive adoption
+# - Popular (51-125): 1M+ downloads/month
+# - Medium (126-200): 100K+ downloads/month
+
+# ============================================================
+# ULTRA-POPULAR PACKAGES (1-50)
+# Core frameworks, utilities, and tools used by millions
+# ============================================================
+
+# Core frameworks and runtimes (1-10)
+react@18.2.0
+lodash@4.17.21
+express@4.19.2
+axios@1.6.7
+moment@2.30.1
+webpack@5.89.0
+babel-core@7.0.0-bridge.0
+typescript@5.3.3
+eslint@8.56.0
+prettier@3.1.1
+
+# Utilities (11-20)
+async@3.2.5
+chalk@5.3.0
+debug@4.3.4
+uuid@9.0.0
+commander@11.1.0
+dotenv@16.3.1
+underscore@1.13.6
+glob@10.3.10
+fs-extra@11.2.0
+bluebird@3.7.2
+
+# HTTP and networking (21-25)
+node-fetch@3.3.2
+got@14.0.0
+request@2.88.2
+superagent@8.1.2
+follow-redirects@1.15.4
+
+# Testing (26-30)
+jest@29.7.0
+mocha@10.2.0
+chai@4.3.10
+sinon@17.0.1
+supertest@6.3.4
+
+# Database (31-35)
+mongoose@8.0.3
+sequelize@6.35.2
+redis@4.6.12
+mongodb@6.3.0
+mysql2@3.7.1
+
+# Security and auth (36-40)
+jsonwebtoken@9.0.2
+bcrypt@5.1.1
+bcryptjs@2.4.3
+passport@0.7.0
+crypto-js@4.2.0
+
+# Build tools (41-45)
+vite@5.0.10
+rollup@4.9.2
+esbuild@0.19.11
+parcel@2.11.0
+gulp@4.0.2
+
+# Logging (46-50)
+grunt@1.6.1
+winston@3.11.0
+pino@8.17.2
+log4js@6.9.1
+npmlog@7.0.1
+
+# ============================================================
+# POPULAR PACKAGES 1M+ DOWNLOADS/MONTH (51-125)
+# Widely adopted packages across different categories
+# ============================================================
+
+# UI frameworks and libraries (51-60)
+vue@3.4.15
+@angular/core@17.1.0
+jquery@3.7.1
+bootstrap@5.3.2
+tailwindcss@3.4.1
+styled-components@6.1.8
+@emotion/react@11.11.3
+@mui/material@5.15.5
+antd@5.13.2
+element-plus@2.5.5
+
+# State management (61-67)
+redux@5.0.1
+react-redux@9.0.4
+mobx@6.12.0
+vuex@4.1.0
+pinia@2.1.7
+zustand@4.4.7
+recoil@0.7.7
+
+# Routing (68-71)
+react-router@6.21.3
+react-router-dom@6.21.3
+vue-router@4.2.5
+@angular/router@17.1.0
+
+# Form handling (72-77)
+formik@2.4.5
+react-hook-form@7.49.3
+vee-validate@4.12.4
+yup@1.3.3
+zod@3.22.4
+joi@17.11.0
+
+# Date and time (78-81)
+dayjs@1.11.10
+date-fns@3.0.6
+luxon@3.4.4
+moment-timezone@0.5.44
+
+# Validation (82-84)
+validator@13.11.0
+ajv@8.12.0
+class-validator@0.14.1
+
+# HTTP middleware (85-89)
+http-proxy@1.18.1
+cors@2.8.5
+helmet@7.1.0
+compression@1.7.4
+morgan@1.10.0
+
+# Database ORMs (90-94)
+prisma@5.8.1
+@prisma/client@5.8.1
+typeorm@0.3.19
+knex@3.1.0
+objection@3.1.3
+
+# Caching (95-98)
+ioredis@5.3.2
+node-cache@5.1.2
+memory-cache@0.2.0
+lru-cache@10.1.0
+
+# Message queues (99-101)
+amqplib@0.10.3
+kafkajs@2.2.4
+bull@4.12.0
+
+# Real-time (102-104)
+socket.io@4.7.4
+socket.io-client@4.7.4
+ws@8.16.0
+
+# GraphQL (105-107)
+graphql@16.8.1
+@apollo/client@3.9.0
+apollo-server@3.13.0
+
+# File handling (108-112)
+chokidar@3.5.3
+fast-glob@3.3.2
+rimraf@5.0.5
+mkdirp@3.0.1
+multer@1.4.5-lts.1
+
+# CLI tools (113-117)
+yargs@17.7.2
+minimist@1.2.8
+inquirer@9.2.12
+ora@8.0.1
+cli-progress@3.12.0
+
+# Crypto and blockchain (118-125)
+ethers@6.9.2
+web3@4.3.0
+viem@1.21.4
+wagmi@1.4.13
+@solana/web3.js@1.87.6
+bitcoinjs-lib@6.1.5
+hdkey@2.1.0
+i18next@23.7.13
+
+# ============================================================
+# MEDIUM POPULARITY 100K+ DOWNLOADS/MONTH (126-200)
+# Specialized packages with significant adoption
+# ============================================================
+
+# UI components (126-135)
+react-select@5.8.0
+react-window@1.8.10
+react-virtualized@9.22.5
+react-transition-group@4.4.5
+react-spring@9.7.3
+framer-motion@10.18.0
+@headlessui/react@2.0.0
+@radix-ui/react-dialog@1.0.5
+react-hot-toast@2.4.1
+react-markdown@9.0.1
+
+# Icons (136-138)
+react-icons@5.0.1
+@fortawesome/react-fontawesome@0.2.0
+@heroicons/react@2.1.1
+
+# Tables and grids (139-141)
+ag-grid-react@31.0.1
+react-table@7.8.0
+@tanstack/react-table@8.11.6
+
+# Charts (142-145)
+recharts@2.10.4
+chart.js@4.4.1
+react-chartjs-2@5.2.0
+victory@37.0.2
+
+# Rich text editors (146-150)
+draft-js@0.11.7
+slate@0.101.4
+slate-react@0.101.3
+@tiptap/react@2.1.13
+quill@1.3.7
+
+# Code editors (151-153)
+monaco-editor@0.45.0
+@monaco-editor/react@4.6.0
+codemirror@6.0.1
+
+# Animation and 3D (154-157)
+gsap@3.12.5
+animejs@3.2.2
+three@0.160.0
+@react-three/fiber@8.15.14
+
+# Image handling (158-160)
+sharp@0.33.2
+jimp@0.22.12
+probe-image-size@7.2.3
+
+# PDF handling (161-163)
+pdf-lib@1.17.1
+pdfkit@0.14.0
+jspdf@2.5.1
+
+# Email (164-166)
+nodemailer@6.9.8
+mailgun.js@9.3.0
+@sendgrid/mail@8.1.0
+
+# Payment processing (167-168)
+stripe@14.14.0
+paypal-rest-sdk@1.7.1
+
+# Social media and APIs (169-171)
+twitter-api-v2@1.15.2
+@octokit/rest@20.0.2
+discord.js@14.14.1
+
+# Cloud storage (172-174)
+@aws-sdk/client-s3@3.490.0
+@google-cloud/storage@7.7.0
+azure-storage@2.10.7
+
+# Monitoring (175-177)
+prom-client@15.1.0
+datadog-metrics@0.12.1
+newrelic@11.10.2
+
+# Error tracking (178-180)
+@sentry/node@7.99.0
+bugsnag@7.21.0
+rollbar@2.26.2
+
+# Feature flags (181-182)
+launchdarkly-node-server-sdk@8.2.3
+@unleash/nextjs-client@1.0.0
+
+# Search (183-185)
+algoliasearch@4.22.0
+@elastic/elasticsearch@8.11.0
+meilisearch@0.36.0
+
+# Internationalization (186-188)
+react-intl@6.5.0
+vue-i18n@9.9.0
+globalize@1.7.0
+
+# Machine learning (189-191)
+@tensorflow/tfjs@4.17.0
+ml5@0.12.2
+natural@6.10.4
+
+# Web scraping (192-194)
+cheerio@1.0.0-rc.12
+puppeteer@21.7.0
+playwright@1.41.0
+
+# Additional utilities (195-200)
+nanoid@5.0.4
+hashids@2.3.0
+ora@8.0.1
+enquirer@2.4.1
+prompts@2.4.2
+signale@1.4.0

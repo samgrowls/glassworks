@@ -1,0 +1,337 @@
+# Phase A: Controlled Campaign - Pre-Production Validation
+#
+# Purpose: Validate detection on known-clean packages with manual review
+# Expected: ≤5% false positive rate on 200 curated high-popularity packages
+# Duration: 3 days
+#
+# Run with: glassware campaign run campaigns/phase-a-controlled/config.toml --llm
+# Expected duration: ~2-3 minutes (0.5s/package including download)
+
+[campaign]
+name = "pre-production-validation"
+description = "Pre-production validation on known-clean packages"
+created_by = "security-team"
+priority = "high"
+tags = ["phase-a", "controlled", "pre-production", "validation"]
+
+[settings]
+concurrency = 4
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+timeout_seconds = 300
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 3.5
+
+[settings.llm]
+tier1_enabled = true
+tier1_provider = "cerebras"
+tier2_enabled = true
+tier2_threshold = 4.0
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/phase-a-controlled"
+report_dir = "reports/phase-a-controlled"
+
+# ============================================================
+# Wave A1: Ultra-Popular Packages (50 packages)
+# These are the most downloaded npm packages - should be clean
+# ============================================================
+[[waves]]
+id = "wave_a1"
+name = "Ultra-Popular Packages"
+description = "Top 50 most popular npm packages - baseline clean scan"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Core frameworks and runtimes
+    "react@18.2.0",
+    "lodash@4.17.21",
+    "express@4.19.2",
+    "axios@1.6.7",
+    "moment@2.30.1",
+    "webpack@5.89.0",
+    "babel-core@7.0.0-bridge.0",
+    "typescript@5.3.3",
+    "eslint@8.56.0",
+    "prettier@3.1.1",
+    # Utilities
+    "async@3.2.5",
+    "chalk@5.3.0",
+    "debug@4.3.4",
+    "uuid@9.0.0",
+    "commander@11.1.0",
+    "dotenv@16.3.1",
+    "underscore@1.13.6",
+    "glob@10.3.10",
+    "fs-extra@11.2.0",
+    "bluebird@3.7.2",
+    # HTTP and networking
+    "node-fetch@3.3.2",
+    "got@14.0.0",
+    "request@2.88.2",
+    "superagent@8.1.2",
+    "follow-redirects@1.15.4",
+    # Testing
+    "jest@29.7.0",
+    "mocha@10.2.0",
+    "chai@4.3.10",
+    "sinon@17.0.1",
+    "supertest@6.3.4",
+    # Database
+    "mongoose@8.0.3",
+    "sequelize@6.35.2",
+    "redis@4.6.12",
+    "mongodb@6.3.0",
+    "mysql2@3.7.1",
+    # Security and auth
+    "jsonwebtoken@9.0.2",
+    "bcrypt@5.1.1",
+    "bcryptjs@2.4.3",
+    "passport@0.7.0",
+    "crypto-js@4.2.0",
+    # Build tools
+    "vite@5.0.10",
+    "rollup@4.9.2",
+    "esbuild@0.19.11",
+    "parcel@2.11.0",
+    "gulp@4.0.2",
+    "grunt@1.6.1",
+    # Logging
+    "winston@3.11.0",
+    "pino@8.17.2",
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 3.5
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave A2: Popular Packages 1M+ downloads/month (75 packages)
+# ============================================================
+[[waves]]
+id = "wave_a2"
+name = "Popular Packages (1M+ downloads/month)"
+description = "75 popular packages with 1M+ monthly downloads"
+depends_on = ["wave_a1"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # UI frameworks and libraries
+    "vue@3.4.15",
+    "@angular/core@17.1.0",
+    "jquery@3.7.1",
+    "bootstrap@5.3.2",
+    "tailwindcss@3.4.1",
+    "styled-components@6.1.8",
+    "emotion@11.11.0",
+    "material-ui@0.18.6",
+    "@mui/material@5.15.5",
+    "antd@5.13.2",
+    # State management
+    "redux@5.0.1",
+    "react-redux@9.0.4",
+    "mobx@6.12.0",
+    "vuex@4.1.0",
+    "pinia@2.1.7",
+    "zustand@4.4.7",
+    "recoil@0.7.7",
+    # Routing
+    "react-router@6.21.3",
+    "react-router-dom@6.21.3",
+    "vue-router@4.2.5",
+    "@angular/router@17.1.0",
+    # Form handling
+    "formik@2.4.5",
+    "react-hook-form@7.49.3",
+    "vee-validate@4.12.4",
+    "yup@1.3.3",
+    "zod@3.22.4",
+    "joi@17.11.0",
+    # Date and time
+    "dayjs@1.11.10",
+    "date-fns@3.0.6",
+    "luxon@3.4.4",
+    "moment-timezone@0.5.44",
+    # Validation
+    "validator@13.11.0",
+    "ajv@8.12.0",
+    "class-validator@0.14.1",
+    # HTTP clients
+    "http-proxy@1.18.1",
+    "cors@2.8.5",
+    "helmet@7.1.0",
+    "compression@1.7.4",
+    "morgan@1.10.0",
+    # Database ORMs
+    "prisma@5.8.1",
+    "@prisma/client@5.8.1",
+    "typeorm@0.3.19",
+    "knex@3.1.0",
+    "objection@3.1.3",
+    # Caching
+    "ioredis@5.3.2",
+    "node-cache@5.1.2",
+    "memory-cache@0.2.0",
+    "lru-cache@10.1.0",
+    # Message queues
+    "amqplib@0.10.3",
+    "kafkajs@2.2.4",
+    "bull@4.12.0",
+    # Real-time
+    "socket.io@4.7.4",
+    "socket.io-client@4.7.4",
+    "ws@8.16.0",
+    # GraphQL
+    "graphql@16.8.1",
+    "@apollo/client@3.9.0",
+    "apollo-server@3.13.0",
+    # File handling
+    "chokidar@3.5.3",
+    "fast-glob@3.3.2",
+    "rimraf@5.0.5",
+    "mkdirp@3.0.1",
+    "multer@1.4.5-lts.1",
+    # CLI tools
+    "yargs@17.7.2",
+    "minimist@1.2.8",
+    "inquirer@9.2.12",
+    "ora@8.0.1",
+    "cli-progress@3.12.0",
+    # Crypto and blockchain
+    "ethers@6.9.2",
+    "web3@4.3.0",
+    "viem@1.21.4",
+    "@solana/web3.js@1.87.6",
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 3.5
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave A3: Medium Popularity 100K+ downloads/month (75 packages)
+# ============================================================
+[[waves]]
+id = "wave_a3"
+name = "Medium Popularity Packages (100K+ downloads/month)"
+description = "75 packages with 100K+ monthly downloads"
+depends_on = ["wave_a2"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # UI components
+    "react-select@5.8.0",
+    "react-window@1.8.10",
+    "react-virtualized@9.22.5",
+    "react-transition-group@4.4.5",
+    "react-spring@9.7.3",
+    "framer-motion@10.18.0",
+    "headlessui@2.0.0",
+    "@radix-ui/react-dialog@1.0.5",
+    "react-hot-toast@2.4.1",
+    "react-markdown@9.0.1",
+    # Icons
+    "react-icons@5.0.1",
+    "@fortawesome/react-fontawesome@0.2.0",
+    "@heroicons/react@2.1.1",
+    # Tables and grids
+    "ag-grid-react@31.0.1",
+    "react-table@7.8.0",
+    "tanstack-table@8.11.6",
+    # Charts
+    "recharts@2.10.4",
+    "chart.js@4.4.1",
+    "react-chartjs-2@5.2.0",
+    "victory@37.0.2",
+    # Rich text editors
+    "draft-js@0.11.7",
+    "slate@0.101.4",
+    "slate-react@0.101.3",
+    "tiptap@2.1.13",
+    "quill@1.3.7",
+    # Code editors
+    "monaco-editor@0.45.0",
+    "@monaco-editor/react@4.6.0",
+    "codemirror@6.0.1",
+    # Animation
+    "gsap@3.12.5",
+    "animejs@3.2.2",
+    "three@0.160.0",
+    "@react-three/fiber@8.15.14",
+    # Image handling
+    "sharp@0.33.2",
+    "jimp@0.22.12",
+    "probe-image-size@7.2.3",
+    # PDF handling
+    "pdf-lib@1.17.1",
+    "pdfkit@0.14.0",
+    "jspdf@2.5.1",
+    # Email
+    "nodemailer@6.9.8",
+    "mailgun.js@9.3.0",
+    "sendgrid@5.2.0",
+    # Payment processing
+    "stripe@14.14.0",
+    "paypal-rest-sdk@1.7.1",
+    # Social media
+    "twitter-api-v2@1.15.2",
+    "@octokit/rest@20.0.2",
+    "discord.js@14.14.1",
+    # Cloud storage
+    "@aws-sdk/client-s3@3.490.0",
+    "@google-cloud/storage@7.7.0",
+    "azure-storage@2.10.7",
+    # Monitoring
+    "prom-client@15.1.0",
+    "datadog-metrics@0.12.1",
+    "newrelic@11.10.2",
+    # Error tracking
+    "@sentry/node@7.99.0",
+    "bugsnag@7.21.0",
+    "rollbar@2.26.2",
+    # Feature flags
+    "launchdarkly-node-server-sdk@8.2.3",
+    "unleash-client@5.5.1",
+    # Search
+    "algoliasearch@4.22.0",
+    "elasticsearch@8.11.0",
+    "meilisearch@0.36.0",
+    # Internationalization
+    "i18next@23.7.13",
+    "react-intl@6.5.0",
+    "globalize@1.7.0",
+    # Machine learning
+    "@tensorflow/tfjs@4.17.0",
+    "ml5@0.12.2",
+    "natural@6.10.4",
+    # Web scraping
+    "cheerio@1.0.0-rc.12",
+    "puppeteer@21.7.0",
+    "playwright@1.41.0",
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 3.5
+
+[waves.reporting]
+include_clean_summary = true
