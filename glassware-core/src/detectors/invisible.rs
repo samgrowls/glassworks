@@ -54,23 +54,55 @@ impl InvisibleCharDetector {
         // - Invisible chars + decoder = likely steganography (Critical)
         // - Invisible chars alone in i18n file = likely legitimate (skip)
         // - High density invisible chars = suspicious regardless of location
-        
+
         // Skip ONLY TypeScript definition files and JSON data files (high FP rate for i18n data)
         let path_lower = file_path.to_lowercase();
         if path_lower.ends_with(".d.ts") {
             return findings;  // TypeScript definitions - rarely contain malicious code
         }
-        
-        // JSON files: Skip only if they appear to be i18n/translation data
-        if path_lower.ends_with(".json") {
-            if self.is_i18n_file(file_path) {
-                return findings;  // Legitimate i18n JSON
-            }
-            // Non-i18n JSON files are scanned (package.json attacks exist)
-        }
 
         // Check if this is an i18n/translation file (legitimate use of ZWNJ/ZWJ)
-        let is_i18n_context = self.is_i18n_file(file_path);
+        let is_i18n_context = self.is_i18n_file(file_path, content);
+
+        // JSON files: Skip only if they appear to be i18n/translation data (no decoder)
+        if path_lower.ends_with(".json") {
+            if is_i18n_context && !self.has_decoder_pattern(content) {
+                return findings;  // Legitimate i18n JSON without decoder
+            }
+            // Non-i18n JSON files or i18n with decoder are scanned below
+        }
+
+        // For i18n files, only flag if decoder pattern present (steganography)
+        if is_i18n_context {
+            if self.has_decoder_pattern(content) {
+                // Count invisible chars to see if it's significant
+                let invisible_count = content.chars().filter(|ch| {
+                    let cp = *ch as u32;
+                    is_in_invisible_range(cp) && cp != 0xFFFD
+                }).count();
+
+                if invisible_count > 10 {
+                    // This is suspicious - i18n file with decoder = likely steganography
+                    findings.push(
+                        Finding::new(
+                            file_path,
+                            1,
+                            1,
+                            0,
+                            '\0',
+                            DetectionCategory::InvisibleCharacter,
+                            Severity::Critical,
+                            "Invisible characters with decoder in i18n file - likely steganography",
+                            "Review this i18n file for steganographic payloads. The presence of decoder patterns (eval, atob, etc.) alongside invisible characters suggests malicious intent.",
+                        )
+                        .with_cwe_id("CWE-172")
+                        .with_confidence(0.85)
+                    );
+                }
+            }
+            // Otherwise skip - legitimate i18n data
+            return findings;
+        }
 
         for (line_num, line) in content.lines().enumerate() {
             for (col_num, ch) in line.chars().enumerate() {
@@ -130,31 +162,70 @@ impl InvisibleCharDetector {
     }
 
     /// Check if file is an i18n/translation file (legitimate ZWNJ/ZWJ usage)
-    fn is_i18n_file(&self, file_path: &str) -> bool {
+    fn is_i18n_file(&self, file_path: &str, content: &str) -> bool {
         let path_lower = file_path.to_lowercase();
-        
+
         // Check for i18n-related directories
         let i18n_dirs = [
-            "/i18n/", "/locale/", "/locales/", "/translation/", 
-            "/translations/", "/lang/", "/languages/",
+            "/i18n/", "/locale/", "/locales/", "/translation/",
+            "/translations/", "/lang/", "/languages/", "/nls/",
         ];
-        
+
         if i18n_dirs.iter().any(|dir| path_lower.contains(dir)) {
             return true;
         }
-        
+
+        // Check for i18n-related file extensions
+        if path_lower.ends_with(".po") ||  // gettext
+           path_lower.ends_with(".mo") ||
+           path_lower.ends_with(".pot") {
+            return true;
+        }
+
         // Check for i18n-related filenames
         let i18n_files = [
             "i18n.", "i18n/", "translation.", "translations.",
             "locale.", "locales.", "lang.", "languages.",
             "gettranslation.", "gettext.", "polyglot.",
         ];
-        
+
         if i18n_files.iter().any(|file| path_lower.contains(file)) {
             return true;
         }
-        
-        false
+
+        // Check for i18n content indicators
+        let content_lower = content.to_lowercase();
+        let i18n_indicators = [
+            "\"locale\"", "\"language\"", "\"translations\"",
+            "i18next", "react-i18next", "react-intl",
+            "gettext", "t(", "i18n:",
+            "datetimeformat", "numberformat", "pluralrules",
+            "\"en\"", "\"de\"", "\"fr\"", "\"es\"", "\"ja\"", "\"zh\"",
+        ];
+
+        // If 3+ i18n indicators found, likely i18n file
+        let indicator_count = i18n_indicators.iter()
+            .filter(|i| content_lower.contains(*i))
+            .count();
+
+        indicator_count >= 3
+    }
+
+    /// Check if content has decoder patterns (indicates steganography, not i18n)
+    fn has_decoder_pattern(&self, content: &str) -> bool {
+        let decoder_patterns = [
+            "atob(",
+            "Buffer.from(",
+            "fromCharCode",
+            "String.fromCharCode",
+            "eval(",
+            "Function(",
+            "decodeURIComponent",
+            ".split('').map(",
+            ".reduce((acc",
+        ];
+
+        decoder_patterns.iter().any(|p| content.contains(p))
     }
 
     /// Check if the character at position is in an emoji context (legitimate)
@@ -372,5 +443,164 @@ mod tests {
         let findings = detector.detect_with_content(content, "test.js");
 
         assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_i18n_file_skips_invisible_chars() {
+        let detector = InvisibleCharDetector::with_default_config();
+
+        // Simulate moment.js-style i18n data with variation selectors
+        let content = "{
+            \"locale\": \"en\",
+            \"translations\": {
+                \"greeting\": \"Hello\u{FE00}\",
+                \"farewell\": \"Goodbye\u{FE01}\"
+            },
+            \"language\": \"English\",
+            \"datetimeformat\": \"MM/DD/YYYY\",
+            \"numberformat\": \"#,##0.00\"
+        }";
+
+        let findings = detector.detect_with_content(content, "package/locale/en.json");
+
+        // Should skip invisible chars in i18n file
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn test_i18n_file_with_decoder_is_flagged() {
+        let detector = InvisibleCharDetector::with_default_config();
+
+        // Simulate steganography in i18n file (invisible chars + decoder)
+        // Use actual invisible characters (variation selectors)
+        let content = "{
+            \"locale\": \"en\",
+            \"translations\": {
+                \"greeting\": \"Hello\u{FE00}\u{FE01}\u{FE02}\u{FE03}\u{FE04}\u{FE05}\u{FE06}\u{FE07}\u{FE08}\u{FE09}\u{FE0A}\u{FE0B}\u{FE0C}\u{FE0D}\u{FE0E}\"
+            },
+            \"language\": \"English\",
+            \"datetimeformat\": \"MM/DD/YYYY\",
+            \"numberformat\": \"#,##0.00\",
+            \"_decoder\": function(data) { return atob(data); }
+        }";
+
+        // Verify decoder pattern is detected
+        assert!(detector.has_decoder_pattern(content), "Should detect atob( pattern");
+
+        // Verify this is detected as i18n file
+        assert!(detector.is_i18n_file("package/locale/en.json", content), "Should detect as i18n file");
+
+        let findings = detector.detect_with_content(content, "package/locale/en.json");
+
+        // Should flag i18n file with decoder pattern and significant invisible chars
+        // Note: We expect findings because i18n + decoder = steganography
+        assert!(!findings.is_empty(), "Should have findings for i18n file with decoder");
+        assert_eq!(findings[0].description, "Invisible characters with decoder in i18n file - likely steganography");
+        assert_eq!(findings[0].confidence, Some(0.85));
+    }
+
+    #[test]
+    fn test_non_i18n_file_still_flagged() {
+        let detector = InvisibleCharDetector::with_default_config();
+
+        // Regular JS file with invisible chars (not i18n)
+        let content = "const secret\u{FE00}Key = 'value';";
+
+        let findings = detector.detect_with_content(content, "src/utils.js");
+
+        // Should still flag non-i18n files
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].code_point, 0xFE00);
+    }
+
+    #[test]
+    fn test_i18n_directory_detection() {
+        let detector = InvisibleCharDetector::with_default_config();
+
+        let content = "const data = 'test\u{FE00}';";
+
+        // Test various i18n directory paths
+        let i18n_paths = [
+            "package/locale/en.js",
+            "src/i18n/translations.js",
+            "lib/locales/fr.js",
+            "app/lang/de.js",
+            "src/languages/es.js",
+            "package/translations/ja.js",
+            "src/nls/pt.js",
+        ];
+
+        for path in &i18n_paths {
+            let findings = detector.detect_with_content(content, path);
+            // Should skip in i18n directories
+            assert!(findings.is_empty(), "Should skip i18n path: {}", path);
+        }
+    }
+
+    #[test]
+    fn test_i18n_file_extension_detection() {
+        let detector = InvisibleCharDetector::with_default_config();
+
+        let content = "const data = 'test\u{FE00}';";
+
+        // Test i18n file extensions
+        let i18n_extensions = [
+            "package/locale/en.po",
+            "package/locale/en.mo",
+            "package/locale/en.pot",
+        ];
+
+        for path in &i18n_extensions {
+            let findings = detector.detect_with_content(content, path);
+            // Should skip i18n file extensions
+            assert!(findings.is_empty(), "Should skip i18n extension: {}", path);
+        }
+    }
+
+    #[test]
+    fn test_is_i18n_file_content_indicators() {
+        let detector = InvisibleCharDetector::with_default_config();
+
+        // Test content-based i18n detection
+        let i18n_content = r##"{
+            "locale": "en",
+            "language": "English",
+            "translations": {...},
+            "i18next": {...},
+            "datetimeformat": "...",
+            "numberformat": "...",
+            "pluralrules": "..."
+        }"##;
+
+        // Should detect as i18n file based on content
+        assert!(detector.is_i18n_file("test.js", i18n_content));
+
+        // Non-i18n content
+        let non_i18n_content = "const x = 1;";
+        assert!(!detector.is_i18n_file("test.js", non_i18n_content));
+    }
+
+    #[test]
+    fn test_has_decoder_pattern() {
+        let detector = InvisibleCharDetector::with_default_config();
+
+        // Test various decoder patterns
+        let decoder_contents = [
+            "const x = atob(data);",
+            "const x = Buffer.from(str);",
+            "const x = String.fromCharCode(c);",
+            "const x = eval(code);",
+            "const x = Function('return this')();",
+            "const x = decodeURIComponent(str);",
+            "const x = str.split('').map(c => c);",
+            "const x = arr.reduce((acc, v) => acc + v);",
+        ];
+
+        for content in &decoder_contents {
+            assert!(detector.has_decoder_pattern(content), "Should detect decoder pattern: {}", content);
+        }
+
+        // Non-decoder content
+        assert!(!detector.has_decoder_pattern("const x = 1;"));
     }
 }

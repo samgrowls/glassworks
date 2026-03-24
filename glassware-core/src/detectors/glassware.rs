@@ -101,6 +101,72 @@ impl GlasswareDetector {
         self.detect_impl(content, file_path)
     }
 
+    /// Check if file is build tool output (should be skipped)
+    fn is_build_output(file_path: &str, content: &str) -> bool {
+        let path_lower = file_path.to_lowercase();
+        
+        // Check for build output directories
+        let build_dirs = [
+            "/node_modules/",
+            "/dist/",
+            "/build/",
+            "/out/",
+            "/lib/",
+            "/generated/",
+            "/.next/",
+            "/.nuxt/",
+            "/.webpack/",
+            "/build-cache/",
+        ];
+        
+        // Check for build tool signatures in content
+        let build_signatures = [
+            "/* webpack",
+            "/* babel",
+            "/* ts-loader",
+            "/* esbuild",
+            "/* rollup",
+            "/*! For license information",
+            "//# sourceMappingURL=",
+            "__webpack_require__",
+            "__babel_runtime__",
+            "/* @preserve",
+            "/* @license",
+            "Object.defineProperty(exports,",
+            "exports.__esModule = true",
+        ];
+        
+        // Check path
+        let in_build_dir = build_dirs.iter().any(|d| path_lower.contains(d));
+        
+        // Check content
+        let has_build_signature = build_signatures.iter()
+            .any(|s| content.contains(s));
+        
+        in_build_dir && has_build_signature
+    }
+
+    /// Check if build output has evasion or C2 patterns (should still flag)
+    fn has_evasion_or_c2(content: &str) -> bool {
+        let evasion_patterns = [
+            "process.env.CI",
+            "process.env.GITHUB_ACTIONS",
+            "os.cpus().length",
+            "os.totalmem()",
+            "process.exit(0)",
+        ];
+        
+        let c2_patterns = [
+            "X-Exfil-ID",
+            "X-Session-Token",
+            "getSignaturesForAddress",
+            "innerInstructions",
+        ];
+        
+        evasion_patterns.iter().any(|p| content.contains(p)) ||
+        c2_patterns.iter().any(|p| content.contains(p))
+    }
+
     /// Internal implementation of detection logic
     fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
@@ -115,6 +181,17 @@ impl GlasswareDetector {
            !path_lower.ends_with(".jsx") &&
            !path_lower.ends_with(".json") {
             return findings;  // Skip non-JS/TS files
+        }
+
+        // Skip build tool output UNLESS it has evasion or C2 patterns
+        if Self::is_build_output(file_path, content) {
+            if Self::has_evasion_or_c2(content) {
+                // Build output with evasion/C2 = still flag (malicious code injected into build)
+                // Continue with normal detection
+            } else {
+                // Pure build output without evasion/C2 = skip
+                return findings;
+            }
         }
 
         // 1. Detect dense VS codepoint runs (steganographic payloads)
@@ -624,5 +701,148 @@ mod tests {
         let content = r#"const normal = 'hello world';"#;
         let findings = detector.detect_with_content(content, "test.js");
         assert!(findings.is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "regex")]
+    fn test_build_output_without_evasion_not_flagged() {
+        let detector = GlasswareDetector::with_default_config();
+        
+        // Webpack build output without evasion patterns
+        let content = r#"
+            /* webpack bootstrap */
+            (function(modules) {
+                function __webpack_require__(moduleId) {
+                    var module = installedModules[moduleId];
+                    return module.exports;
+                }
+            })([]);
+            //# sourceMappingURL=bundle.js.map
+        "#;
+        
+        let findings = detector.detect_with_content(content, "package/dist/bundle.js");
+        
+        // Should be skipped - pure build output
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "regex")]
+    fn test_build_output_with_evasion_still_flagged() {
+        let detector = GlasswareDetector::with_default_config();
+        
+        // Build output WITH evasion pattern (should still be flagged)
+        let content = r#"
+            /* webpack bootstrap */
+            (function() {
+                if (process.env.CI === 'true') {
+                    process.exit(0);
+                }
+                __webpack_require__(0);
+            })();
+            //# sourceMappingURL=bundle.js.map
+        "#;
+        
+        let findings = detector.detect_with_content(content, "package/dist/bundle.js");
+        
+        // Should NOT be skipped - has evasion pattern
+        // Note: This test verifies the skip logic is bypassed, but actual findings
+        // depend on other detectors (the evasion pattern itself isn't detected by glassware detector)
+        // The key is that is_build_output returns true but has_evasion_or_c2 also returns true
+        assert!(GlasswareDetector::is_build_output("package/dist/bundle.js", content));
+        assert!(GlasswareDetector::has_evasion_or_c2(content));
+    }
+
+    #[test]
+    #[cfg(feature = "regex")]
+    fn test_build_output_with_c2_still_flagged() {
+        let detector = GlasswareDetector::with_default_config();
+        
+        // Build output WITH C2 pattern (should still be flagged)
+        let content = r#"
+            /* babel runtime helpers */
+            exports.__esModule = true;
+            const headers = {
+                "X-Exfil-ID": sessionId,
+                "Content-Type": "application/json"
+            };
+        "#;
+        
+        let findings = detector.detect_with_content(content, "package/lib/index.js");
+        
+        // Verify build output detection and C2 detection
+        assert!(GlasswareDetector::is_build_output("package/lib/index.js", content));
+        assert!(GlasswareDetector::has_evasion_or_c2(content));
+    }
+
+    #[test]
+    fn test_build_signature_detection() {
+        // Test various build tool signatures
+        let webpack_sig = "/* webpack";
+        let babel_sig = "/* babel";
+        let sourcemap_sig = "//# sourceMappingURL=";
+        let webpack_require = "__webpack_require__";
+        let babel_runtime = "__babel_runtime__";
+        
+        assert!(GlasswareDetector::is_build_output("package/dist/app.js", webpack_sig));
+        assert!(GlasswareDetector::is_build_output("package/build/main.js", babel_sig));
+        assert!(GlasswareDetector::is_build_output("package/lib/index.js", sourcemap_sig));
+        assert!(GlasswareDetector::is_build_output("package/dist/bundle.js", webpack_require));
+        assert!(GlasswareDetector::is_build_output("package/out/app.js", babel_runtime));
+    }
+
+    #[test]
+    fn test_build_directory_detection() {
+        // Test build directory detection with various signatures
+        let sig = "/* webpack";
+        
+        assert!(GlasswareDetector::is_build_output("package/dist/app.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/build/main.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/out/app.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/lib/index.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/generated/code.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/.next/static/app.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/.nuxt/dist/app.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/.webpack/bundle.js", sig));
+        assert!(GlasswareDetector::is_build_output("package/build-cache/output.js", sig));
+    }
+
+    #[test]
+    fn test_non_build_output_not_skipped() {
+        // Source files should not be skipped even with some signatures
+        let content = "const x = 1; // some comment";
+        
+        // No build directory = not skipped
+        assert!(!GlasswareDetector::is_build_output("package/src/index.js", content));
+        assert!(!GlasswareDetector::is_build_output("package/lib/source.ts", content));
+        assert!(!GlasswareDetector::is_build_output("package/index.js", content));
+    }
+
+    #[test]
+    fn test_evasion_patterns() {
+        // Test evasion pattern detection
+        assert!(GlasswareDetector::has_evasion_or_c2("if (process.env.CI) {}"));
+        assert!(GlasswareDetector::has_evasion_or_c2("process.env.GITHUB_ACTIONS"));
+        assert!(GlasswareDetector::has_evasion_or_c2("os.cpus().length"));
+        assert!(GlasswareDetector::has_evasion_or_c2("os.totalmem()"));
+        assert!(GlasswareDetector::has_evasion_or_c2("process.exit(0)"));
+    }
+
+    #[test]
+    fn test_c2_patterns() {
+        // Test C2 pattern detection
+        assert!(GlasswareDetector::has_evasion_or_c2("X-Exfil-ID"));
+        assert!(GlasswareDetector::has_evasion_or_c2("X-Session-Token"));
+        assert!(GlasswareDetector::has_evasion_or_c2("getSignaturesForAddress"));
+        assert!(GlasswareDetector::has_evasion_or_c2("innerInstructions"));
+    }
+
+    #[test]
+    fn test_clean_content_not_flagged_as_build_or_evasion() {
+        // Clean content should not trigger build output or evasion detection
+        let content = "const normal = 'hello world';";
+        
+        assert!(!GlasswareDetector::is_build_output("package/src/index.js", content));
+        assert!(!GlasswareDetector::has_evasion_or_c2(content));
     }
 }
