@@ -368,7 +368,6 @@ impl WaveExecutor {
             .map_err(|e| WaveError::ExecutorError(format!("Scan failed: {}", e)))?;
 
         // Run LLM analysis if enabled and findings exist
-        // DISABLED: LLM verdicts inconsistent in campaign mode - use for logging only
         #[cfg(feature = "llm")]
         if let Some(ref analyzer) = self.llm_analyzer {
             if !scan_result.findings.is_empty() {
@@ -385,21 +384,21 @@ impl WaveExecutor {
                               verdict.is_malicious, verdict.confidence);
                         debug!("LLM explanation: {}", verdict.explanation);
                         
-                        // DISABLED: LLM verdicts inconsistent in campaign mode
-                        // TODO: Fix LLM integration before re-enabling
-                        /*
+                        // Use LLM verdict to override score-based flagging when confidence is high
+                        // This prevents false positives when LLM is confident the package is safe
                         if verdict.confidence >= 0.75 {
+                            // High confidence: trust LLM verdict
                             scan_result.is_malicious = verdict.is_malicious;
                             info!("LLM high confidence ({:.2}) - overriding is_malicious to {}",
                                   verdict.confidence, verdict.is_malicious);
                         } else if verdict.confidence <= 0.25 {
+                            // Low confidence: assume safe (likely FP)
                             if scan_result.is_malicious {
                                 scan_result.is_malicious = false;
                                 info!("LLM low confidence ({:.2}) - overriding is_malicious to false (likely FP)",
                                       verdict.confidence);
                             }
                         }
-                        */
                     }
                     Err(e) => {
                         warn!("LLM analysis failed: {}", e);

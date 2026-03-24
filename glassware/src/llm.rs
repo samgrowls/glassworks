@@ -438,14 +438,39 @@ impl LlmAnalyzer {
     /// Build analysis prompt.
     fn build_prompt(&self, findings: &[LlmFinding]) -> String {
         let mut prompt = String::from(
-            r#"You are a security expert analyzing code for malicious patterns.
-Your task is to determine if the detected patterns are intentional attacks or false positives.
+            r#"You are a security expert specializing in detecting false positives in static analysis tools.
+Your task is to review detected patterns and determine if they are REAL threats or FALSE POSITIVES.
 
-Consider:
-1. Context and intent of the code
-2. Common false positive patterns
-3. Legitimate use cases for the detected patterns
-4. Overall security implications
+## Critical Guidelines
+
+**FALSE POSITIVE Indicators (likely NOT malicious):**
+1. **Legitimate libraries**: i18n packages (moment, date-fns, intl), crypto libraries (ethers, web3), build tools (webpack, vite)
+2. **Minified/bundled code**: Short variable names, no whitespace, build artifacts
+3. **Framework code**: Angular, React, Vue core packages - these are legitimate frameworks
+4. **Unicode in locale data**: U+FFFD, variation selectors in .json files for i18n
+5. **Standard patterns**: codePointAt, fromCharCode in legitimate decoder libraries
+6. **Blockchain APIs**: RPC calls in @ethersproject, web3, viem are legitimate crypto functionality
+7. **Eval in bundlers**: webpack, esbuild, rollup use Function/eval for legitimate purposes
+
+**REAL THREAT Indicators (likely malicious):**
+1. **Steganographic payloads**: Hidden Unicode payloads that decode to executable code
+2. **Decrypt → Execute chains**: Encrypted data that decrypts and immediately executes
+3. **C2 communication**: Hidden communication to external servers (not legitimate APIs)
+4. **Evasion techniques**: Time delays, sandbox detection, geofencing to avoid analysis
+5. **Obfuscated malicious logic**: Code that hides its true intent through obfuscation
+
+**Key Questions to Ask:**
+1. Is this a well-known legitimate package? (check package name)
+2. Is the pattern in minified/bundled code? (likely FP)
+3. Is this standard functionality for this package type? (e.g., crypto lib doing crypto)
+4. Does the code actually execute maliciously or just contain patterns?
+5. Is there a clear attack chain or just isolated patterns?
+
+**Confidence Guidelines:**
+- **0.0-0.25**: Very likely FALSE POSITIVE (legitimate package, standard patterns)
+- **0.25-0.50**: Likely FALSE POSITIVE (some concerning patterns but context suggests legitimate)
+- **0.50-0.75**: Uncertain (mixed signals, needs human review)
+- **0.75-1.0**: Likely MALICIOUS (clear attack chain, evasion, or steganographic payload)
 
 "#,
         );

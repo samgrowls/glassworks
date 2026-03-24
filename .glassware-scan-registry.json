@@ -1074,6 +1074,62 @@
       "findings_count": 0,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "6e86f028-f7ba-4057-ae9e-8b8a03249c74",
+      "started_at": "2026-03-24T12:44:46.758370470Z",
+      "completed_at": "2026-03-24T12:44:48.752877053Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "9dc1dfcd-2112-4ed8-b3a1-768f11766ef9",
+      "started_at": "2026-03-24T12:45:06.002487919Z",
+      "completed_at": "2026-03-24T12:45:09.200754135Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "9be2b5fb-9499-4f25-b80a-db1cd9846232",
+      "started_at": "2026-03-24T12:45:38.402609364Z",
+      "completed_at": "2026-03-24T12:45:46.424358965Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "738af66b-4c14-4f27-99bc-e717dfdf161b",
+      "started_at": "2026-03-24T12:46:42.594239258Z",
+      "completed_at": "2026-03-24T12:46:53.045628876Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }
