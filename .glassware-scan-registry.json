@@ -1004,6 +1004,48 @@
       "findings_count": 1,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "5d8def00-bab6-4d95-97d0-d52533719281",
+      "started_at": "2026-03-24T10:56:32.694446126Z",
+      "completed_at": "2026-03-24T10:56:33.664676631Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "2b3eb1eb-512e-489c-b8a3-39cce523c9df",
+      "started_at": "2026-03-24T10:56:33.767146775Z",
+      "completed_at": "2026-03-24T10:56:34.061315237Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dotenv@16.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "94d3701a-cf17-483a-92e9-9b65739531ad",
+      "started_at": "2026-03-24T10:56:44.639187509Z",
+      "completed_at": "2026-03-24T10:56:45.619468420Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
     }
   ]
 }
