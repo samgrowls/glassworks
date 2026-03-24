@@ -514,6 +514,174 @@
       "findings_count": 16,
       "malicious_count": 1,
       "error": null
+    },
+    {
+      "id": "9ba6073f-d25d-4050-974c-4d65020a6fd4",
+      "started_at": "2026-03-24T07:12:25.128481241Z",
+      "completed_at": "2026-03-24T07:12:25.168256190Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "fa14bb8b-0fe0-4201-99c9-b78a6a166844",
+      "started_at": "2026-03-24T07:12:30.890344747Z",
+      "completed_at": "2026-03-24T07:12:30.930042139Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "moment@2.30.1"
+      ],
+      "version_policy": null,
+      "findings_count": 194,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "cd83b103-ab11-4e84-9995-6103a87695fc",
+      "started_at": "2026-03-24T07:13:55.066787041Z",
+      "completed_at": "2026-03-24T07:13:55.106173655Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "5ee77f19-5d9d-4624-af10-b27083f05948",
+      "started_at": "2026-03-24T07:29:37.887125143Z",
+      "completed_at": "2026-03-24T07:29:37.926954530Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "87b13ae6-163f-4952-a290-fcc1e496910f",
+      "started_at": "2026-03-24T07:29:42.379739394Z",
+      "completed_at": "2026-03-24T07:29:42.420009843Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "09987d90-aed1-46eb-ba0f-b30daea5a9c8",
+      "started_at": "2026-03-24T07:29:47.916653331Z",
+      "completed_at": "2026-03-24T07:29:47.955828252Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "moment@2.30.1"
+      ],
+      "version_policy": null,
+      "findings_count": 194,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "49d02f3b-252c-4ad8-8765-5e2c1021f8c1",
+      "started_at": "2026-03-24T07:30:09.950071880Z",
+      "completed_at": "2026-03-24T07:30:09.989927095Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "54286a75-7f3e-43fc-898a-c4ac9bd29556",
+      "started_at": "2026-03-24T07:34:41.638884007Z",
+      "completed_at": "2026-03-24T07:34:41.678117826Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "3c7125d1-9376-4e43-abe4-33f60b75381a",
+      "started_at": "2026-03-24T07:34:47.358441845Z",
+      "completed_at": "2026-03-24T07:34:47.397847988Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "79d9ff1a-49d9-46b1-aeb9-da5e9ec9f403",
+      "started_at": "2026-03-24T07:35:37.879400078Z",
+      "completed_at": "2026-03-24T07:35:39.887037847Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "4a48bad5-8bf8-47b4-81a3-98ebe1db945c",
+      "started_at": "2026-03-24T07:35:45.089410890Z",
+      "completed_at": "2026-03-24T07:35:45.129137689Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "4d73f0f5-b09d-43a5-9757-42ae88d66e3e",
+      "started_at": "2026-03-24T07:38:15.355099251Z",
+      "completed_at": "2026-03-24T07:38:17.364189481Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "webpack@5.89.0"
+      ],
+      "version_policy": null,
+      "findings_count": 16,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }

@@ -940,7 +940,7 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
                     packages: glassware_config.whitelist.packages.clone(),
                     crypto_packages: glassware_config.whitelist.crypto_packages.clone(),
                     build_tools: glassware_config.whitelist.build_tools.clone(),
-                    state_management: vec![],
+                    state_management: glassware_config.whitelist.state_management.clone(),
                 },
                 scoring: glassware_core::ScoringConfig {
                     malicious_threshold: glassware_config.scoring.malicious_threshold,
@@ -949,7 +949,19 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
                     critical_weight: glassware_config.scoring.critical_weight,
                     high_weight: glassware_config.scoring.high_weight,
                 },
-                detectors: glassware_core::DetectorWeights::default(),
+                detectors: glassware_core::DetectorWeights {
+                    invisible_char: glassware_config.detectors.invisible_char.weight,
+                    homoglyph: glassware_config.detectors.homoglyph.weight,
+                    bidi: glassware_config.detectors.bidi.weight,
+                    blockchain_c2: glassware_config.detectors.blockchain_c2.weight,
+                    glassware_pattern: glassware_config.detectors.glassware_pattern.weight,
+                    locale_geofencing: 1.0,  // LocaleGeofencingConfig doesn't have weight field
+                    time_delay: 1.0,
+                    encrypted_payload: 3.0,
+                    rdd: 3.0,
+                    forcememo: 3.0,
+                    jpd_author: 3.0,
+                },
             },
         },
         cache_db_path: if cli.no_cache {

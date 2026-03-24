@@ -715,28 +715,28 @@ impl Scanner {
         // Helper to check if package matches a whitelist entry
         let matches_entry = |entry: &str| -> bool {
             let entry_lower = entry.to_lowercase();
-            
+
             // Exact match
             if package_lower == entry_lower {
                 return true;
             }
-            
+
             // Wildcard match (@metamask/* matches @metamask/anything)
             if entry_lower.ends_with("/*") {
                 let prefix = &entry_lower[..entry_lower.len()-2]; // "@metamask/"
                 return package_lower.starts_with(prefix);
             }
-            
+
             // Prefix match with dash (webpack- matches webpack-cli)
             if entry_lower.ends_with('-') {
                 return package_lower.starts_with(&entry_lower);
             }
-            
+
             // Prefix match with slash (@babel/ matches @babel/core)
             if entry_lower.ends_with('/') {
                 return package_lower.starts_with(&entry_lower);
             }
-            
+
             false
         };
 
