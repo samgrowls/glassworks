@@ -878,6 +878,62 @@
       "findings_count": 1,
       "malicious_count": 1,
       "error": null
+    },
+    {
+      "id": "09466c09-e12c-44a5-9d3d-ff1f4488a923",
+      "started_at": "2026-03-24T10:35:00.224694231Z",
+      "completed_at": "2026-03-24T10:35:04.907952348Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/core@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 114,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "8e415695-21aa-4814-b117-e3f5c3edb349",
+      "started_at": "2026-03-24T10:35:25.927613285Z",
+      "completed_at": "2026-03-24T10:35:43.395613673Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@react-native-firebase/app@18.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 4,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "aa68582d-75ce-4540-8b90-9a4d4bb933df",
+      "started_at": "2026-03-24T10:39:11.109208113Z",
+      "completed_at": "2026-03-24T10:39:11.960319492Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@react-native-firebase/app@18.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 4,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "9753d137-184e-43df-ad65-e62eeab3d7f0",
+      "started_at": "2026-03-24T10:39:23.400042185Z",
+      "completed_at": "2026-03-24T10:39:51.703972621Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@react-native-firebase/app@18.7.0"
+      ],
+      "version_policy": null,
+      "findings_count": 4,
+      "malicious_count": 1,
+      "error": null
     }
   ]
 }
