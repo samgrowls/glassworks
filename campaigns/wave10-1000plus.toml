@@ -84,6 +84,9 @@ mode = "validate"
 [[waves.sources]]
 type = "packages"
 list = [
+    # Evidence packages (known malicious GlassWare attacks)
+    "react-native-country-select@0.3.1",
+    "react-native-international-phone-number@0.10.7",
 ]
 
 [waves.expectations]
