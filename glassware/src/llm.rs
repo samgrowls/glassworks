@@ -8,6 +8,7 @@
 //! - NVIDIA NIM, Cerebras, Groq support
 //! - Batch analysis
 //! - Caching of LLM results
+//! - Multi-stage pipeline (Phase 5 - 2026-03-24)
 
 use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,9 @@ use tokio::sync::Mutex;
 use tracing::{debug, error, info, warn};
 
 use crate::error::{OrchestratorError, Result};
+
+// Re-export core types for convenience
+pub use glassware_core::Finding as CoreFinding;
 
 /// LLM verdict from analysis.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -691,6 +695,470 @@ impl From<&glassware_core::Finding> for LlmFinding {
                 }
             }),
         }
+    }
+}
+
+// ============================================================================
+// Phase 5: Multi-Stage LLM Pipeline (2026-03-24)
+// ============================================================================
+
+/// Configuration for multi-stage LLM pipeline.
+#[derive(Debug, Clone)]
+pub struct MultiStagePipelineConfig {
+    /// Stage 1: Triage config (Cerebras - fast, ~2s/pkg)
+    pub triage_config: Option<LlmAnalyzerConfig>,
+    /// Stage 2: Analysis config (NVIDIA - medium, ~15s/pkg)
+    pub analysis_config: Option<LlmAnalyzerConfig>,
+    /// Stage 3: Deep dive config (NVIDIA - slow, ~30s/pkg for borderline)
+    pub deep_dive_config: Option<LlmAnalyzerConfig>,
+    /// Score threshold for deep dive (e.g., 4.0-7.0 = borderline)
+    pub deep_dive_score_threshold_min: f32,
+    /// Score threshold for deep dive (e.g., 4.0-7.0 = borderline)
+    pub deep_dive_score_threshold_max: f32,
+    /// Enable triage stage
+    pub triage_enabled: bool,
+    /// Enable analysis stage
+    pub analysis_enabled: bool,
+    /// Enable deep dive stage
+    pub deep_dive_enabled: bool,
+    /// Cache results
+    pub cache_enabled: bool,
+}
+
+impl Default for MultiStagePipelineConfig {
+    fn default() -> Self {
+        Self {
+            // Stage 1: Cerebras for fast triage
+            triage_config: LlmAnalyzerConfig::from_env().map(|mut cfg| {
+                cfg.timeout_secs = 30;
+                cfg.max_tokens = 512;
+                cfg
+            }),
+            // Stage 2: NVIDIA for analysis
+            analysis_config: LlmAnalyzerConfig::nvidia_deep_analysis(),
+            // Stage 3: NVIDIA for deep dive (same config, different prompt)
+            deep_dive_config: LlmAnalyzerConfig::nvidia_deep_analysis(),
+            deep_dive_score_threshold_min: 4.0,
+            deep_dive_score_threshold_max: 7.0,
+            triage_enabled: true,
+            analysis_enabled: true,
+            deep_dive_enabled: true,
+            cache_enabled: true,
+        }
+    }
+}
+
+impl MultiStagePipelineConfig {
+    /// Create config from environment variables.
+    pub fn from_env() -> Self {
+        let mut config = Self::default();
+
+        // Override with environment-based configs
+        if let Ok(cerebras_key) = std::env::var("GLASSWARE_LLM_API_KEY") {
+            config.triage_config = Some(LlmAnalyzerConfig::cerebras(cerebras_key));
+        }
+
+        config
+    }
+
+    /// Create config with only triage stage (fast scanning).
+    pub fn triage_only() -> Self {
+        Self {
+            triage_config: LlmAnalyzerConfig::from_env(),
+            analysis_config: None,
+            deep_dive_config: None,
+            triage_enabled: true,
+            analysis_enabled: false,
+            deep_dive_enabled: false,
+            cache_enabled: true,
+            deep_dive_score_threshold_min: 4.0,
+            deep_dive_score_threshold_max: 7.0,
+        }
+    }
+
+    /// Create config with triage + analysis (standard scanning).
+    pub fn standard() -> Self {
+        Self {
+            triage_config: LlmAnalyzerConfig::from_env(),
+            analysis_config: LlmAnalyzerConfig::nvidia_deep_analysis(),
+            deep_dive_config: None,
+            triage_enabled: true,
+            analysis_enabled: true,
+            deep_dive_enabled: false,
+            cache_enabled: true,
+            deep_dive_score_threshold_min: 4.0,
+            deep_dive_score_threshold_max: 7.0,
+        }
+    }
+
+    /// Create config with all stages (deep scanning for borderline cases).
+    pub fn deep_scan() -> Self {
+        Self {
+            triage_config: LlmAnalyzerConfig::from_env(),
+            analysis_config: LlmAnalyzerConfig::nvidia_deep_analysis(),
+            deep_dive_config: LlmAnalyzerConfig::nvidia_deep_analysis(),
+            triage_enabled: true,
+            analysis_enabled: true,
+            deep_dive_enabled: true,
+            cache_enabled: true,
+            deep_dive_score_threshold_min: 4.0,
+            deep_dive_score_threshold_max: 7.0,
+        }
+    }
+}
+
+/// Result from multi-stage LLM pipeline.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PipelineResult {
+    /// Final verdict.
+    pub verdict: LlmVerdict,
+    /// Stage that produced the verdict (1=triage, 2=analysis, 3=deep dive).
+    pub stage: u8,
+    /// Whether triage was run.
+    pub triage_run: bool,
+    /// Whether analysis was run.
+    pub analysis_run: bool,
+    /// Whether deep dive was run.
+    pub deep_dive_run: bool,
+    /// Triage verdict (if run).
+    pub triage_verdict: Option<LlmVerdict>,
+    /// Analysis verdict (if run).
+    pub analysis_verdict: Option<LlmVerdict>,
+    /// Deep dive verdict (if run).
+    pub deep_dive_verdict: Option<LlmVerdict>,
+    /// Total time spent in milliseconds.
+    pub total_time_ms: u64,
+    /// Models used at each stage.
+    pub models_used: Vec<String>,
+}
+
+/// Multi-stage LLM pipeline for security analysis.
+///
+/// Implements the Phase 5 multi-stage pipeline from PROMPT.md:
+/// - Stage 1: Triage (Cerebras - fast, ~2s/pkg) - Identify obvious FPs
+/// - Stage 2: Analysis (NVIDIA - medium, ~15s/pkg) - Explain attack chain
+/// - Stage 3: Deep Dive (NVIDIA - slow, ~30s/pkg) - Borderline cases
+pub struct MultiStagePipeline {
+    triage_analyzer: Option<LlmAnalyzer>,
+    analysis_analyzer: Option<LlmAnalyzer>,
+    deep_dive_analyzer: Option<LlmAnalyzer>,
+    config: MultiStagePipelineConfig,
+}
+
+impl MultiStagePipeline {
+    /// Create a new multi-stage pipeline with default config.
+    pub fn new() -> Result<Self> {
+        Self::with_config(MultiStagePipelineConfig::default())
+    }
+
+    /// Create a new multi-stage pipeline with custom config.
+    pub fn with_config(config: MultiStagePipelineConfig) -> Result<Self> {
+        let triage_analyzer = config.triage_config.as_ref()
+            .filter(|_| config.triage_enabled)
+            .map(|cfg| LlmAnalyzer::with_config(cfg.clone()))
+            .transpose()?;
+
+        let analysis_analyzer = config.analysis_config.as_ref()
+            .filter(|_| config.analysis_enabled)
+            .map(|cfg| LlmAnalyzer::with_config(cfg.clone()))
+            .transpose()?;
+
+        let deep_dive_analyzer = config.deep_dive_config.as_ref()
+            .filter(|_| config.deep_dive_enabled)
+            .map(|cfg| LlmAnalyzer::with_config(cfg.clone()))
+            .transpose()?;
+
+        Ok(Self {
+            triage_analyzer,
+            analysis_analyzer,
+            deep_dive_analyzer,
+            config,
+        })
+    }
+
+    /// Run the multi-stage pipeline on findings.
+    ///
+    /// Returns a PipelineResult with the final verdict and stage information.
+    pub async fn run(&self, findings: &[LlmFinding], threat_score: f32) -> Result<PipelineResult> {
+        let start_time = std::time::Instant::now();
+        let mut models_used = Vec::new();
+
+        let mut triage_verdict: Option<LlmVerdict> = None;
+        let mut analysis_verdict: Option<LlmVerdict> = None;
+        let mut deep_dive_verdict: Option<LlmVerdict> = None;
+
+        // Stage 1: Triage (fast FP identification)
+        let triage_run = self.triage_analyzer.is_some();
+        if let Some(ref triage) = self.triage_analyzer {
+            info!("Stage 1: Running triage analysis (fast FP identification)");
+            match triage.analyze(findings).await {
+                Ok(verdict) => {
+                    debug!("Triage verdict: is_malicious={}, confidence={:.2}", verdict.is_malicious, verdict.confidence);
+                    
+                    // Record model used
+                    if let Some(model) = triage.config().models.first() {
+                        models_used.push(format!("triage:{}", model));
+                    }
+
+                    // If triage says very likely FP (confidence < 0.25), skip further analysis
+                    if verdict.confidence < 0.25 {
+                        info!("Triage identified likely FP (confidence {:.2}), skipping further analysis", verdict.confidence);
+                        triage_verdict = Some(verdict.clone());
+                        
+                        return Ok(PipelineResult {
+                            verdict,
+                            stage: 1,
+                            triage_run,
+                            analysis_run: false,
+                            deep_dive_run: false,
+                            triage_verdict,
+                            analysis_verdict: None,
+                            deep_dive_verdict: None,
+                            total_time_ms: start_time.elapsed().as_millis() as u64,
+                            models_used,
+                        });
+                    }
+
+                    triage_verdict = Some(verdict);
+                }
+                Err(e) => {
+                    warn!("Triage analysis failed: {}", e);
+                    // Continue to Stage 2 even if triage fails
+                }
+            }
+        }
+
+        // Stage 2: Analysis (attack chain explanation)
+        let analysis_run = self.analysis_analyzer.is_some();
+        if let Some(ref analysis) = self.analysis_analyzer {
+            info!("Stage 2: Running analysis (attack chain explanation)");
+            match analysis.analyze(findings).await {
+                Ok(verdict) => {
+                    debug!("Analysis verdict: is_malicious={}, confidence={:.2}", verdict.is_malicious, verdict.confidence);
+                    
+                    // Record model used
+                    if let Some(model) = analysis.config().models.first() {
+                        models_used.push(format!("analysis:{}", model));
+                    }
+
+                    // If analysis is confident (>= 0.75), skip deep dive
+                    if verdict.confidence >= 0.75 {
+                        info!("Analysis confident (confidence {:.2}), skipping deep dive", verdict.confidence);
+                        analysis_verdict = Some(verdict.clone());
+                        
+                        return Ok(PipelineResult {
+                            verdict,
+                            stage: 2,
+                            triage_run,
+                            analysis_run,
+                            deep_dive_run: false,
+                            triage_verdict,
+                            analysis_verdict,
+                            deep_dive_verdict: None,
+                            total_time_ms: start_time.elapsed().as_millis() as u64,
+                            models_used,
+                        });
+                    }
+
+                    analysis_verdict = Some(verdict);
+                }
+                Err(e) => {
+                    warn!("Analysis failed: {}", e);
+                    // Continue to Stage 3 if deep dive is enabled
+                }
+            }
+        }
+
+        // Stage 3: Deep Dive (borderline cases only)
+        let deep_dive_run = self.deep_dive_analyzer.is_some() 
+            && threat_score >= self.config.deep_dive_score_threshold_min
+            && threat_score <= self.config.deep_dive_score_threshold_max;
+
+        if let Some(ref deep_dive) = self.deep_dive_analyzer {
+            if deep_dive_run {
+                info!("Stage 3: Running deep dive (borderline case: score {:.2})", threat_score);
+                match deep_dive.analyze(findings).await {
+                    Ok(verdict) => {
+                        debug!("Deep dive verdict: is_malicious={}, confidence={:.2}", verdict.is_malicious, verdict.confidence);
+                        
+                        // Record model used
+                        if let Some(model) = deep_dive.config().models.first() {
+                            models_used.push(format!("deep_dive:{}", model));
+                        }
+
+                        deep_dive_verdict = Some(verdict.clone());
+                        
+                        return Ok(PipelineResult {
+                            verdict,
+                            stage: 3,
+                            triage_run,
+                            analysis_run,
+                            deep_dive_run: true,
+                            triage_verdict,
+                            analysis_verdict,
+                            deep_dive_verdict,
+                            total_time_ms: start_time.elapsed().as_millis() as u64,
+                            models_used,
+                        });
+                    }
+                    Err(e) => {
+                        warn!("Deep dive failed: {}", e);
+                        // Fall back to analysis verdict if available
+                    }
+                }
+            }
+        }
+
+        // Return best available verdict
+        let verdict = deep_dive_verdict.clone()
+            .or_else(|| analysis_verdict.clone())
+            .or_else(|| triage_verdict.clone())
+            .unwrap_or_else(|| LlmVerdict {
+                is_malicious: false,
+                confidence: 0.0,
+                explanation: "All LLM stages failed".to_string(),
+                recommendations: vec!["Manual review required".to_string()],
+                false_positive_indicators: vec![],
+            });
+
+        let stage = if deep_dive_verdict.is_some() { 3 } 
+            else if analysis_verdict.is_some() { 2 } 
+            else if triage_verdict.is_some() { 1 } 
+            else { 0 };
+
+        Ok(PipelineResult {
+            verdict,
+            stage,
+            triage_run,
+            analysis_run,
+            deep_dive_run,
+            triage_verdict,
+            analysis_verdict,
+            deep_dive_verdict,
+            total_time_ms: start_time.elapsed().as_millis() as u64,
+            models_used,
+        })
+    }
+
+    /// Run pipeline without triage (analysis + deep dive only).
+    pub async fn run_analysis_only(&self, findings: &[LlmFinding], threat_score: f32) -> Result<PipelineResult> {
+        // Just call run - config controls which stages are enabled
+        // If triage is disabled in config, it will be skipped
+        self.run(findings, threat_score).await
+    }
+
+    /// Get pipeline configuration.
+    pub fn config(&self) -> &MultiStagePipelineConfig {
+        &self.config
+    }
+}
+
+/// Builder for multi-stage pipeline configuration.
+pub struct PipelineBuilder {
+    config: MultiStagePipelineConfig,
+}
+
+impl PipelineBuilder {
+    /// Create a new pipeline builder.
+    pub fn new() -> Self {
+        Self {
+            config: MultiStagePipelineConfig::default(),
+        }
+    }
+
+    /// Enable/disable triage stage.
+    pub fn with_triage(mut self, enabled: bool) -> Self {
+        self.config.triage_enabled = enabled;
+        self
+    }
+
+    /// Enable/disable analysis stage.
+    pub fn with_analysis(mut self, enabled: bool) -> Self {
+        self.config.analysis_enabled = enabled;
+        self
+    }
+
+    /// Enable/disable deep dive stage.
+    pub fn with_deep_dive(mut self, enabled: bool) -> Self {
+        self.config.deep_dive_enabled = enabled;
+        self
+    }
+
+    /// Set triage config.
+    pub fn with_triage_config(mut self, config: LlmAnalyzerConfig) -> Self {
+        self.config.triage_config = Some(config);
+        self
+    }
+
+    /// Set analysis config.
+    pub fn with_analysis_config(mut self, config: LlmAnalyzerConfig) -> Self {
+        self.config.analysis_config = Some(config);
+        self
+    }
+
+    /// Set deep dive config.
+    pub fn with_deep_dive_config(mut self, config: LlmAnalyzerConfig) -> Self {
+        self.config.deep_dive_config = Some(config);
+        self
+    }
+
+    /// Set score thresholds for deep dive.
+    pub fn with_score_thresholds(mut self, min: f32, max: f32) -> Self {
+        self.config.deep_dive_score_threshold_min = min;
+        self.config.deep_dive_score_threshold_max = max;
+        self
+    }
+
+    /// Build the pipeline.
+    pub fn build(self) -> Result<MultiStagePipeline> {
+        MultiStagePipeline::with_config(self.config)
+    }
+}
+
+impl Default for PipelineBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod pipeline_tests {
+    use super::*;
+
+    #[test]
+    fn test_pipeline_config_default() {
+        let config = MultiStagePipelineConfig::default();
+        assert!(config.triage_enabled);
+        assert!(config.analysis_enabled);
+        assert!(config.deep_dive_enabled);
+        assert_eq!(config.deep_dive_score_threshold_min, 4.0);
+        assert_eq!(config.deep_dive_score_threshold_max, 7.0);
+    }
+
+    #[test]
+    fn test_pipeline_config_triage_only() {
+        let config = MultiStagePipelineConfig::triage_only();
+        assert!(config.triage_enabled);
+        assert!(!config.analysis_enabled);
+        assert!(!config.deep_dive_enabled);
+    }
+
+    #[test]
+    fn test_pipeline_builder() {
+        let pipeline = PipelineBuilder::new()
+            .with_triage(true)
+            .with_analysis(true)
+            .with_deep_dive(false)
+            .with_score_thresholds(3.0, 6.0)
+            .build();
+
+        assert!(pipeline.is_ok());
+        let pipeline = pipeline.unwrap();
+        assert!(pipeline.config().triage_enabled);
+        assert!(pipeline.config().analysis_enabled);
+        assert!(!pipeline.config().deep_dive_enabled);
+        assert_eq!(pipeline.config().deep_dive_score_threshold_min, 3.0);
+        assert_eq!(pipeline.config().deep_dive_score_threshold_max, 6.0);
     }
 }
 
