@@ -22,6 +22,27 @@
 
 ---
 
+## ⚠️ Current State & Known Issues
+
+**Version:** v0.30.0-fp-eliminated (2026-03-24)
+
+**⚠️ CRITICAL:** Recent tuning eliminated false positives by whitelisting high-value target packages (UI frameworks, build tools). This is a **temporary workaround**, not a proper fix.
+
+**See:** [`HANDOFF/CRITICAL-STATE-MAR24.md`](HANDOFF/CRITICAL-STATE-MAR24.md) for:
+- Dangerous whitelist entries that should be removed
+- Proper detector fixes needed
+- Evidence library expansion requirements
+- Testing workflows
+
+**Current Detection Performance:**
+- Wave 10 (611 packages): ~0% malicious rate
+- Evidence detection: 1/2 packages (50%)
+- False positives: ~0% (achieved via whitelisting)
+
+**Next Priority:** Remove dangerous whitelist entries and fix detectors properly.
+
+---
+
 ## 🚀 Quick Start
 
 ### Install
