@@ -88,23 +88,12 @@ impl Detector for TimeDelayDetector {
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
-        
-        // Skip build tools and development dependencies - they legitimately use setTimeout
-        // for watch mode, debouncing, build optimization, etc.
-        let path_lower = ir.metadata.path.to_lowercase();
-        if path_lower.contains("@angular") ||
-           path_lower.contains("@angular-devkit") ||
-           path_lower.contains("webpack") ||
-           path_lower.contains("vite") ||
-           path_lower.contains("rollup") ||
-           path_lower.contains("babel") ||
-           path_lower.contains("gulp") ||
-           path_lower.contains("grunt") ||
-           path_lower.contains("build-") ||
-           path_lower.contains("-cli/") {
-            return findings;  // Skip build tools
-        }
-        
+
+        // ⚠️ UPDATED 2026-03-24: Removed build tool skip logic
+        // Build tools ARE high-value attack targets (see: Babel 2024, Webpack 2025 attacks)
+        // Instead, use context-aware detection: CI bypass + delay = evasion
+        // Pure setTimeout in build tools without CI bypass = likely legitimate
+
         let mut ci_check_lines: Vec<usize> = Vec::new();
 
         // First pass: find CI checks

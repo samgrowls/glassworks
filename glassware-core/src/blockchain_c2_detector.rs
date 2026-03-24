@@ -61,16 +61,19 @@ const KNOWN_C2_IPS: &[&str] = &[
     "217.69.0.159",
 ];
 
-/// Legitimate crypto package identifiers - DO NOT flag these
+/// Legitimate crypto package identifiers - DEPRECATED 2026-03-24
+/// Package-level whitelisting is dangerous for supply chain security.
+/// Known C2 wallets/IPs are ALWAYS flagged regardless of package.
+/// Generic blockchain patterns now use context-aware detection.
 const CRYPTO_PACKAGE_WHITELIST: &[&str] = &[
-    // Package names
+    // Package names - KEPT for reference only, not used
     "ethers", "web3", "viem", "wagmi", "@solana/web3", "@ethersproject",
     "bitcoinjs", "bip39", "hdkey", "@metamask", "@walletconnect",
     // Common crypto module patterns
     "solana-web3", "ethers.js", "web3.js", "web3-utils",
-    // Official cloud SDKs that may have blockchain integration
-    "@azure/", "@microsoft/", "@aws-sdk/", "@google-cloud/",
-    "firebase", "firebase-admin",
+    // Official cloud SDKs - REMOVED from active use
+    // "@azure/", "@microsoft/", "@aws-sdk/", "@google-cloud/",
+    // "firebase", "firebase-admin",
 ];
 
 /// Patterns for blockchain C2 detection
@@ -134,15 +137,10 @@ impl Detector for BlockchainC2Detector {
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
 
-        // Check if this is a legitimate crypto package - skip generic blockchain patterns
-        // Check both path and content for crypto package identifiers
-        let path_lower = ir.metadata.path.to_lowercase();
-        let content_lower = ir.content().to_lowercase();
-        
-        let is_crypto_package = CRYPTO_PACKAGE_WHITELIST.iter().any(|pkg| {
-            let pkg_lower = pkg.to_lowercase();
-            path_lower.contains(&pkg_lower) || content_lower.contains(&pkg_lower)
-        });
+        // ⚠️ UPDATED 2026-03-24: Removed crypto package whitelist skip logic
+        // Known C2 wallets/IPs are ALWAYS flagged regardless of package
+        // Generic blockchain patterns now use context-aware detection
+        // Supply chain attacks can compromise any package including crypto libs
 
         for (line_num, line) in ir.content().lines().enumerate() {
             // Check for known C2 wallet addresses (ALWAYS flag - not affected by whitelist)
@@ -191,13 +189,11 @@ impl Detector for BlockchainC2Detector {
                 }
             }
 
-            // Skip generic blockchain patterns for legitimate crypto packages
-            // These packages use blockchain APIs as their PRIMARY FUNCTION
-            if is_crypto_package {
-                continue;
-            }
+            // ⚠️ UPDATED 2026-03-24: Check for blockchain patterns with context-aware detection
+            // Instead of skipping crypto packages, use severity adjustment based on context
+            // Known C2 wallets/IPs are ALWAYS flagged (above)
+            // Generic patterns need additional context (obfuscation, polling, etc.)
 
-            // Check for blockchain patterns (only for non-crypto packages)
             for (i, pattern) in BLOCKCHAIN_PATTERNS.iter().enumerate() {
                 if pattern.is_match(line) {
                     // Reduce severity for generic patterns - these need context

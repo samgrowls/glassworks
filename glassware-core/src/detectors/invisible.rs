@@ -48,31 +48,25 @@ impl InvisibleCharDetector {
     fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
 
-        // Skip bundled/minified files (high FP rate)
+        // ⚠️ UPDATED 2026-03-24: Removed overly broad directory skips
+        // Malicious code is often in dist/build directories
+        // Instead, use content-aware detection:
+        // - Invisible chars + decoder = likely steganography (Critical)
+        // - Invisible chars alone in i18n file = likely legitimate (skip)
+        // - High density invisible chars = suspicious regardless of location
+        
+        // Skip ONLY TypeScript definition files and JSON data files (high FP rate for i18n data)
         let path_lower = file_path.to_lowercase();
-        let is_bundled = path_lower.contains("/dist/")
-            || path_lower.contains("/build/")
-            || path_lower.contains("/bin/")
-            || path_lower.contains("/out/")      // ClojureScript
-            || path_lower.contains("/gyp/")      // GYP build files
-            || path_lower.contains("/lib/")      // Compiled libraries
-            || path_lower.ends_with(".mjs")
-            || path_lower.ends_with(".cjs")
-            || path_lower.contains(".min.")
-            || path_lower.contains(".bundle.");
-
-        if is_bundled {
-            return findings;
+        if path_lower.ends_with(".d.ts") {
+            return findings;  // TypeScript definitions - rarely contain malicious code
         }
-
-        // Skip ClojureScript compiled output (cljs_deps.js marker)
-        if path_lower.contains("cljs_deps.js") || path_lower.contains("/com/cognitect/transit/") {
-            return findings;
-        }
-
-        // Skip TypeScript definition files and JSON files (high FP rate for i18n data)
-        if path_lower.ends_with(".d.ts") || path_lower.ends_with(".json") {
-            return findings;
+        
+        // JSON files: Skip only if they appear to be i18n/translation data
+        if path_lower.ends_with(".json") {
+            if self.is_i18n_file(file_path) {
+                return findings;  // Legitimate i18n JSON
+            }
+            // Non-i18n JSON files are scanned (package.json attacks exist)
         }
 
         // Check if this is an i18n/translation file (legitimate use of ZWNJ/ZWJ)
