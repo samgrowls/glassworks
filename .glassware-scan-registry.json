@@ -1130,6 +1130,272 @@
       "findings_count": 16,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "a91b9d82-4aa1-4830-9b61-5fb90ad2e9ab",
+      "started_at": "2026-03-24T15:13:45.049136388Z",
+      "completed_at": "2026-03-24T15:13:46.048934099Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "8251df07-afd3-42bf-bbf4-a574abee86c1",
+      "started_at": "2026-03-24T15:13:46.127485066Z",
+      "completed_at": "2026-03-24T15:13:46.929233244Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "f8b4f623-a5e2-41cb-a03f-78952d09af03",
+      "started_at": "2026-03-24T15:13:47.057610735Z",
+      "completed_at": "2026-03-24T15:13:47.404755371Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "dotenv@16.3.1"
+      ],
+      "version_policy": null,
+      "findings_count": 1,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "0fa4989a-6b32-47aa-8f2a-4f46c623f17f",
+      "started_at": "2026-03-24T15:14:04.971821025Z",
+      "completed_at": "2026-03-24T15:14:05.932165628Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "ba23565d-8e08-4dbb-8832-3ae1964b1bb0",
+      "started_at": "2026-03-24T15:14:06.033728073Z",
+      "completed_at": "2026-03-24T15:14:06.607991723Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "3272dd20-813d-42ae-ab02-4ea72a9eb4ce",
+      "started_at": "2026-03-24T15:14:06.709164393Z",
+      "completed_at": "2026-03-24T15:14:07.178118913Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ajv@8.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 6,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "a5168809-babb-479c-ab43-74d0d953e252",
+      "started_at": "2026-03-24T15:14:32.147921043Z",
+      "completed_at": "2026-03-24T15:14:32.567247602Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "socket.io@4.7.4"
+      ],
+      "version_policy": null,
+      "findings_count": 7,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "32f4ffc0-42a4-40e6-abf1-849a89fd40b4",
+      "started_at": "2026-03-24T15:14:32.676376835Z",
+      "completed_at": "2026-03-24T15:14:33.350460730Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "pino@8.17.2"
+      ],
+      "version_policy": null,
+      "findings_count": 6,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "72948751-8318-47b1-b51c-57dfef0f7d09",
+      "started_at": "2026-03-24T15:14:33.453964675Z",
+      "completed_at": "2026-03-24T15:14:34.266508296Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "hashids@2.3.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "161aceb3-787b-4d13-bb96-550994b21711",
+      "started_at": "2026-03-24T15:27:23.727825119Z",
+      "completed_at": "2026-03-24T15:27:24.705895134Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "c5f9d86c-bae2-4caa-a8aa-20cd1134d740",
+      "started_at": "2026-03-24T15:27:24.834836539Z",
+      "completed_at": "2026-03-24T15:27:25.585903787Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "304c4889-bb42-4e33-9615-7050141e288c",
+      "started_at": "2026-03-24T15:31:03.230971110Z",
+      "completed_at": "2026-03-24T15:31:04.231356513Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "f92bdd74-bf4b-472d-b7d7-746f938f8549",
+      "started_at": "2026-03-24T15:31:04.311955110Z",
+      "completed_at": "2026-03-24T15:31:04.921767271Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "0658a63b-9a00-40f1-8c73-9d12b8e4bc40",
+      "started_at": "2026-03-24T15:35:09.783128623Z",
+      "completed_at": "2026-03-24T15:35:10.781138192Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "bc557da8-06af-4d79-bc22-ffc15aa0e379",
+      "started_at": "2026-03-24T15:37:45.146965405Z",
+      "completed_at": "2026-03-24T15:37:46.166881666Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "3745dc30-be9f-4478-b7a7-5b63b8a42d67",
+      "started_at": "2026-03-24T15:41:00.770553786Z",
+      "completed_at": "2026-03-24T15:41:01.680304665Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "graphql@16.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 8,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "664b9da4-9278-46f3-a093-9e4c46d520c7",
+      "started_at": "2026-03-24T15:41:47.426890867Z",
+      "completed_at": "2026-03-24T15:41:47.921574375Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ajv@8.12.0"
+      ],
+      "version_policy": null,
+      "findings_count": 6,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1f8be869-19de-4cbb-8a9f-f6d13e4934a9",
+      "started_at": "2026-03-24T15:41:47.935156018Z",
+      "completed_at": "2026-03-24T15:41:48.658430161Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@angular/cli@17.1.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 1,
+      "error": null
+    },
+    {
+      "id": "89409baa-a8e2-48e6-bcbf-10baa6e7efe3",
+      "started_at": "2026-03-24T15:41:48.665540490Z",
+      "completed_at": "2026-03-24T15:41:49.083470865Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "hashids@2.3.0"
+      ],
+      "version_policy": null,
+      "findings_count": 9,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }

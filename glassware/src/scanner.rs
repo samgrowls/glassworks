@@ -762,9 +762,21 @@ impl Scanner {
 
         // Calculate score using config weights
         let category_count = categories.len() as f32;
-        let score = (category_count * config.scoring.category_weight) +
+        let mut score = (category_count * config.scoring.category_weight) +
                     (critical_hits * config.scoring.critical_weight) +
                     (high_hits * config.scoring.high_weight);
+
+        // Cap score for single-category detections to prevent false positives
+        // Real attacks typically involve multiple attack vectors
+        if category_count == 1.0 {
+            // Single category: cap at 4.0 (suspicious, not malicious)
+            // This prevents FPs from legitimate libraries
+            score = score.min(4.0);
+        } else if category_count == 2.0 {
+            // Two categories: max 7.0 (borderline malicious)
+            score = score.min(7.0);
+        }
+        // 3+ categories: full score up to 10.0 (very likely malicious)
 
         // Cap at 10.0
         score.min(10.0)
