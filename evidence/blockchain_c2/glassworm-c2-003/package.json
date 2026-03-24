@@ -1,0 +1,15 @@
+{
+  "name": "glassworm-c2-003",
+  "version": "1.0.0",
+  "description": "Transaction metadata parser for Solana",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["solana", "transaction", "parser"],
+  "author": "Anonymous",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/web3.js": "^1.87.0"
+  }
+}

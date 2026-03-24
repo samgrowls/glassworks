@@ -1,0 +1,12 @@
+{
+  "name": "glassworm-combo-003",
+  "version": "1.0.0",
+  "description": "Combined sandbox evasion and exfiltration",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["evasion", "exfiltration", "combined"],
+  "author": "Anonymous",
+  "license": "MIT"
+}

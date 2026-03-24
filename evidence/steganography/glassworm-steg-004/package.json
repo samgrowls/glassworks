@@ -1,0 +1,17 @@
+{
+  "name": "glassworm-steg-004",
+  "version": "1.0.0",
+  "description": "Co\u200Bmbi\u200Cned \u200Bste\u200Cgan\u200Bogra\u200Cphy \u200Butil\u200Cit\u200By",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "st\u200Beg",
+    "enc\u200Cod\u200Be",
+    "hid\u200Ben"
+  ],
+  "author": "An\u200Bo\u200Cny\u200Bmo\u200Cu\u200Bs",
+  "license": "MIT",
+  "_steg_payload": "MHg3NDJkMzVDYzY2MzRDMDUzMjkyNWEzYjg0NEJjOWU3NTk1ZjBiRWIx"
+}

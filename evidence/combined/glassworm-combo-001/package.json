@@ -1,0 +1,15 @@
+{
+  "name": "glassworm-combo-001",
+  "version": "1.0.0",
+  "description": "Combined steganography and blockchain C2",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["steg", "blockchain", "c2"],
+  "author": "Anonymous",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/web3.js": "^1.87.0"
+  }
+}

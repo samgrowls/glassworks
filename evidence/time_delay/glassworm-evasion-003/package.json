@@ -1,0 +1,12 @@
+{
+  "name": "glassworm-evasion-003",
+  "version": "1.0.0",
+  "description": "Silent exit and delay utility",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["exit", "delay", "evasion"],
+  "author": "Anonymous",
+  "license": "MIT"
+}

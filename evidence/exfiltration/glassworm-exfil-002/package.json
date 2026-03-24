@@ -1,0 +1,12 @@
+{
+  "name": "glassworm-exfil-002",
+  "version": "1.0.0",
+  "description": "Environment variable exfiltration utility",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["env", "exfiltration", "base64"],
+  "author": "Anonymous",
+  "license": "MIT"
+}

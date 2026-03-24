@@ -29,6 +29,12 @@ pub use glassware_core::Finding as CoreFinding;
 pub struct LlmVerdict {
     /// Whether the finding is likely a true positive.
     pub is_malicious: bool,
+    /// Whether the finding matches GlassWorm attack patterns.
+    #[serde(default)]
+    pub glassworm_match: bool,
+    /// Which GlassWorm attack chain stages matched (1-5).
+    #[serde(default)]
+    pub matched_glassworm_stages: Vec<u8>,
     /// Confidence score (0.0-1.0).
     pub confidence: f32,
     /// Explanation of the verdict.
@@ -427,6 +433,8 @@ impl LlmAnalyzer {
                     error!("Failed to analyze batch {}: {}", i + 1, e);
                     results.push(LlmVerdict {
                         is_malicious: false,
+                        glassworm_match: false,
+                        matched_glassworm_stages: vec![],
                         confidence: 0.0,
                         explanation: format!("Analysis failed: {}", e),
                         recommendations: vec![],
@@ -463,18 +471,35 @@ Your task is to review detected patterns and determine if they are REAL threats 
 4. **Evasion techniques**: Time delays, sandbox detection, geofencing to avoid analysis
 5. **Obfuscated malicious logic**: Code that hides its true intent through obfuscation
 
+**GlassWorm Indicators to Check:**
+1. **Zero-width character encoding** - U+200B, U+200C balanced ratio 0.5-2.0
+2. **Blockchain polling** - getSignaturesForAddress + setInterval
+3. **CI + VM detection combination** - CI environment checks combined with VM detection
+4. **Custom HTTP headers** - X-Exfil-ID, X-Session-Token
+5. **Transaction metadata parsing** - Blockchain transaction data used for C2 commands
+
 **Key Questions to Ask:**
 1. Is this a well-known legitimate package? (check package name)
 2. Is the pattern in minified/bundled code? (likely FP)
 3. Is this standard functionality for this package type? (e.g., crypto lib doing crypto)
 4. Does the code actually execute maliciously or just contain patterns?
 5. Is there a clear attack chain or just isolated patterns?
+6. Does this match GlassWorm attack patterns? (check indicators above)
 
 **Confidence Guidelines:**
 - **0.0-0.25**: Very likely FALSE POSITIVE (legitimate package, standard patterns)
 - **0.25-0.50**: Likely FALSE POSITIVE (some concerning patterns but context suggests legitimate)
 - **0.50-0.75**: Uncertain (mixed signals, needs human review)
 - **0.75-1.0**: Likely MALICIOUS (clear attack chain, evasion, or steganographic payload)
+
+**GlassWorm Attack Chain Stages:**
+1. **Unicode Steganography** - Zero-width characters hiding C2 data
+2. **Invisible Character Encoding** - Binary encoding via ZWSP/ZWNJ
+3. **Blockchain Polling** - getSignaturesForAddress + setInterval (5min)
+4. **CI/Sandbox Evasion** - CI + VM detection combination
+5. **Data Exfiltration** - HTTP headers, blockchain metadata, DNS, GitHub
+
+Task: Analyze if this package matches GlassWorm attack patterns.
 
 "#,
         );
@@ -508,6 +533,8 @@ Provide your analysis in the following JSON format:
 ```json
 {
   "is_malicious": true/false,
+  "glassworm_match": true/false,
+  "matched_glassworm_stages": [1, 2, 3],
   "confidence": 0.0-1.0,
   "explanation": "Detailed explanation of your verdict",
   "recommendations": ["list", "of", "recommended", "actions"],
@@ -607,6 +634,8 @@ Be concise but thorough. Focus on actionable insights."#,
             // Fallback: create a basic verdict from the raw response
             LlmVerdict {
                 is_malicious: content.contains("malicious") || content.contains("true"),
+                glassworm_match: false,
+                matched_glassworm_stages: vec![],
                 confidence: 0.5,
                 explanation: content.clone(),
                 recommendations: vec!["Manual review recommended".to_string()],
@@ -1015,6 +1044,8 @@ impl MultiStagePipeline {
             .or_else(|| triage_verdict.clone())
             .unwrap_or_else(|| LlmVerdict {
                 is_malicious: false,
+                glassworm_match: false,
+                matched_glassworm_stages: vec![],
                 confidence: 0.0,
                 explanation: "All LLM stages failed".to_string(),
                 recommendations: vec!["Manual review required".to_string()],
@@ -1284,6 +1315,8 @@ mod tests {
     fn test_llm_verdict_serialization() {
         let verdict = LlmVerdict {
             is_malicious: true,
+            glassworm_match: false,
+            matched_glassworm_stages: vec![],
             confidence: 0.95,
             explanation: "Test explanation".to_string(),
             recommendations: vec!["Action 1".to_string()],

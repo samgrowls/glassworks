@@ -799,6 +799,8 @@ impl App {
 
             let mock_verdict = LlmVerdict {
                 is_malicious: threat_score >= 7.0,
+                glassworm_match: false,
+                matched_glassworm_stages: vec![],
                 confidence: 0.85,
                 explanation: format!(
                     "Based on analysis of {}@{}, the package shows signs of malicious intent. \

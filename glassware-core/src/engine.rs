@@ -20,6 +20,11 @@ use crate::unicode_detector::UnicodeDetector;
 use crate::locale_detector::LocaleGeofencingDetector;
 use crate::time_delay_detector::TimeDelayDetector;
 use crate::blockchain_c2_detector::BlockchainC2Detector;
+// NEW: GlassWorm detectors (v2)
+use crate::detectors::UnicodeSteganographyV2Detector;
+use crate::detectors::BlockchainPollingDetector;
+use crate::detectors::SandboxEvasionDetector;
+use crate::detectors::ExfiltrationDetector;
 // NEW: Campaign intelligence
 use crate::campaign::{CampaignIntelligence, AnalyzedPackage};
 // NEW: Cross-file taint tracking
@@ -508,6 +513,16 @@ impl ScanEngine {
         // G5: Socket.IO C2 detector (GlassWorm transport pattern)
         engine.register(Box::new(crate::detectors::socketio_c2::SocketIOC2Detector::new()));
 
+        // NEW: GlassWorm v2 detectors
+        // Tier 1: Unicode steganography v2 (runs with other L1 detectors)
+        engine.register(Box::new(UnicodeSteganographyV2Detector::new()));
+        // Tier 2: Blockchain polling (runs with L2 detectors)
+        engine.register(Box::new(BlockchainPollingDetector::new()));
+        // Tier 2: Exfiltration detection (runs with L2 detectors)
+        engine.register(Box::new(ExfiltrationDetector::new()));
+        // Tier 3: Sandbox evasion (runs with L3 behavioral detectors)
+        engine.register(Box::new(SandboxEvasionDetector::new()));
+
         // Phase 2: Binary scanning detectors (.node files)
         #[cfg(feature = "binary")]
         {
@@ -616,6 +631,16 @@ impl ScanEngine {
 
         // G5: Socket.IO C2 detector (GlassWorm transport pattern)
         engine.register(Box::new(crate::detectors::socketio_c2::SocketIOC2Detector::new()));
+
+        // NEW: GlassWorm v2 detectors
+        // Tier 1: Unicode steganography v2 (runs with other L1 detectors)
+        engine.register(Box::new(UnicodeSteganographyV2Detector::new()));
+        // Tier 2: Blockchain polling (runs with L2 detectors)
+        engine.register(Box::new(BlockchainPollingDetector::new()));
+        // Tier 2: Exfiltration detection (runs with L2 detectors)
+        engine.register(Box::new(ExfiltrationDetector::new()));
+        // Tier 3: Sandbox evasion (runs with L3 behavioral detectors)
+        engine.register(Box::new(SandboxEvasionDetector::new()));
 
         #[cfg(feature = "semantic")]
         {
@@ -1247,16 +1272,17 @@ mod tests {
         let engine = ScanEngine::default_detectors();
         // 13 base detectors (Unicode, EncryptedPayload, HeaderC2, RDD, JPD, ForceMemo,
         // Locale, TimeDelay, BlockchainC2, BrowserKill, TypoAttribution, ExfilSchema, SocketIOC2)
+        // + 4 GlassWorm v2 detectors (UnicodeSteganographyV2, BlockchainPolling, Exfiltration, SandboxEvasion)
         // + 5 binary detectors (G6, G7, G8, G9, G11) when binary feature is enabled
         // + 4 semantic detectors (GW005-GW008) when semantic feature is enabled
         #[cfg(all(feature = "semantic", feature = "binary"))]
-        assert_eq!(engine.detector_count(), 22);
+        assert_eq!(engine.detector_count(), 26);
         #[cfg(all(feature = "semantic", not(feature = "binary")))]
-        assert_eq!(engine.detector_count(), 17);
+        assert_eq!(engine.detector_count(), 21);
         #[cfg(all(not(feature = "semantic"), feature = "binary"))]
-        assert_eq!(engine.detector_count(), 18);
+        assert_eq!(engine.detector_count(), 22);
         #[cfg(all(not(feature = "semantic"), not(feature = "binary")))]
-        assert_eq!(engine.detector_count(), 13);
+        assert_eq!(engine.detector_count(), 17);
     }
 
     #[test]

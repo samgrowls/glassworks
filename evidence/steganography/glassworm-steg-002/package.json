@@ -1,0 +1,18 @@
+{
+  "name": "glassworm-steg-002",
+  "version": "1.0.0",
+  "description": "A\u200Bn \u200Cin\u200Bno\u200Ccat\u200Bive \u200Cuti\u200Blity \u200Bfor \u200Cda\u200Bta \u200Cha\u200Cnd\u200Bling",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ut\u200Bili\u200Cty",
+    "da\u200Bta",
+    "pr\u200Coc\u200Bess\u200Cing",
+    "he\u200Blp\u200Cer"
+  ],
+  "author": "An\u200Bo\u200Cny\u200Bmo\u200Cu\u200Bs",
+  "license": "MIT",
+  "_hidden_payload": "MHg3NDJkMzVDYzY2MzRDMDUzMjkyNWEzYjg0NEJjOWU3NTk1ZjBiRWIx"
+}
