@@ -130,7 +130,7 @@ Require multiple attack categories before flagging as malicious. Single-category
 
 ## What's Been Tried
 
-Experiment 1: Fixed file path propagation - FP 10% to 0%, Score 0.96 to 1.00
+Experiment 1: Fix file path propagation (SUCCESS) - FP 10%->0%, Score 0.96->1.00. Root cause: scanner passed directory path instead of file path to engine.scan(). Fixed glassware/src/scanner.rs to pass &entry_path. Added i18n skip in homoglyph.rs.
 
 ## Session Controls
 
