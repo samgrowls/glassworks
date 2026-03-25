@@ -133,6 +133,9 @@ pub use campaign::{
     AnalyzedPackage, TimeRange,
 };
 
+// NEW: Deduplicated finding pattern for scoring
+pub mod finding_pattern;
+
 pub use decoder::{
     count_vs_codepoints, decode_vs_stego, find_vs_runs, is_vs_codepoint, shannon_entropy,
     DecodedPayload, PayloadClass,
@@ -155,6 +158,8 @@ pub use engine::{ScanEngine, ScanResult};
 pub use cache::{CacheStats, FileCacheEntry, ScanCache};
 
 pub use finding::{DetectionCategory, Severity, SourceLocation};
+
+pub use finding_pattern::FindingPattern;
 
 pub use header_c2_detector::HeaderC2Detector;
 

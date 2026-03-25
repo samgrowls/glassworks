@@ -219,6 +219,9 @@ pub mod retry;
 pub mod sampler;
 pub mod scanner;
 pub mod scan_registry;
+pub mod scoring;
+pub mod scoring_config;
+pub mod package_context;
 pub mod streaming;
 pub mod tracing;
 pub mod version_checkpoint;
@@ -266,6 +269,12 @@ pub use rate_limiter::{MultiThrottleLimiter, ThrottleLimiter};
 pub use retry::{RetryConfig, RetryConfigBuilder, RetryState, RetryableError, with_retry};
 
 pub use scanner::{PackageScanResult, Scanner, ScannerConfig, ScanSummary};
+
+pub use scoring::ScoringEngine;
+
+pub use scoring_config::ScoringConfig;
+
+pub use package_context::PackageContext;
 
 pub use streaming::{StreamingWriter, StreamingWriterBuilder, OutputFormat as StreamOutputFormat};
 

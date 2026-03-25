@@ -185,10 +185,10 @@ pub struct OutputConfig {
 
 // Default value functions
 fn default_malicious_threshold() -> f32 {
-    7.0
+    8.0 // Raised from 7.0 for Phase A.5 scoring redesign
 }
 fn default_suspicious_threshold() -> f32 {
-    3.0
+    4.0 // Raised from 3.0 for Phase A.5 scoring redesign
 }
 fn default_category_weight() -> f32 {
     2.0

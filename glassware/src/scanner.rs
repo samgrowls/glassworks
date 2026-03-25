@@ -14,6 +14,8 @@ use tracing::{debug, error, info, warn};
 
 use crate::downloader::DownloadedPackage;
 use crate::error::{OrchestratorError, Result};
+use crate::scoring::{ScoringEngine, ScoringConfig};
+use crate::package_context::PackageContext;
 
 /// LLM verdict for a finding or package.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -209,13 +211,17 @@ impl Scanner {
 
         let findings = self.scan_directory(&package.path).await?;
 
-        let threat_score = self.calculate_threat_score(&findings, &package.name);
+        // Use new ScoringEngine with deduplication, LLM feedback, and reputation
+        let scoring_config = ScoringConfig::default();
+        let package_context = PackageContext::new(package.name.clone(), package.version.clone());
+        let scoring_engine = ScoringEngine::new(scoring_config, package_context);
+        let threat_score = scoring_engine.calculate_score(&findings, None);
 
         // ⚠️ DISABLED 2026-03-24: Package-level whitelisting removed
         // All packages are evaluated equally - no whitelist bypass
         // let is_whitelisted = self.is_package_whitelisted(&package.name);
         let _is_whitelisted = false;
-        
+
         let is_malicious = threat_score >= self.config.threat_threshold;
 
         if is_malicious {
@@ -430,8 +436,11 @@ impl Scanner {
         // Don't skip /dist/ or /build/ for tarballs (these ARE the distributed files)
         let findings = self.scan_directory_for_tarball(scan_path.to_str().unwrap()).await?;
 
-        // Calculate threat score
-        let threat_score = self.calculate_threat_score(&findings, &name);
+        // Calculate threat score using new ScoringEngine
+        let scoring_config = ScoringConfig::default();
+        let package_context = PackageContext::new(name.clone(), version.clone());
+        let scoring_engine = ScoringEngine::new(scoring_config, package_context);
+        let threat_score = scoring_engine.calculate_score(&findings, None);
         let is_malicious = threat_score >= self.config.threat_threshold;
 
         if is_malicious {
