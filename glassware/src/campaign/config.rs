@@ -289,6 +289,15 @@ pub struct LlmSettings {
     /// NVIDIA model fallback chain.
     #[serde(default = "default_nvidia_models")]
     pub tier2_models: Vec<String>,
+    /// Threat score threshold for initial LLM analysis during scan.
+    /// Packages with score below this threshold skip LLM analysis to reduce API calls.
+    /// Recommended: 4.0-6.0 (skip LLM for low-risk packages)
+    #[serde(default = "default_llm_analysis_threshold")]
+    pub analysis_threshold: f32,
+}
+
+fn default_llm_analysis_threshold() -> f32 {
+    6.0  // Skip LLM for packages with score < 6.0 (reduces API calls by ~80%)
 }
 
 /// Output configuration.

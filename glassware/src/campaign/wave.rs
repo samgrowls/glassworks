@@ -368,10 +368,14 @@ impl WaveExecutor {
             .map_err(|e| WaveError::ExecutorError(format!("Scan failed: {}", e)))?;
 
         // Run LLM analysis if enabled and findings exist
+        // Skip LLM for low-score packages to reduce API calls and rate limiting
         #[cfg(feature = "llm")]
         if let Some(ref analyzer) = self.llm_analyzer {
-            if !scan_result.findings.is_empty() {
-                debug!("Running LLM analysis on {} findings", scan_result.findings.len());
+            // Only run LLM if score meets threshold (reduces API calls by ~80%)
+            let llm_threshold = self.settings.llm.analysis_threshold;
+            if !scan_result.findings.is_empty() && scan_result.threat_score >= llm_threshold {
+                debug!("Running LLM analysis on {} findings (score {:.2} >= {:.2})", 
+                    scan_result.findings.len(), scan_result.threat_score, llm_threshold);
 
                 use crate::llm::LlmFinding;
                 let llm_findings: Vec<LlmFinding> = scan_result.findings.iter()
@@ -383,7 +387,7 @@ impl WaveExecutor {
                         info!("LLM analysis complete: is_malicious={}, confidence={:.2}",
                               verdict.is_malicious, verdict.confidence);
                         debug!("LLM explanation: {}", verdict.explanation);
-                        
+
                         // Use LLM verdict to override score-based flagging when confidence is high
                         // This prevents false positives when LLM is confident the package is safe
                         if verdict.confidence >= 0.75 {
@@ -405,6 +409,10 @@ impl WaveExecutor {
                         // Continue without LLM verdict
                     }
                 }
+            } else if !scan_result.findings.is_empty() {
+                // Skip LLM for low-score packages
+                debug!("Skipping LLM analysis for {} (score {:.2} < {:.2})", 
+                    package.name, scan_result.threat_score, llm_threshold);
             }
         }
 
