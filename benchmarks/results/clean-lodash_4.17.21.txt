@@ -1,22 +1,26 @@
-[2m2026-03-25T16:05:08.955500Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:05:08.956311Z[0m [32m INFO[0m Started scan: d0a70e29-abab-426b-a974-fbefd46f4610
-[2m2026-03-25T16:05:08.956315Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T16:05:08.979755Z[0m [32m INFO[0m Cache database initialized with WAL mode
-[2m2026-03-25T16:05:08.979770Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T16:51:44.350657Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:51:44.351451Z[0m [32m INFO[0m Started scan: 03cabdb1-c1fd-4306-b161-5b86c28502ae
+[2m2026-03-25T16:51:44.351455Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T16:51:44.373354Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T16:51:44.373374Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T16:51:44.619370Z[0m [32m INFO[0m Downloaded lodash@4.17.21 (4.17.21) to "/tmp/.tmpF7VwCs"
+[2m2026-03-25T16:51:44.619400Z[0m [32m INFO[0m Scanning package: lodash@4.17.21 (4.17.21)
+[2m2026-03-25T16:51:46.031049Z[0m [32m INFO[0m Scanned 1049 files, found 2 issues
 
 ============================================================
 SCAN SUMMARY
 ============================================================
 Total packages scanned: 1
 Malicious packages: 0
-Total findings: 1
-Average threat score: 0.50
+Total findings: 2
+Average threat score: 1.00
 
 Findings by severity:
-  Medium: 1
+  Medium: 2
 
 Findings by category:
   "Unknown": 1
+  "EncryptedPayload": 1
 ============================================================
 
-✅ No malicious packages detected (1 findings below threshold)
+✅ No malicious packages detected (2 findings below threshold)

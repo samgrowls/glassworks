@@ -1,10 +1,10 @@
-[2m2026-03-25T16:05:07.659177Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:05:07.659213Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T16:05:07.659341Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/aifabrix-miso-client-4.7.2.tgz
-[2m2026-03-25T16:05:07.659348Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/aifabrix-miso-client-4.7.2.tgz
-[2m2026-03-25T16:05:07.671662Z[0m [32m INFO[0m Scanning package: aifabrix-miso-client (4.7.2)
-[2m2026-03-25T16:05:08.477371Z[0m [32m INFO[0m Scanned 223 files, found 9128 issues
-[2m2026-03-25T16:05:08.480315Z[0m [33m WARN[0m Package aifabrix-miso-client flagged as malicious (threat score: 7.00)
+[2m2026-03-25T16:51:42.651136Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:51:42.651170Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:51:42.651295Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/aifabrix-miso-client-4.7.2.tgz
+[2m2026-03-25T16:51:42.651318Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/aifabrix-miso-client-4.7.2.tgz
+[2m2026-03-25T16:51:42.663491Z[0m [32m INFO[0m Scanning package: aifabrix-miso-client (4.7.2)
+[2m2026-03-25T16:51:43.507018Z[0m [32m INFO[0m Scanned 223 files, found 9128 issues
+[2m2026-03-25T16:51:43.509725Z[0m [33m WARN[0m Package aifabrix-miso-client flagged as malicious (threat score: 7.00)
 
 ============================================================
 SCAN SUMMARY

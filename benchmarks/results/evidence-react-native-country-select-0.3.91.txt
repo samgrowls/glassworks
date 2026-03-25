@@ -1,17 +1,21 @@
-[2m2026-03-25T16:05:03.261976Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:05:03.262001Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T16:05:03.262157Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
-[2m2026-03-25T16:05:03.262167Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
-[2m2026-03-25T16:05:03.266473Z[0m [32m INFO[0m Scanning package: react-native-country-select (0.3.91)
-[2m2026-03-25T16:05:06.732158Z[0m [32m INFO[0m Scanned 36 files, found 12 issues
+[2m2026-03-25T16:51:38.102970Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:51:38.102996Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:51:38.103155Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
+[2m2026-03-25T16:51:38.103167Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
+[2m2026-03-25T16:51:38.107510Z[0m [32m INFO[0m Scanning package: react-native-country-select (0.3.91)
+[2m2026-03-25T16:51:41.639539Z[0m [32m INFO[0m Scanned 36 files, found 19 issues
+[2m2026-03-25T16:51:41.639568Z[0m [33m WARN[0m Package react-native-country-select flagged as malicious (threat score: 7.14)
 
 ============================================================
 SCAN SUMMARY
 ============================================================
 Total packages scanned: 1
-Malicious packages: 0
-Total findings: 12
-Average threat score: 4.02
+Malicious packages: 1
+Total findings: 19
+Average threat score: 7.14
 ============================================================
 
-✅ No malicious packages detected (12 findings below threshold)
+⚠️  MALICIOUS PACKAGES DETECTED:
+  - react-native-country-select (0.3.91) [threat score: 7.14]
+
+❌ Malicious packages detected (19 findings below threshold)

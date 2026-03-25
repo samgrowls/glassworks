@@ -1,10 +1,10 @@
-[2m2026-03-25T16:05:08.574237Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:05:08.574256Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T16:05:08.574376Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-combo-001.tgz
-[2m2026-03-25T16:05:08.574384Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-combo-001.tgz
-[2m2026-03-25T16:05:08.574641Z[0m [32m INFO[0m Scanning package: glassworm-combo (001)
-[2m2026-03-25T16:05:08.588884Z[0m [32m INFO[0m Scanned 2 files, found 4 issues
-[2m2026-03-25T16:05:08.588900Z[0m [33m WARN[0m Package glassworm-combo flagged as malicious (threat score: 9.00)
+[2m2026-03-25T16:51:43.615652Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:51:43.615671Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:51:43.615787Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-combo-001.tgz
+[2m2026-03-25T16:51:43.615794Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-combo-001.tgz
+[2m2026-03-25T16:51:43.616051Z[0m [32m INFO[0m Scanning package: glassworm-combo (001)
+[2m2026-03-25T16:51:43.632075Z[0m [32m INFO[0m Scanned 2 files, found 4 issues
+[2m2026-03-25T16:51:43.632089Z[0m [33m WARN[0m Package glassworm-combo flagged as malicious (threat score: 9.00)
 
 ============================================================
 SCAN SUMMARY

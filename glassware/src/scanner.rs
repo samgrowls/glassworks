@@ -265,7 +265,7 @@ impl Scanner {
 
                 debug!("Scanning file: {}", relative_path);
 
-                let findings = engine.scan(path, &content);
+                let findings = engine.scan(&entry_path, &content);
 
                 all_findings.extend(findings);
                 files_scanned += 1;
@@ -323,7 +323,7 @@ impl Scanner {
 
                 debug!("Scanning file: {}", relative_path);
 
-                let findings = engine.scan(path, &content);
+                let findings = engine.scan(&entry_path, &content);
 
                 all_findings.extend(findings);
                 files_scanned += 1;

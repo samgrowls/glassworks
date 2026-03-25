@@ -48,6 +48,13 @@ impl HomoglyphDetector {
     fn detect_impl(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
 
+        // Skip i18n/locale files - they legitimately contain non-Latin scripts
+        let path_lower = file_path.to_lowercase();
+        let i18n_paths = ["/locale/", "/locales/", "/i18n/", "/lang/", "/languages/", "/nls/", "/translation/", "/translations/"];
+        if i18n_paths.iter().any(|dir| path_lower.contains(dir)) {
+            return findings; // Skip i18n files entirely
+        }
+
         // Skip homoglyph detection for large files (likely minified bundles)
         if content.len() > 100_000 {
             return findings;

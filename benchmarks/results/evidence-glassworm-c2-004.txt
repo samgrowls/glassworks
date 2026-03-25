@@ -1,10 +1,10 @@
-[2m2026-03-25T16:05:08.553006Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:05:08.553033Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T16:05:08.553149Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-c2-004.tgz
-[2m2026-03-25T16:05:08.553157Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-c2-004.tgz
-[2m2026-03-25T16:05:08.553413Z[0m [32m INFO[0m Scanning package: glassworm-c2 (004)
-[2m2026-03-25T16:05:08.567353Z[0m [32m INFO[0m Scanned 2 files, found 5 issues
-[2m2026-03-25T16:05:08.567372Z[0m [33m WARN[0m Package glassworm-c2 flagged as malicious (threat score: 9.00)
+[2m2026-03-25T16:51:43.592180Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:51:43.592198Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:51:43.592310Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-c2-004.tgz
+[2m2026-03-25T16:51:43.592318Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-c2-004.tgz
+[2m2026-03-25T16:51:43.592647Z[0m [32m INFO[0m Scanning package: glassworm-c2 (004)
+[2m2026-03-25T16:51:43.608969Z[0m [32m INFO[0m Scanned 2 files, found 5 issues
+[2m2026-03-25T16:51:43.608989Z[0m [33m WARN[0m Package glassworm-c2 flagged as malicious (threat score: 9.00)
 
 ============================================================
 SCAN SUMMARY

@@ -1,17 +1,17 @@
-[2m2026-03-25T16:05:06.740173Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:05:06.740190Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T16:05:06.740309Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-international-phone-number-0.11.8.tgz
-[2m2026-03-25T16:05:06.740317Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-international-phone-number-0.11.8.tgz
-[2m2026-03-25T16:05:06.741203Z[0m [32m INFO[0m Scanning package: react-native-international-phone-number (0.11.8)
-[2m2026-03-25T16:05:06.779610Z[0m [32m INFO[0m Scanned 14 files, found 2 issues
+[2m2026-03-25T16:51:41.648126Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:51:41.648148Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:51:41.648261Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-international-phone-number-0.11.8.tgz
+[2m2026-03-25T16:51:41.648269Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-international-phone-number-0.11.8.tgz
+[2m2026-03-25T16:51:41.649167Z[0m [32m INFO[0m Scanning package: react-native-international-phone-number (0.11.8)
+[2m2026-03-25T16:51:41.701562Z[0m [32m INFO[0m Scanned 14 files, found 10 issues
 
 ============================================================
 SCAN SUMMARY
 ============================================================
 Total packages scanned: 1
 Malicious packages: 0
-Total findings: 2
-Average threat score: 1.25
+Total findings: 10
+Average threat score: 5.87
 ============================================================
 
-✅ No malicious packages detected (2 findings below threshold)
+✅ No malicious packages detected (10 findings below threshold)
