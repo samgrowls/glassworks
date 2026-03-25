@@ -1,10 +1,10 @@
-[2m2026-03-25T17:05:44.263267Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T17:05:44.263285Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T17:05:44.263420Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
-[2m2026-03-25T17:05:44.263427Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
-[2m2026-03-25T17:05:44.267963Z[0m [32m INFO[0m Scanning package: react-native-country-select (0.3.91)
-[2m2026-03-25T17:05:47.871188Z[0m [32m INFO[0m Scanned 36 files, found 19 issues
-[2m2026-03-25T17:05:47.871212Z[0m [33m WARN[0m Package react-native-country-select flagged as malicious (threat score: 7.14)
+[2m2026-03-25T17:11:16.732922Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:11:16.732952Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T17:11:16.733096Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
+[2m2026-03-25T17:11:16.733109Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/react-native-country-select-0.3.91.tgz
+[2m2026-03-25T17:11:16.737502Z[0m [32m INFO[0m Scanning package: react-native-country-select (0.3.91)
+[2m2026-03-25T17:11:20.302537Z[0m [32m INFO[0m Scanned 36 files, found 19 issues
+[2m2026-03-25T17:11:20.302573Z[0m [33m WARN[0m Package react-native-country-select flagged as malicious (threat score: 7.14)
 
 ============================================================
 SCAN SUMMARY

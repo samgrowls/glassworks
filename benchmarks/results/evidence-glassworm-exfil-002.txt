@@ -1,9 +1,9 @@
-[2m2026-03-25T17:05:49.973266Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T17:05:49.973284Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T17:05:49.973401Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-exfil-002.tgz
-[2m2026-03-25T17:05:49.973408Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-exfil-002.tgz
-[2m2026-03-25T17:05:49.973667Z[0m [32m INFO[0m Scanning package: glassworm-exfil (002)
-[2m2026-03-25T17:05:49.990407Z[0m [32m INFO[0m Scanned 2 files, found 1 issues
+[2m2026-03-25T17:11:22.402819Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:11:22.402838Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T17:11:22.402952Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-exfil-002.tgz
+[2m2026-03-25T17:11:22.402960Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-exfil-002.tgz
+[2m2026-03-25T17:11:22.403212Z[0m [32m INFO[0m Scanning package: glassworm-exfil (002)
+[2m2026-03-25T17:11:22.419760Z[0m [32m INFO[0m Scanned 2 files, found 1 issues
 
 ============================================================
 SCAN SUMMARY

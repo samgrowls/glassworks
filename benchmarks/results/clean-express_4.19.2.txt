@@ -1,11 +1,8 @@
-[2m2026-03-25T17:05:50.208536Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T17:05:50.209470Z[0m [32m INFO[0m Started scan: 7db5e567-35b2-4f75-89e8-930731602959
-[2m2026-03-25T17:05:50.209474Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T17:05:50.264312Z[0m [32m INFO[0m Cache database initialized with WAL mode
-[2m2026-03-25T17:05:50.264335Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T17:05:50.515303Z[0m [32m INFO[0m Downloaded express@4.19.2 (4.19.2) to "/tmp/.tmpFtGsaV"
-[2m2026-03-25T17:05:50.515363Z[0m [32m INFO[0m Scanning package: express@4.19.2 (4.19.2)
-[2m2026-03-25T17:05:50.590025Z[0m [32m INFO[0m Scanned 13 files, found 6 issues
+[2m2026-03-25T17:11:22.639205Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:11:22.640176Z[0m [32m INFO[0m Started scan: f88f3799-4e81-41e4-9da2-a5b28507a617
+[2m2026-03-25T17:11:22.640180Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:11:22.661898Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T17:11:22.661915Z[0m [32m INFO[0m Scanning 1 npm packages
 
 ============================================================
 SCAN SUMMARY
@@ -22,8 +19,8 @@ Findings by severity:
 
 Findings by category:
   "HeaderC2": 1
-  "Unknown": 3
   "TimeDelaySandboxEvasion": 2
+  "Unknown": 3
 ============================================================
 
 ✅ No malicious packages detected (6 findings below threshold)

@@ -4616,6 +4616,146 @@
       "findings_count": 0,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "f88f3799-4e81-41e4-9da2-a5b28507a617",
+      "started_at": "2026-03-25T17:11:22.639646235Z",
+      "completed_at": "2026-03-25T17:11:22.662111702Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "express@4.19.2"
+      ],
+      "version_policy": null,
+      "findings_count": 6,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "2214be75-968c-4522-9ce8-5bba97f670fd",
+      "started_at": "2026-03-25T17:11:22.672727753Z",
+      "completed_at": "2026-03-25T17:11:22.695018235Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "lodash@4.17.21"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "60a11507-3213-4967-820b-66d5dcecfc19",
+      "started_at": "2026-03-25T17:11:22.707913334Z",
+      "completed_at": "2026-03-25T17:11:22.730208340Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "axios@1.6.7"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "e5a8ffb4-52b5-4761-b646-746506f7125b",
+      "started_at": "2026-03-25T17:11:22.741149124Z",
+      "completed_at": "2026-03-25T17:11:22.763450907Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "chalk@5.3.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "bad3b807-fb6a-408f-b2a2-6f622264346c",
+      "started_at": "2026-03-25T17:11:22.773721398Z",
+      "completed_at": "2026-03-25T17:11:22.795925676Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "debug@4.3.4"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1248f123-29a2-4a64-8ca4-50af761e9dad",
+      "started_at": "2026-03-25T17:11:22.806169753Z",
+      "completed_at": "2026-03-25T17:11:22.828480386Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "moment@2.30.1"
+      ],
+      "version_policy": null,
+      "findings_count": 2,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "1055e040-d83a-4f50-8d20-7ccd724c9c5a",
+      "started_at": "2026-03-25T17:11:22.838702475Z",
+      "completed_at": "2026-03-25T17:11:22.860694220Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "uuid@9.0.1"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "76040ab0-f059-4def-ae28-7fab59f82292",
+      "started_at": "2026-03-25T17:11:22.873901633Z",
+      "completed_at": "2026-03-25T17:11:22.896143067Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "async@3.2.5"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "8ad945fa-bc8d-4cf7-b772-26366b735d65",
+      "started_at": "2026-03-25T17:11:22.906974211Z",
+      "completed_at": "2026-03-25T17:11:22.929400928Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "glob@10.3.10"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
+    },
+    {
+      "id": "586e81b9-6593-4a84-9192-52d52674f101",
+      "started_at": "2026-03-25T17:11:22.960692225Z",
+      "completed_at": "2026-03-25T17:11:23.007404987Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "ws@8.16.0"
+      ],
+      "version_policy": null,
+      "findings_count": 0,
+      "malicious_count": 0,
+      "error": null
     }
   ]
 }

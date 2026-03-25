@@ -1,11 +1,8 @@
-[2m2026-03-25T17:05:56.902698Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T17:05:56.903713Z[0m [32m INFO[0m Started scan: 0eb1fd02-20c9-49f1-84d3-4eaf10d7f1c3
-[2m2026-03-25T17:05:56.903718Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T17:05:56.926496Z[0m [32m INFO[0m Cache database initialized with WAL mode
-[2m2026-03-25T17:05:56.926513Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T17:05:57.136571Z[0m [32m INFO[0m Downloaded ws@8.16.0 (8.16.0) to "/tmp/.tmplLGVMW"
-[2m2026-03-25T17:05:57.136676Z[0m [32m INFO[0m Scanning package: ws@8.16.0 (8.16.0)
-[2m2026-03-25T17:05:57.255788Z[0m [32m INFO[0m Scanned 17 files, found 0 issues
+[2m2026-03-25T17:11:22.959140Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:11:22.962619Z[0m [32m INFO[0m Started scan: 586e81b9-6593-4a84-9192-52d52674f101
+[2m2026-03-25T17:11:22.962634Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:11:23.007265Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T17:11:23.007282Z[0m [32m INFO[0m Scanning 1 npm packages
 
 ============================================================
 SCAN SUMMARY

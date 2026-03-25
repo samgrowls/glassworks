@@ -1,10 +1,10 @@
-[2m2026-03-25T17:05:47.940026Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T17:05:47.940044Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T17:05:47.940159Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/iflow-mcp-watercrawl-watercrawl-mcp-1.3.4.tgz
-[2m2026-03-25T17:05:47.940167Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/iflow-mcp-watercrawl-watercrawl-mcp-1.3.4.tgz
-[2m2026-03-25T17:05:47.942481Z[0m [32m INFO[0m Scanning package: iflow-mcp-watercrawl-watercrawl-mcp (1.3.4)
-[2m2026-03-25T17:05:48.873712Z[0m [32m INFO[0m Scanned 24 files, found 9126 issues
-[2m2026-03-25T17:05:48.876286Z[0m [33m WARN[0m Package iflow-mcp-watercrawl-watercrawl-mcp flagged as malicious (threat score: 8.50)
+[2m2026-03-25T17:11:20.371000Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:11:20.371038Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T17:11:20.371160Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/iflow-mcp-watercrawl-watercrawl-mcp-1.3.4.tgz
+[2m2026-03-25T17:11:20.371182Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/iflow-mcp-watercrawl-watercrawl-mcp-1.3.4.tgz
+[2m2026-03-25T17:11:20.373471Z[0m [32m INFO[0m Scanning package: iflow-mcp-watercrawl-watercrawl-mcp (1.3.4)
+[2m2026-03-25T17:11:21.300401Z[0m [32m INFO[0m Scanned 24 files, found 9126 issues
+[2m2026-03-25T17:11:21.303428Z[0m [33m WARN[0m Package iflow-mcp-watercrawl-watercrawl-mcp flagged as malicious (threat score: 8.50)
 
 ============================================================
 SCAN SUMMARY

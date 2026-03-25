@@ -1,11 +1,8 @@
-[2m2026-03-25T17:05:52.894714Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T17:05:52.895653Z[0m [32m INFO[0m Started scan: 9dfe8e66-b08b-4b22-8403-d0ff212ca036
-[2m2026-03-25T17:05:52.895657Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T17:05:52.916998Z[0m [32m INFO[0m Cache database initialized with WAL mode
-[2m2026-03-25T17:05:52.917018Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T17:05:53.081257Z[0m [32m INFO[0m Downloaded chalk@5.3.0 (5.3.0) to "/tmp/.tmp2VEBtv"
-[2m2026-03-25T17:05:53.081315Z[0m [32m INFO[0m Scanning package: chalk@5.3.0 (5.3.0)
-[2m2026-03-25T17:05:53.153191Z[0m [32m INFO[0m Scanned 10 files, found 0 issues
+[2m2026-03-25T17:11:22.740699Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:11:22.741661Z[0m [32m INFO[0m Started scan: e5a8ffb4-52b5-4761-b646-746506f7125b
+[2m2026-03-25T17:11:22.741666Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:11:22.763058Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T17:11:22.763074Z[0m [32m INFO[0m Scanning 1 npm packages
 
 ============================================================
 SCAN SUMMARY
