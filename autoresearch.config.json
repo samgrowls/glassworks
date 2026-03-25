@@ -1,0 +1,8 @@
+{
+  "workingDir": "/home/shva/samgrowls/glassworks-v0.41",
+  "maxIterations": 30,
+  "checks_timeout_seconds": 600,
+  "benchmark_script": "./autoresearch.sh",
+  "optimization_goal": "maximize",
+  "metric": "combined_score"
+}
