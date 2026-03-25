@@ -191,16 +191,26 @@ impl ScoringEngine {
         }
     }
 
-    /// Calculate LLM quality multiplier (0.3-1.0)
+    /// Calculate LLM quality multiplier (0.2-1.0)
     ///
-    /// LLM confidence significantly impacts the score:
-    /// - LLM confidence 0.10 → multiplier 0.37 (reduce score by 63%)
-    /// - LLM confidence 0.50 → multiplier 0.65 (reduce score by 35%)
-    /// - LLM confidence 0.90 → multiplier 0.93 (minimal reduction)
+    /// More aggressive reduction for low-confidence findings:
+    /// - LLM confidence < 0.20 → multiplier 0.2-0.3x (70-80% reduction)
+    /// - LLM confidence 0.20-0.50 → multiplier 0.3-0.6x (40-70% reduction)
+    /// - LLM confidence > 0.50 → multiplier 0.6-1.0x (0-40% reduction)
     fn calculate_llm_multiplier(&self, llm: &LlmVerdict) -> f32 {
-        // Linear interpolation: 0.3 + (confidence * 0.7)
-        // This ensures even low confidence doesn't zero out the score completely
-        0.3 + (llm.confidence * 0.7)
+        if llm.confidence < 0.20 {
+            // Very low confidence = severe penalty (75-80% reduction)
+            // 0.10 confidence = 0.25x multiplier
+            0.2 + (llm.confidence * 0.5)
+        } else if llm.confidence < 0.50 {
+            // Medium-low confidence = moderate penalty (40-70% reduction)
+            // 0.30 confidence = 0.46x multiplier
+            0.3 + ((llm.confidence - 0.20) * 0.6)
+        } else {
+            // High confidence = minimal penalty (10-30% reduction)
+            // 0.90 confidence = 0.86x multiplier
+            0.5 + ((llm.confidence - 0.50) * 0.8)
+        }
     }
 
     /// Apply exceptions for known malicious patterns
@@ -208,7 +218,7 @@ impl ScoringEngine {
     /// Certain attack patterns are so distinctive they override normal scoring:
     /// - Known C2 wallets/IPs: minimum 9.0
     /// - GlassWorm C2 polling: minimum 9.0
-    /// - Steganography with decoder: minimum 8.5
+    /// - Steganography with decoder: minimum 8.5 (NOT for i18n/locale files)
     fn apply_exceptions(&self, score: f32, findings: &[Finding]) -> f32 {
         // Known C2 wallets/IPs always score high
         if findings.iter().any(|f| {
@@ -228,12 +238,18 @@ impl ScoringEngine {
             return score.max(self.config.glassworm_c2_min_score);
         }
 
-        // Steganography with decoder
+        // Steganography with decoder - EXCLUDE i18n/locale/translation packages
+        // This prevents legitimate i18n libraries (antd, dayjs, moment) from triggering
         if findings.iter().any(|f| {
             (f.category == DetectionCategory::SteganoPayload
                 || f.category == DetectionCategory::InvisibleCharacter)
                 && f.severity == Severity::Critical
                 && (f.description.contains("decoder") || f.description.contains("GlassWorm"))
+                // Exclude i18n-related findings
+                && !f.description.contains("i18n")
+                && !f.description.contains("locale")
+                && !f.description.contains("translation")
+                && !f.description.contains("gettext")
         }) {
             return score.max(self.config.steganography_min_score);
         }

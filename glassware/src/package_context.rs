@@ -53,9 +53,10 @@ impl PackageContext {
         }
     }
 
-    /// Calculate reputation multiplier (0.5-1.0)
+    /// Calculate reputation multiplier (0.3-1.0)
     ///
     /// Returns a multiplier that reduces threat scores for reputable packages:
+    /// - Ultra popular (1M+ downloads, 3+ years, verified) = 0.3 (70% reduction)
     /// - High downloads + old + verified = 0.5 (50% reduction)
     /// - Medium downloads + established = 0.7 (30% reduction)
     /// - Low downloads + some age = 0.85 (15% reduction)
@@ -65,6 +66,16 @@ impl PackageContext {
     ///
     /// ```
     /// use glassware::package_context::PackageContext;
+    ///
+    /// // Ultra-popular, old, verified package (webpack, typescript)
+    /// let webpack = PackageContext::with_reputation(
+    ///     "webpack".to_string(),
+    ///     "5.89.0".to_string(),
+    ///     15_000_000,  // 15M weekly downloads
+    ///     2500,        // ~7 years old
+    ///     true,        // verified maintainer
+    /// );
+    /// assert_eq!(webpack.reputation_multiplier(), 0.3);
     ///
     /// // Popular, old, verified package
     /// let lodash = PackageContext::with_reputation(
@@ -81,6 +92,16 @@ impl PackageContext {
     /// assert_eq!(new_pkg.reputation_multiplier(), 1.0);
     /// ```
     pub fn reputation_multiplier(&self) -> f32 {
+        // Tier 0: Ultra-popular (1M+ downloads, 3+ years, verified)
+        // These are foundational packages used by millions daily (webpack, typescript, babel)
+        // Give maximum benefit of doubt - 70% score reduction
+        if self.downloads_weekly > 1_000_000
+            && self.age_days > 1095  // 3 years
+            && self.maintainer_verified
+        {
+            return 0.3;
+        }
+
         // Tier 1: High downloads + old + verified = maximum benefit of doubt
         // These are battle-tested packages used by millions
         if self.downloads_weekly > 100_000
