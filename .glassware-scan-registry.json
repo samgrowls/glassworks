@@ -2222,6 +2222,20 @@
       "findings_count": 7,
       "malicious_count": 0,
       "error": null
+    },
+    {
+      "id": "bff6971c-8714-432a-b202-9a0813b7d936",
+      "started_at": "2026-03-25T10:41:39.788177296Z",
+      "completed_at": "2026-03-25T10:42:56.860568274Z",
+      "status": "completed",
+      "command": "scan-npm",
+      "packages": [
+        "@prisma/client@5.8.1"
+      ],
+      "version_policy": null,
+      "findings_count": 24,
+      "malicious_count": 1,
+      "error": null
     }
   ]
 }
