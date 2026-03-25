@@ -1,0 +1,49 @@
+[package]
+name = "glassware-tools"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Utility tools for Glassworks (autoresearch, benchmarks, analysis)"
+
+[dependencies]
+# Core
+glassware-core = { path = "../glassware-core", version = "0.5.0" }
+glassware = { path = "../glassware", version = "0.8.0" }
+
+# Async
+tokio = { workspace = true }
+
+# CLI
+clap = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = "0.8"
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Utilities
+walkdir = { workspace = true }
+chrono = { workspace = true }
+rand = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# HTTP (for package downloads)
+reqwest = { workspace = true }
+
+# Filesystem
+tokio-retry = { workspace = true }
+
+[[bin]]
+name = "autoresearch"
+path = "src/bin/autoresearch.rs"
+
+[[bin]]
+name = "download-benchmarks"
+path = "src/bin/download-benchmarks.rs"

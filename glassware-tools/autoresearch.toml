@@ -1,0 +1,86 @@
+# Autoresearch Configuration
+# 
+# This file controls the autoresearch optimization loop parameters.
+
+[optimization]
+# Maximum number of iterations to run
+max_iterations = 100
+
+# Target metrics
+target_fp_rate = 0.05           # ≤5% false positive rate
+target_detection_rate = 0.90    # ≥90% evidence detection
+target_f1_score = 0.90          # ≥0.90 F1 score
+
+# Benchmark configuration
+use_subset_for_iteration = true  # Use 50 packages for speed
+subset_size = 50
+full_validation_size = 96
+
+# LLM configuration
+use_llm_in_phase1 = false       # Phase 1: optimize without LLM
+use_llm_in_phase2 = true        # Phase 2: add LLM after convergence
+llm_cache_enabled = true        # Cache LLM responses
+
+# Concurrency
+scan_concurrency = 8            # Parallel package scanning
+
+# Parameter ranges to optimize
+[parameter_ranges]
+# CRITICAL: malicious_threshold (current: 8.0)
+malicious_threshold_min = 6.5
+malicious_threshold_max = 9.0
+malicious_threshold_step = 0.25
+
+# HIGH: suspicious_threshold (current: 4.0)
+suspicious_threshold_min = 3.0
+suspicious_threshold_max = 5.5
+suspicious_threshold_step = 0.25
+
+# HIGH: reputation multipliers (current: tier1=0.3, tier2=0.5)
+reputation_tier_1_min = 0.2
+reputation_tier_1_max = 0.5
+reputation_tier_1_step = 0.05
+
+reputation_tier_2_min = 0.3
+reputation_tier_2_max = 0.7
+reputation_tier_2_step = 0.05
+
+# MEDIUM: LLM override threshold (current: 0.95)
+llm_override_threshold_min = 0.85
+llm_override_threshold_max = 0.99
+llm_override_threshold_step = 0.02
+
+# MEDIUM: LLM multiplier min (current: 0.2)
+llm_multiplier_min_min = 0.1
+llm_multiplier_min_max = 0.5
+llm_multiplier_min_step = 0.05
+
+# MEDIUM: Category caps (current: cap1=5.0, cap2=7.0, cap3=8.5)
+category_cap_1_min = 4.0
+category_cap_1_max = 6.5
+category_cap_1_step = 0.25
+
+category_cap_2_min = 6.0
+category_cap_2_max = 8.5
+category_cap_2_step = 0.25
+
+category_cap_3_min = 7.5
+category_cap_3_max = 9.5
+category_cap_3_step = 0.25
+
+# MEDIUM: Deduplication similarity (current: 0.8)
+dedup_similarity_min = 0.6
+dedup_similarity_max = 0.9
+dedup_similarity_step = 0.05
+
+# LOW: Log weight base (current: 1.0)
+log_weight_base_min = 0.5
+log_weight_base_max = 1.5
+log_weight_base_step = 0.1
+
+# Paths
+[paths]
+evidence_dir = "evidence"
+clean_packages_dir = "benchmarks/clean-packages"
+output_dir = "output/autoresearch"
+cache_dir = "~/.cache/glassware/autoresearch"
