@@ -53,6 +53,7 @@ suspicious_threshold = 4.0
 [settings.llm]
 tier1_enabled = true
 tier1_provider = "cerebras"
+tier1_threshold = 6.0  # Skip Tier 1 for score < 6.0 (reduces API calls)
 tier2_enabled = true
 tier2_threshold = 7.0
 
