@@ -1,9 +1,9 @@
-[2m2026-03-25T16:51:43.953416Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:51:43.953434Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T16:51:43.953558Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-evasion-003.tgz
-[2m2026-03-25T16:51:43.953565Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-evasion-003.tgz
-[2m2026-03-25T16:51:43.953824Z[0m [32m INFO[0m Scanning package: glassworm-evasion (003)
-[2m2026-03-25T16:51:43.969729Z[0m [32m INFO[0m Scanned 2 files, found 3 issues
+[2m2026-03-25T17:05:50.184612Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:05:50.184638Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T17:05:50.184753Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-evasion-003.tgz
+[2m2026-03-25T17:05:50.184760Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-evasion-003.tgz
+[2m2026-03-25T17:05:50.185004Z[0m [32m INFO[0m Scanning package: glassworm-evasion (003)
+[2m2026-03-25T17:05:50.200726Z[0m [32m INFO[0m Scanned 2 files, found 3 issues
 
 ============================================================
 SCAN SUMMARY

@@ -1,0 +1,9 @@
+{
+    "evidence_detection_rate": 1.00,
+    "fp_rate": 0.00,
+    "combined_score": 1.00,
+    "timestamp": "2026-03-25T17:02:43+00:00",
+    "quick_mode": true,
+    "evidence_tarballs_scanned": 23,
+    "clean_packages_scanned": 10
+}

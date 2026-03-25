@@ -1,11 +1,11 @@
-[2m2026-03-25T16:51:44.350657Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:51:44.351451Z[0m [32m INFO[0m Started scan: 03cabdb1-c1fd-4306-b161-5b86c28502ae
-[2m2026-03-25T16:51:44.351455Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T16:51:44.373354Z[0m [32m INFO[0m Cache database initialized with WAL mode
-[2m2026-03-25T16:51:44.373374Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T16:51:44.619370Z[0m [32m INFO[0m Downloaded lodash@4.17.21 (4.17.21) to "/tmp/.tmpF7VwCs"
-[2m2026-03-25T16:51:44.619400Z[0m [32m INFO[0m Scanning package: lodash@4.17.21 (4.17.21)
-[2m2026-03-25T16:51:46.031049Z[0m [32m INFO[0m Scanned 1049 files, found 2 issues
+[2m2026-03-25T17:05:50.604891Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:05:50.605814Z[0m [32m INFO[0m Started scan: a02b9fd5-ba61-4547-a664-fc9fade97633
+[2m2026-03-25T17:05:50.605819Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:05:50.627051Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T17:05:50.627065Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:05:51.015329Z[0m [32m INFO[0m Downloaded lodash@4.17.21 (4.17.21) to "/tmp/.tmpuQFqxg"
+[2m2026-03-25T17:05:51.015385Z[0m [32m INFO[0m Scanning package: lodash@4.17.21 (4.17.21)
+[2m2026-03-25T17:05:52.418705Z[0m [32m INFO[0m Scanned 1049 files, found 2 issues
 
 ============================================================
 SCAN SUMMARY
@@ -19,8 +19,8 @@ Findings by severity:
   Medium: 2
 
 Findings by category:
-  "Unknown": 1
   "EncryptedPayload": 1
+  "Unknown": 1
 ============================================================
 
 ✅ No malicious packages detected (2 findings below threshold)

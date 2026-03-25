@@ -130,7 +130,7 @@ Require multiple attack categories before flagging as malicious. Single-category
 
 ## What's Been Tried
 
-*Session just starting - no experiments yet*
+Experiment 1: Fixed file path propagation - FP 10% to 0%, Score 0.96 to 1.00
 
 ## Session Controls
 

@@ -1,11 +1,11 @@
-[2m2026-03-25T16:51:46.041729Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:51:46.042532Z[0m [32m INFO[0m Started scan: d01090e7-19ee-4765-a4d3-7612d7f00a24
-[2m2026-03-25T16:51:46.042537Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T16:51:46.063689Z[0m [32m INFO[0m Cache database initialized with WAL mode
-[2m2026-03-25T16:51:46.063705Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T16:51:46.312350Z[0m [32m INFO[0m Downloaded axios@1.6.7 (1.6.7) to "/tmp/.tmpIUzYOB"
-[2m2026-03-25T16:51:46.312422Z[0m [32m INFO[0m Scanning package: axios@1.6.7 (1.6.7)
-[2m2026-03-25T16:51:46.421468Z[0m [32m INFO[0m Scanned 59 files, found 2 issues
+[2m2026-03-25T17:05:52.431733Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:05:52.432738Z[0m [32m INFO[0m Started scan: e11a63ab-7828-40fb-8612-3e2beac1d731
+[2m2026-03-25T17:05:52.432743Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:05:52.454095Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T17:05:52.454110Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:05:52.752698Z[0m [32m INFO[0m Downloaded axios@1.6.7 (1.6.7) to "/tmp/.tmp1S6Dje"
+[2m2026-03-25T17:05:52.752755Z[0m [32m INFO[0m Scanning package: axios@1.6.7 (1.6.7)
+[2m2026-03-25T17:05:52.884464Z[0m [32m INFO[0m Scanned 59 files, found 2 issues
 
 ============================================================
 SCAN SUMMARY

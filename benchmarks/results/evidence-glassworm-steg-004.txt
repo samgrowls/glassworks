@@ -1,9 +1,9 @@
-[2m2026-03-25T16:51:43.882464Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:51:43.882484Z[0m [32m INFO[0m Scanning 1 tarball file(s)
-[2m2026-03-25T16:51:43.882600Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-steg-004.tgz
-[2m2026-03-25T16:51:43.882608Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-steg-004.tgz
-[2m2026-03-25T16:51:43.882868Z[0m [32m INFO[0m Scanning package: glassworm-steg (004)
-[2m2026-03-25T16:51:43.899575Z[0m [32m INFO[0m Scanned 2 files, found 0 issues
+[2m2026-03-25T17:05:50.115035Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:05:50.115060Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T17:05:50.115171Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-steg-004.tgz
+[2m2026-03-25T17:05:50.115178Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-steg-004.tgz
+[2m2026-03-25T17:05:50.115432Z[0m [32m INFO[0m Scanning package: glassworm-steg (004)
+[2m2026-03-25T17:05:50.131801Z[0m [32m INFO[0m Scanned 2 files, found 0 issues
 
 ============================================================
 SCAN SUMMARY

@@ -1,8 +1,11 @@
-[2m2026-03-25T16:51:47.042226Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
-[2m2026-03-25T16:51:47.043034Z[0m [32m INFO[0m Started scan: ab27a645-83f8-4607-8fc1-fd67c6ac84f0
-[2m2026-03-25T16:51:47.043039Z[0m [32m INFO[0m Scanning 1 npm packages
-[2m2026-03-25T16:51:47.064295Z[0m [32m INFO[0m Cache database initialized with WAL mode
-[2m2026-03-25T16:51:47.064314Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:05:53.570497Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T17:05:53.571437Z[0m [32m INFO[0m Started scan: 4ff715ee-645c-4404-8e73-334efea07c9d
+[2m2026-03-25T17:05:53.571441Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:05:53.592784Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T17:05:53.592798Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T17:05:53.876760Z[0m [32m INFO[0m Downloaded moment@2.30.1 (2.30.1) to "/tmp/.tmpXtQMIS"
+[2m2026-03-25T17:05:53.876847Z[0m [32m INFO[0m Scanning package: moment@2.30.1 (2.30.1)
+[2m2026-03-25T17:05:55.933469Z[0m [32m INFO[0m Scanned 395 files, found 2 issues
 
 ============================================================
 SCAN SUMMARY
