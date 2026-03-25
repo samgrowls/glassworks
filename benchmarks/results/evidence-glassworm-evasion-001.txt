@@ -1,0 +1,17 @@
+[2m2026-03-25T16:05:08.851230Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:05:08.851257Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:05:08.851378Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-evasion-001.tgz
+[2m2026-03-25T16:05:08.851387Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-evasion-001.tgz
+[2m2026-03-25T16:05:08.851660Z[0m [32m INFO[0m Scanning package: glassworm-evasion (001)
+[2m2026-03-25T16:05:08.866466Z[0m [32m INFO[0m Scanned 2 files, found 6 issues
+
+============================================================
+SCAN SUMMARY
+============================================================
+Total packages scanned: 1
+Malicious packages: 0
+Total findings: 6
+Average threat score: 5.00
+============================================================
+
+✅ No malicious packages detected (6 findings below threshold)

@@ -936,12 +936,6 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
                 "dist".to_string(), "build".to_string(),
             ],
             glassware_config: glassware_core::GlasswareConfig {
-                whitelist: glassware_core::WhitelistConfig {
-                    packages: glassware_config.whitelist.packages.clone(),
-                    crypto_packages: glassware_config.whitelist.crypto_packages.clone(),
-                    build_tools: glassware_config.whitelist.build_tools.clone(),
-                    state_management: glassware_config.whitelist.state_management.clone(),
-                },
                 scoring: glassware_core::ScoringConfig {
                     malicious_threshold: glassware_config.scoring.malicious_threshold,
                     suspicious_threshold: glassware_config.scoring.suspicious_threshold,

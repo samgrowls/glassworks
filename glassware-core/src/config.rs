@@ -113,33 +113,12 @@ impl Default for DetectorConfig {
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GlasswareConfig {
-    /// Package whitelist
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub whitelist: WhitelistConfig,
     /// Scoring configuration
     #[cfg_attr(feature = "serde", serde(default))]
     pub scoring: ScoringConfig,
     /// Detector configuration
     #[cfg_attr(feature = "serde", serde(default))]
     pub detectors: DetectorWeights,
-}
-
-/// Package whitelist configuration
-#[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct WhitelistConfig {
-    /// Packages to never flag (i18n libraries, etc.)
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub packages: Vec<String>,
-    /// Crypto libraries (blockchain API calls are legitimate)
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub crypto_packages: Vec<String>,
-    /// Build tools (time delays are legitimate)
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub build_tools: Vec<String>,
-    /// State management libraries
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub state_management: Vec<String>,
 }
 
 /// Scoring configuration

@@ -15,7 +15,6 @@ use std::path::PathBuf;
 pub struct GlasswareConfig {
     pub scoring: ScoringConfig,
     pub detectors: DetectorConfig,
-    pub whitelist: WhitelistConfig,
     pub performance: PerformanceConfig,
     pub llm: LlmConfig,
     pub output: OutputConfig,
@@ -103,26 +102,6 @@ impl Default for LocaleGeofencingConfig {
             skip_for_packages: Vec::new(),
         }
     }
-}
-
-/// Package whitelist configuration
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct WhitelistConfig {
-    /// Packages to never flag (locale libraries, etc.)
-    #[serde(default)]
-    pub packages: Vec<String>,
-
-    /// Crypto libraries (blockchain API calls are legitimate)
-    #[serde(default)]
-    pub crypto_packages: Vec<String>,
-
-    /// Build tools (time delays are legitimate)
-    #[serde(default)]
-    pub build_tools: Vec<String>,
-
-    /// State management libraries (complex patterns are legitimate)
-    #[serde(default)]
-    pub state_management: Vec<String>,
 }
 
 /// Performance configuration
@@ -263,7 +242,6 @@ impl Default for GlasswareConfig {
         Self {
             scoring: ScoringConfig::default(),
             detectors: DetectorConfig::default(),
-            whitelist: WhitelistConfig::default(),
             performance: PerformanceConfig::default(),
             llm: LlmConfig::default(),
             output: OutputConfig::default(),
@@ -376,7 +354,6 @@ fn merge_configs(
     GlasswareConfig {
         scoring: merge_scoring(base.scoring, override_config.scoring),
         detectors: merge_detectors(base.detectors, override_config.detectors),
-        whitelist: merge_whitelist(base.whitelist, override_config.whitelist),
         performance: merge_performance(
             base.performance,
             override_config.performance,
@@ -474,20 +451,6 @@ fn merge_locale_geofencing_config(
             override_config.skip_for_packages,
         ]
         .concat(),
-    }
-}
-
-/// Merge whitelist configs by concatenating lists
-fn merge_whitelist(
-    base: WhitelistConfig,
-    override_config: WhitelistConfig,
-) -> WhitelistConfig {
-    WhitelistConfig {
-        packages: [base.packages, override_config.packages].concat(),
-        crypto_packages: [base.crypto_packages, override_config.crypto_packages]
-            .concat(),
-        build_tools: [base.build_tools, override_config.build_tools].concat(),
-        state_management: [base.state_management, override_config.state_management].concat(),
     }
 }
 
@@ -680,27 +643,6 @@ npm_rate_limit = 15.0
         let merged = merge_scoring(base, override_config);
         assert_eq!(merged.malicious_threshold, 9.0);
         assert_eq!(merged.suspicious_threshold, 3.0); // from base
-    }
-
-    #[test]
-    fn test_merge_whitelist() {
-        let base = WhitelistConfig {
-            packages: vec!["package1".to_string()],
-            crypto_packages: vec!["crypto1".to_string()],
-            build_tools: vec!["build1".to_string()],
-            state_management: vec!["state1".to_string()],
-        };
-        let override_config = WhitelistConfig {
-            packages: vec!["package2".to_string()],
-            crypto_packages: vec!["crypto2".to_string()],
-            build_tools: vec!["build2".to_string()],
-            state_management: vec!["state2".to_string()],
-        };
-        let merged = merge_whitelist(base, override_config);
-        assert_eq!(merged.packages.len(), 2);
-        assert_eq!(merged.crypto_packages.len(), 2);
-        assert_eq!(merged.build_tools.len(), 2);
-        assert_eq!(merged.state_management.len(), 2);
     }
 
     #[test]

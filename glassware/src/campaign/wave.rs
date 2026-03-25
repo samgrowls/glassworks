@@ -41,14 +41,6 @@ impl WaveExecutor {
         event_bus: EventBus,
         max_concurrency: usize,
     ) -> Self {
-        // Convert campaign whitelist to glassware-core format
-        let whitelist_config = glassware_core::config::WhitelistConfig {
-            packages: settings.whitelist.packages.clone(),
-            crypto_packages: settings.whitelist.crypto_packages.clone(),
-            build_tools: settings.whitelist.build_tools.clone(),
-            state_management: vec![],
-        };
-
         // Convert campaign scoring to glassware-core format
         let scoring_config = glassware_core::config::ScoringConfig {
             malicious_threshold: settings.scoring.malicious_threshold,
@@ -62,7 +54,6 @@ impl WaveExecutor {
             crate::scanner::ScannerConfig {
                 max_concurrent: max_concurrency,
                 glassware_config: glassware_core::GlasswareConfig {
-                    whitelist: whitelist_config,
                     scoring: scoring_config,
                     detectors: glassware_core::DetectorWeights {
                         invisible_char: 1.0,

@@ -1,0 +1,17 @@
+[2m2026-03-25T16:05:08.760393Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:05:08.760421Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:05:08.760550Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-steg-001.tgz
+[2m2026-03-25T16:05:08.760559Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-steg-001.tgz
+[2m2026-03-25T16:05:08.760836Z[0m [32m INFO[0m Scanning package: glassworm-steg (001)
+[2m2026-03-25T16:05:08.775497Z[0m [32m INFO[0m Scanned 2 files, found 0 issues
+
+============================================================
+SCAN SUMMARY
+============================================================
+Total packages scanned: 1
+Malicious packages: 0
+Total findings: 0
+Average threat score: 0.00
+============================================================
+
+✅ No malicious packages detected (0 findings below threshold)

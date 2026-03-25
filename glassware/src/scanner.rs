@@ -122,12 +122,6 @@ impl From<crate::config::GlasswareConfig> for ScannerConfig {
     fn from(config: crate::config::GlasswareConfig) -> Self {
         // Convert local config to glassware_core config
         let core_config = glassware_core::GlasswareConfig {
-            whitelist: glassware_core::WhitelistConfig {
-                packages: config.whitelist.packages,
-                crypto_packages: config.whitelist.crypto_packages,
-                build_tools: config.whitelist.build_tools,
-                state_management: vec![],
-            },
             scoring: glassware_core::ScoringConfig {
                 malicious_threshold: config.scoring.malicious_threshold,
                 suspicious_threshold: config.scoring.suspicious_threshold,
@@ -217,11 +211,7 @@ impl Scanner {
         let scoring_engine = ScoringEngine::new(scoring_config, package_context);
         let threat_score = scoring_engine.calculate_score(&findings, None);
 
-        // ⚠️ DISABLED 2026-03-24: Package-level whitelisting removed
-        // All packages are evaluated equally - no whitelist bypass
-        // let is_whitelisted = self.is_package_whitelisted(&package.name);
-        let _is_whitelisted = false;
-
+        // All packages are evaluated equally - no package-level whitelisting
         let is_malicious = threat_score >= self.config.threat_threshold;
 
         if is_malicious {
@@ -612,26 +602,15 @@ impl Scanner {
     /// Calculate threat score from findings using signal stacking with config weights.
     ///
     /// Score = (categories × category_weight) + (critical × critical_weight) + (high × high_weight)
-    fn calculate_threat_score(&self, findings: &[Finding], package_name: &str) -> f32 {
+    fn calculate_threat_score(&self, findings: &[Finding], _package_name: &str) -> f32 {
         if findings.is_empty() {
             return 0.0;
         }
 
         let config = &self.config.glassware_config;
 
-        // ⚠️ DISABLED 2026-03-24: Package-level whitelisting removed
-        // All packages now go through the same detection logic
+        // All packages are evaluated equally - no package-level whitelisting
         // Context-aware detection in individual detectors prevents FPs
-        // let is_whitelisted = self.is_package_whitelisted(package_name);
-        // let is_crypto_package = config.whitelist.crypto_packages.iter().any(|p| {
-        //     package_lower.contains(&p.to_lowercase())
-        // });
-        // let is_build_tool = config.whitelist.build_tools.iter().any(|p| {
-        //     package_lower.contains(&p.to_lowercase())
-        // });
-        let _is_whitelisted = false;  // Always false - no whitelisting
-        let _is_crypto_package = false;  // Detectors handle context internally
-        let _is_build_tool = false;  // Detectors handle context internally
 
         // Track which signal categories are present
         let mut categories = std::collections::HashSet::new();
@@ -643,7 +622,6 @@ impl Scanner {
             let detector_weight = self.get_detector_weight(&finding.category);
 
             // Categorize each finding
-            // Note: is_whitelisted, is_crypto_package, is_build_tool are always false now
             match finding.category {
                 // === Obfuscation Category ===
                 DetectionCategory::InvisibleCharacter => {
@@ -898,27 +876,6 @@ impl Scanner {
             // Default weight for detectors without specific config
             _ => 1.0,
         }
-    }
-
-    /// Check if a package is whitelisted (defense in depth).
-    ///
-    /// ⚠️ **DISABLED 2026-03-24**: Package-level whitelisting is dangerous for supply chain security.
-    /// Attackers target popular packages specifically (webpack, babel, express, etc.).
-    /// 
-    /// Context-aware detection (in detectors) should be used instead of blanket whitelisting.
-    /// See: Phase 1 - Emergency Whitelist Removal (PROMPT.md)
-    ///
-    /// Previous matching rules (DEPRECATED):
-    /// - Exact match: "lodash" matches "lodash"
-    /// - Prefix with dash: "webpack-" matches "webpack", "webpack-cli"
-    /// - Prefix with slash: "@babel/" matches "@babel/core", "@babel/cli"
-    /// - Wildcard: "@metamask/*" matches "@metamask/anything"
-    #[allow(dead_code)]
-    fn is_package_whitelisted(&self, _package_name: &str) -> bool {
-        // DISABLED: Always return false - no package-level whitelisting
-        // This forces all packages through the same detection logic
-        // Context-aware detection in individual detectors prevents FPs
-        false
     }
 
     /// Check if a file is a locale or data file (where invisible chars are legitimate)

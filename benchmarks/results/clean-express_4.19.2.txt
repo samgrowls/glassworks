@@ -1,0 +1,26 @@
+[2m2026-03-25T16:05:08.920452Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:05:08.921260Z[0m [32m INFO[0m Started scan: 9317955e-7161-47f2-ab11-1fc8c673cba2
+[2m2026-03-25T16:05:08.921265Z[0m [32m INFO[0m Scanning 1 npm packages
+[2m2026-03-25T16:05:08.944927Z[0m [32m INFO[0m Cache database initialized with WAL mode
+[2m2026-03-25T16:05:08.944950Z[0m [32m INFO[0m Scanning 1 npm packages
+
+============================================================
+SCAN SUMMARY
+============================================================
+Total packages scanned: 1
+Malicious packages: 0
+Total findings: 6
+Average threat score: 3.39
+
+Findings by severity:
+  Critical: 1
+  Low: 2
+  Info: 3
+
+Findings by category:
+  "HeaderC2": 1
+  "Unknown": 3
+  "TimeDelaySandboxEvasion": 2
+============================================================
+
+✅ No malicious packages detected (6 findings below threshold)

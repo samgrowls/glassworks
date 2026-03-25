@@ -1,0 +1,21 @@
+[2m2026-03-25T16:05:08.641441Z[0m [32m INFO[0m Glassware Orchestrator v0.8.0
+[2m2026-03-25T16:05:08.641466Z[0m [32m INFO[0m Scanning 1 tarball file(s)
+[2m2026-03-25T16:05:08.641580Z[0m [32m INFO[0m Scanning tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-combo-004.tgz
+[2m2026-03-25T16:05:08.641588Z[0m [32m INFO[0m Extracting tarball: /home/shva/samgrowls/glassworks-v0.41/evidence/glassworm-combo-004.tgz
+[2m2026-03-25T16:05:08.641853Z[0m [32m INFO[0m Scanning package: glassworm-combo (004)
+[2m2026-03-25T16:05:08.660005Z[0m [32m INFO[0m Scanned 2 files, found 8 issues
+[2m2026-03-25T16:05:08.660020Z[0m [33m WARN[0m Package glassworm-combo flagged as malicious (threat score: 9.00)
+
+============================================================
+SCAN SUMMARY
+============================================================
+Total packages scanned: 1
+Malicious packages: 1
+Total findings: 8
+Average threat score: 9.00
+============================================================
+
+⚠️  MALICIOUS PACKAGES DETECTED:
+  - glassworm-combo (004) [threat score: 9.00]
+
+❌ Malicious packages detected (8 findings below threshold)
