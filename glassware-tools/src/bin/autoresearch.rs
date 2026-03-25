@@ -93,12 +93,11 @@ fn main() -> Result<()> {
         // Propose new configuration
         let (params, params_json) = optimizer.propose();
         
-        // Apply configuration (would modify scoring config file)
-        // For now, we just simulate by logging
+        // Run benchmark with proposed parameters
         info!("Iteration {}: Testing configuration", iteration);
-        
+
         // Run benchmark
-        match benchmark_runner.run() {
+        match benchmark_runner.run_with_params(&params) {
             Ok(result) => {
                 // Calculate metrics
                 let record = IterationRecord::new(

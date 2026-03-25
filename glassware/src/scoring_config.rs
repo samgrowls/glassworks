@@ -8,6 +8,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::env;
 
 /// Scoring configuration
 ///
@@ -92,9 +93,20 @@ fn default_glassworm_c2_min_score() -> f32 {
 
 impl Default for ScoringConfig {
     fn default() -> Self {
+        // Check for autoresearch runtime config override
+        let malicious_threshold = env::var("GLASSWARE_MALICIOUS_THRESHOLD")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_else(default_malicious_threshold);
+
+        let suspicious_threshold = env::var("GLASSWARE_SUSPICIOUS_THRESHOLD")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_else(default_suspicious_threshold);
+
         Self {
-            malicious_threshold: default_malicious_threshold(),
-            suspicious_threshold: default_suspicious_threshold(),
+            malicious_threshold,
+            suspicious_threshold,
             finding_base_weights: default_finding_base_weights(),
             pattern_dedup_enabled: default_true(),
             pattern_similarity_threshold: default_similarity_threshold(),

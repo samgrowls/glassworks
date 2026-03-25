@@ -1,8 +1,9 @@
 //! Benchmark Module
-//! 
+//!
 //! Scans packages and collects benchmark results.
 
 use crate::metrics::BenchmarkResult;
+use crate::optimizer::ScoringParams;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tracing::{info, warn, error};
@@ -14,6 +15,7 @@ pub struct BenchmarkRunner {
     clean_packages_dir: PathBuf,
     use_subset: bool,
     subset_size: usize,
+    work_dir: PathBuf,
 }
 
 impl BenchmarkRunner {
@@ -31,33 +33,34 @@ impl BenchmarkRunner {
             clean_packages_dir,
             use_subset,
             subset_size,
+            work_dir: std::env::current_dir().unwrap_or(PathBuf::from(".")),
         }
     }
-    
-    /// Run benchmark and return results
-    pub fn run(&self) -> anyhow::Result<BenchmarkResult> {
-        info!("Running benchmark...");
-        
+
+    /// Run benchmark with specific scoring parameters
+    pub fn run_with_params(&self, params: &ScoringParams) -> anyhow::Result<BenchmarkResult> {
+        info!("Running benchmark with params: mal={}, susp={}", 
+            params.malicious_threshold, params.suspicious_threshold);
+
         let start_time = std::time::Instant::now();
-        
+
         // Scan evidence packages
-        let (evidence_total, evidence_detected) = self.scan_evidence()?;
-        
+        let (evidence_total, evidence_detected) = self.scan_evidence(params)?;
+
         // Scan clean packages
-        let (clean_total, clean_flagged) = self.scan_clean()?;
-        
+        let (clean_total, clean_flagged) = self.scan_clean(params)?;
+
         let elapsed = start_time.elapsed();
         let scan_time_seconds = elapsed.as_secs_f64();
-        
+
         // Estimate scan speed (rough estimate based on package count)
-        // In production, we'd track actual LOC scanned
         let estimated_loc = (evidence_total + clean_total) as f64 * 5000.0;
         let scan_speed_loc_per_sec = if scan_time_seconds > 0.0 {
             estimated_loc / scan_time_seconds
         } else {
             0.0
         };
-        
+
         let result = BenchmarkResult {
             evidence_total,
             evidence_detected,
@@ -66,19 +69,60 @@ impl BenchmarkRunner {
             scan_time_seconds,
             scan_speed_loc_per_sec,
         };
-        
+
         info!(
             "Benchmark complete: FP={:.1}%, Detection={:.1}%, F1={:.3}",
             result.fp_rate() * 100.0,
             result.detection_rate() * 100.0,
             result.f1_score()
         );
-        
+
         Ok(result)
+    }
+
+    /// Write campaign configuration file
+    fn write_campaign_config(&self, path: &Path, params: &ScoringParams) -> anyhow::Result<()> {
+        let config_content = format!(r#"[campaign]
+name = "Autoresearch Iteration"
+description = "Temporary campaign for autoresearch optimization"
+priority = "high"
+
+[settings]
+concurrency = 8
+cache_enabled = false
+
+[settings.scoring]
+malicious_threshold = {}
+suspicious_threshold = {}
+
+[settings.llm]
+tier1_enabled = false
+tier2_enabled = false
+
+[[waves]]
+id = "benchmark"
+name = "Benchmark Scan"
+mode = "scan"
+
+[[waves.sources]]
+type = "packages"
+list = []
+"#,
+            params.malicious_threshold,
+            params.suspicious_threshold,
+        );
+
+        // Create parent directory if needed
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        std::fs::write(path, config_content)?;
+        Ok(())
     }
     
     /// Scan evidence packages
-    fn scan_evidence(&self) -> anyhow::Result<(usize, usize)> {
+    fn scan_evidence(&self, params: &ScoringParams) -> anyhow::Result<(usize, usize)> {
         let mut total = 0;
         let mut detected = 0;
         
@@ -90,7 +134,7 @@ impl BenchmarkRunner {
                 
                 if path.extension().and_then(|s| s.to_str()) == Some("tgz") {
                     total += 1;
-                    if self.is_flagged(&path)? {
+                    if self.is_flagged(&path, params)? {
                         detected += 1;
                     }
                 }
@@ -123,7 +167,7 @@ impl BenchmarkRunner {
                     .status()?;
                 
                 if status.success() {
-                    if self.is_flagged(&temp_tarball)? {
+                    if self.is_flagged(&temp_tarball, params)? {
                         detected += 1;
                     }
                     let _ = std::fs::remove_file(temp_tarball);
@@ -135,7 +179,7 @@ impl BenchmarkRunner {
     }
     
     /// Scan clean packages
-    fn scan_clean(&self) -> anyhow::Result<(usize, usize)> {
+    fn scan_clean(&self, params: &ScoringParams) -> anyhow::Result<(usize, usize)> {
         let mut total = 0;
         let mut flagged = 0;
         
@@ -163,8 +207,8 @@ impl BenchmarkRunner {
         // Scan each package
         for package in &packages {
             total += 1;
-            
-            if self.is_flagged(package)? {
+
+            if self.is_flagged(package, params)? {
                 flagged += 1;
                 info!("  FP: {}", package.file_name().unwrap().to_string_lossy());
             }
@@ -174,9 +218,12 @@ impl BenchmarkRunner {
     }
     
     /// Check if a package is flagged as malicious
-    fn is_flagged(&self, tarball: &Path) -> anyhow::Result<bool> {
+    fn is_flagged(&self, tarball: &Path, params: &ScoringParams) -> anyhow::Result<bool> {
+        // Set environment variables to override scoring config
         let output = Command::new(&self.glassware_binary)
             .args(["scan-tarball", tarball.to_str().unwrap()])
+            .env("GLASSWARE_MALICIOUS_THRESHOLD", params.malicious_threshold.to_string())
+            .env("GLASSWARE_SUSPICIOUS_THRESHOLD", params.suspicious_threshold.to_string())
             .output();
         
         match output {
