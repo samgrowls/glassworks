@@ -280,6 +280,11 @@ pub struct LlmSettings {
     /// Tier 1 provider (cerebras).
     #[serde(default = "default_cerebras")]
     pub tier1_provider: String,
+    /// Threat score threshold for Tier 1 LLM analysis during scan.
+    /// Packages with score below this threshold skip Tier 1 LLM to reduce API calls.
+    /// Recommended: 4.0-6.0 (skip Tier 1 for low-risk packages)
+    #[serde(default = "default_tier1_threshold")]
+    pub tier1_threshold: f32,
     /// Enable Tier 2 LLM (NVIDIA) for flagged packages.
     #[serde(default)]
     pub tier2_enabled: bool,
@@ -289,16 +294,10 @@ pub struct LlmSettings {
     /// NVIDIA model fallback chain.
     #[serde(default = "default_nvidia_models")]
     pub tier2_models: Vec<String>,
-    /// Threat score threshold for initial LLM analysis during scan.
-    /// Packages with score below this threshold skip LLM analysis to reduce API calls.
-    /// Recommended: 4.0-6.0 (skip LLM for low-risk packages)
-    #[serde(default = "default_llm_analysis_threshold")]
-    pub analysis_threshold: f32,
 }
 
-fn default_llm_analysis_threshold() -> f32 {
-    6.0  // Skip LLM for packages with score < 6.0 (reduces API calls by ~80%)
-}
+fn default_tier1_threshold() -> f32 { 6.0 }  // Skip Tier 1 for score < 6.0
+fn default_tier2_threshold() -> f32 { 5.0 }  // Tier 2 for score >= 5.0
 
 /// Output configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -558,7 +557,6 @@ fn default_github_rate_limit() -> f32 { 5.0 }
 fn default_true() -> bool { true }
 fn default_cache_ttl() -> u64 { 7 }
 fn default_cerebras() -> String { "cerebras".to_string() }
-fn default_tier2_threshold() -> f32 { 5.0 }
 fn default_nvidia_models() -> Vec<String> {
     vec![
         "qwen/qwen3.5-397b-a17b".to_string(),

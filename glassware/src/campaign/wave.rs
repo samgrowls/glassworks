@@ -367,15 +367,15 @@ impl WaveExecutor {
         let mut scan_result = self.scanner.scan_package(&downloaded).await
             .map_err(|e| WaveError::ExecutorError(format!("Scan failed: {}", e)))?;
 
-        // Run LLM analysis if enabled and findings exist
-        // Skip LLM for low-score packages to reduce API calls and rate limiting
+        // Run Tier 1 LLM analysis if enabled and findings exist
+        // Skip Tier 1 LLM for low-score packages to reduce API calls and rate limiting
         #[cfg(feature = "llm")]
         if let Some(ref analyzer) = self.llm_analyzer {
-            // Only run LLM if score meets threshold (reduces API calls by ~80%)
-            let llm_threshold = self.settings.llm.analysis_threshold;
-            if !scan_result.findings.is_empty() && scan_result.threat_score >= llm_threshold {
-                debug!("Running LLM analysis on {} findings (score {:.2} >= {:.2})", 
-                    scan_result.findings.len(), scan_result.threat_score, llm_threshold);
+            // Only run Tier 1 LLM if score meets threshold (reduces API calls by ~80%)
+            let tier1_threshold = self.settings.llm.tier1_threshold;
+            if !scan_result.findings.is_empty() && scan_result.threat_score >= tier1_threshold {
+                debug!("Running Tier 1 LLM analysis on {} findings (score {:.2} >= {:.2})", 
+                    scan_result.findings.len(), scan_result.threat_score, tier1_threshold);
 
                 use crate::llm::LlmFinding;
                 let llm_findings: Vec<LlmFinding> = scan_result.findings.iter()
@@ -384,19 +384,16 @@ impl WaveExecutor {
 
                 match analyzer.analyze(&llm_findings).await {
                     Ok(verdict) => {
-                        info!("LLM analysis complete: is_malicious={}, confidence={:.2}",
+                        info!("Tier 1 LLM analysis complete: is_malicious={}, confidence={:.2}",
                               verdict.is_malicious, verdict.confidence);
                         debug!("LLM explanation: {}", verdict.explanation);
 
                         // Use LLM verdict to override score-based flagging when confidence is high
-                        // This prevents false positives when LLM is confident the package is safe
                         if verdict.confidence >= 0.75 {
-                            // High confidence: trust LLM verdict
                             scan_result.is_malicious = verdict.is_malicious;
                             info!("LLM high confidence ({:.2}) - overriding is_malicious to {}",
                                   verdict.confidence, verdict.is_malicious);
                         } else if verdict.confidence <= 0.25 {
-                            // Low confidence: assume safe (likely FP)
                             if scan_result.is_malicious {
                                 scan_result.is_malicious = false;
                                 info!("LLM low confidence ({:.2}) - overriding is_malicious to false (likely FP)",
@@ -405,14 +402,12 @@ impl WaveExecutor {
                         }
                     }
                     Err(e) => {
-                        warn!("LLM analysis failed: {}", e);
-                        // Continue without LLM verdict
+                        warn!("Tier 1 LLM analysis failed: {}", e);
                     }
                 }
             } else if !scan_result.findings.is_empty() {
-                // Skip LLM for low-score packages
-                debug!("Skipping LLM analysis for {} (score {:.2} < {:.2})", 
-                    package.name, scan_result.threat_score, llm_threshold);
+                debug!("Skipping Tier 1 LLM for {} (score {:.2} < {:.2})", 
+                    package.name, scan_result.threat_score, tier1_threshold);
             }
         }
 

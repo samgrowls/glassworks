@@ -29,8 +29,9 @@ suspicious_threshold = 3.5
 [settings.llm]
 tier1_enabled = true
 tier1_provider = "cerebras"
+tier1_threshold = 6.0  # Skip Tier 1 for score < 6.0 (reduces API calls, avoids rate limiting)
 tier2_enabled = true
-tier2_threshold = 4.0
+tier2_threshold = 7.0  # Tier 2 deep analysis for score >= 7.0
 
 [settings.output]
 formats = ["json", "markdown"]
