@@ -1,13 +1,13 @@
 {
   "scans": [
     {
-      "id": "782c1fdc-fa58-45d2-8a7f-a8826c21722d",
-      "started_at": "2026-03-26T20:17:48.175586306Z",
+      "id": "3935d870-3bc6-4f71-8906-13bd806267cc",
+      "started_at": "2026-03-26T20:45:18.332569243Z",
       "completed_at": null,
       "status": "running",
       "command": "scan-npm",
       "packages": [
-        "three@0.160.0"
+        "phaser3-rex-plugins@1.60.6"
       ],
       "version_policy": null,
       "findings_count": 0,

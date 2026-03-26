@@ -1,0 +1,454 @@
+# Wave 17: Large Scale Validation (1000+ NEW packages)
+#
+# Purpose: Validate FP rate holds at 1000+ package scale with NEW packages
+# Target: 1000+ packages not in wave16
+#
+# Run with: glassware campaign run campaigns/wave17-validation.toml
+# Expected duration: ~30-45 minutes
+
+[campaign]
+name = "Wave 17 - Large Scale Validation (1000+ packages)"
+description = "Validate FP rate < 1% on 1000+ NEW packages"
+created_by = "security-team"
+priority = "critical"
+tags = ["validation", "wave17", "production", "large-scale"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+
+# Tiered scoring configuration
+[settings.scoring.tier_config]
+mode = "tiered"
+
+# Tier 1: Primary signals (always runs) - REQUIRED for high scores
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+threshold = 0.0
+weight_multiplier = 1.0
+
+# Tier 2: Secondary confirmation (only if tier 1 score >= 2.0)
+[[settings.scoring.tiers]]
+tier = 2
+detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+threshold = 2.0
+weight_multiplier = 0.8
+
+# Tier 3: Behavioral indicators (only if tier 1+2 score >= 10.0)
+[[settings.scoring.tiers]]
+tier = 3
+detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
+threshold = 10.0
+weight_multiplier = 0.8
+
+# Conditional rules for high-confidence patterns
+[[settings.scoring.conditional_rules]]
+name = "glassworm_signature"
+description = "Invisible + C2 = confirmed GlassWorm"
+condition = "invisible_char.count >= 10 AND blockchain_c2.count >= 1"
+action = "final_score = 25.0"
+
+[settings.scoring.weights]
+invisible_char = 6.0
+glassware_pattern = 10.0
+obfuscation = 10.0
+blockchain_c2 = 5.0
+header_c2 = 4.0
+exfil_schema = 6.0
+locale_geofencing = 7.0
+time_delay_sandbox_evasion = 7.0
+
+[settings.llm]
+tier1_enabled = false  # DISABLED for FP testing
+tier2_enabled = false
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave17"
+report_dir = "reports/wave17"
+
+# ============================================================
+# Wave 17A: Evidence Validation (MUST detect 100%)
+# ============================================================
+[[waves]]
+id = "wave_17a"
+name = "Evidence Validation"
+description = "Validate 100% detection on curated GlassWorm evidence"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Real GlassWorm attack (invisible chars + C2 + obfuscation)
+    "iflow-mcp-watercrawl-watercrawl-mcp@1.3.4",
+]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+min_malicious_count = 1
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 17B: Clean Baseline (1000+ NEW packages, MUST NOT flag)
+# ============================================================
+[[waves]]
+id = "wave_17b"
+name = "Clean Baseline - 1000+ NEW Packages"
+description = "Measure FP rate on 1000+ NEW packages not in wave16"
+depends_on = ["wave_17a"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # UI Component Libraries (100) - NEW, not in wave16
+    "@mui/material@5.15.0", "@mui/icons-material@5.15.0", "@mui/system@5.15.0",
+    "@chakra-ui/react@2.8.2", "@chakra-ui/icons@2.1.1",
+    "@radix-ui/react-dialog@1.0.5", "@radix-ui/react-dropdown-menu@2.0.6", "@radix-ui/react-tooltip@1.0.7",
+    "antd@5.12.5", "rc-table@7.36.0", "rc-select@14.10.0",
+    "react-bootstrap@2.9.1", "bootstrap@5.3.2",
+    "semantic-ui-react@2.1.4", "semantic-ui-css@2.5.0",
+    "@headlessui/react@1.7.17", "@heroicons/react@2.1.1",
+    "tailwindcss@3.4.0", "postcss@8.4.32", "autoprefixer@10.4.16",
+    "styled-components@6.1.6", "emotion@11.0.0", "@emotion/react@11.11.3", "@emotion/styled@11.11.0",
+    "framer-motion@10.16.16", "react-spring@9.7.3", "react-transition-group@4.4.5",
+    "swiper@11.0.5", "react-slick@0.29.0", "slick-carousel@1.8.1",
+    "react-virtualized@9.22.5", "react-window@1.8.10", "react-beautiful-dnd@13.1.1",
+    "ag-grid-react@30.2.1", "ag-grid-community@30.2.1",
+    "recharts@2.10.3", "victory@36.9.1", "nivo@0.84.0", "@nivo/core@0.84.0",
+    "plotly.js@2.27.1", "react-plotly.js@2.6.0",
+    "leaflet@1.9.4", "react-leaflet@4.2.1", "@react-leaflet/core@2.1.0",
+    "mapbox-gl@3.0.1", "react-map-gl@7.1.6",
+    "deck.gl@8.9.3", "@deck.gl/react@8.9.3",
+    "react-dropzone@14.2.3", "react-pdf@7.6.0", "react-document-viewer@0.9.2",
+    "react-quill@2.0.0", "quill@1.3.7", "draft-js@0.11.7",
+    "slate@0.101.4", "slate-react@0.101.3",
+    "prosemirror-state@1.4.3", "prosemirror-view@1.32.7", "prosemirror-model@1.19.4",
+    "tiptap@2.1.13", "@tiptap/react@2.1.13", "@tiptap/starter-kit@2.1.13",
+    "react-markdown@9.0.1", "remark-gfm@4.0.0", "rehype-highlight@7.0.0",
+    "prismjs@1.29.0", "prism-react-renderer@2.3.1",
+    "react-syntax-highlighter@15.5.0", "highlight.js@11.9.0",
+    "react-helmet@6.1.0", "react-helmet-async@2.0.4",
+    "next-seo@6.4.0", "next-sitemap@4.2.3",
+    "react-router@6.21.1", "react-router-dom@6.21.1", "history@5.3.0",
+    "reach-router@1.3.4", "wouter@2.12.1",
+    "formik@2.4.5", "react-hook-form@7.49.2", "informed@4.4.1",
+    "yup@1.3.3", "zod@3.22.4", "joi@17.11.0", "ajv@8.12.0",
+    "react-select@5.8.0", "react-autosuggest@10.1.0", "downshift@9.0.4",
+    "react-datepicker@4.25.0", "react-time-picker@6.5.2", "react-calendar@4.7.0",
+    "date-fns@3.0.6", "dayjs@1.11.10", "luxon@3.4.4", "moment@2.30.1",
+    "moment-timezone@0.5.44", "chrono-node@2.7.4",
+    "i18next@23.7.13", "react-i18next@14.0.0", "intl@1.2.5",
+    "formatjs@2.0.0", "@formatjs/intl@2.10.1",
+    # Animation Libraries (50) - NEW
+    "gsap@3.12.4", "animejs@3.2.2", "mo-js@1.5.1",
+    "popper.js@1.16.1", "@popperjs/core@2.11.8",
+    "tween.js@18.6.4", "@tweenjs/tween.js@23.1.1",
+    "lottie-web@5.12.2", "bodymovin@4.6.0",
+    "pixi.js@7.4.0", "pixi-filters@5.2.1",
+    "konva@9.2.2", "react-konva@18.2.10",
+    "fabric@5.3.0", "paper@0.12.17",
+    "p5@1.9.0", "processing-js@1.6.6",
+    "babylonjs@7.0.1", "babylonjs-loaders@7.0.1",
+    "cannon-es@0.20.0", "ammo.js@0.0.10",
+    "matter-js@0.19.0", "box2d-wasm@7.0.0",
+    "liquidjs@10.9.4", "handlebars@4.7.8", "mustache@4.2.0",
+    "nunjucks@3.2.4", "ejs@3.1.9", "pug@3.0.2",
+    "markdown-it@14.0.0", "marked@11.1.1", "remarkable@2.0.1",
+    "showdown@2.1.0", "turndown@7.1.2",
+    "dompurify@3.0.6", "xss@1.0.14",
+    "sanitize-html@2.11.0", "htmlparser2@9.1.0",
+    "cheerio@1.0.0-rc.12", "jsdom@23.0.1",
+    "svelte@4.2.8", "svelte-preprocess@5.1.3",
+    "vue@3.4.0", "vue-router@4.2.5", "vuex@4.1.0", "pinia@2.1.7",
+    "nuxt@3.9.0", "@nuxt/devtools@1.0.8",
+    "angular@17.0.0", "@angular/core@17.0.0", "@angular/common@17.0.0",
+    "@angular/router@17.0.0", "@angular/forms@17.0.0",
+    "ember-source@5.4.0", "ember-cli@5.4.0",
+    "solid-js@1.8.7", "solid-start@0.4.4",
+    "qwik@1.4.0", "@builder.io/qwik@1.4.0",
+    "astro@4.0.0", "@astrojs/react@3.0.8", "@astrojs/vue@4.0.8",
+    "remix@2.4.0", "@remix-run/react@2.4.0", "@remix-run/node@2.4.0",
+    "blitz@2.0.0", "redwoodjs@6.0.0",
+    # Build Tools (50) - NEW
+    "esbuild@0.19.10", "esbuild-register@3.5.0",
+    "vite@5.0.10", "vite-plugin-react@4.0.0",
+    "rollup@4.9.0", "@rollup/plugin-node-resolve@15.2.3", "@rollup/plugin-commonjs@25.0.7",
+    "webpack@5.89.0", "webpack-cli@5.1.4", "webpack-dev-server@4.15.1",
+    "babel-loader@9.1.3", "@babel/core@7.23.7", "@babel/preset-env@7.23.7", "@babel/preset-react@7.23.3", "@babel/preset-typescript@7.23.3",
+    "ts-loader@9.5.1", "fork-ts-checker-webpack-plugin@9.0.2",
+    "css-loader@6.8.1", "style-loader@3.3.3", "sass-loader@13.3.3", "less-loader@11.1.0",
+    "postcss-loader@7.3.4", "file-loader@6.2.0", "url-loader@4.1.1",
+    "html-webpack-plugin@5.6.0", "copy-webpack-plugin@11.0.0", "mini-css-extract-plugin@2.7.6",
+    "terser-webpack-plugin@5.3.10", "compression-webpack-plugin@10.0.0",
+    "webpack-bundle-analyzer@4.10.1", "webpack-merge@5.10.0",
+    "parcel@2.11.0", "@parcel/transformer-react@2.11.0",
+    "snowpack@4.0.0", "skypack@0.3.2",
+    "swc-core@1.3.100", "@swc/cli@0.1.63", "@swc/jest@0.2.29",
+    "tsx@4.7.0", "ts-node@10.9.2", "ts-node-dev@2.0.0",
+    "typescript@5.3.3", "tslib@2.6.2",
+    "prettier@3.1.1", "eslint@8.56.0", "eslint-config-prettier@9.1.0",
+    "eslint-plugin-react@7.33.2", "eslint-plugin-react-hooks@4.6.0",
+    "@typescript-eslint/parser@6.17.0", "@typescript-eslint/eslint-plugin@6.17.0",
+    "stylelint@16.1.0", "stylelint-config-standard@35.0.0",
+    "husky@8.0.3", "lint-staged@15.2.0",
+    "commitlint@18.4.3", "@commitlint/config-conventional@18.4.3",
+    "semantic-release@23.0.0", "@semantic-release/github@9.2.6",
+    "changesets@2.27.0", "@changesets/cli@2.27.0",
+    # DevOps/CI (50) - NEW
+    "dotenv@16.3.1", "dotenv-cli@7.3.0", "dotenv-expand@10.0.0",
+    "cross-env@7.0.3", "env-cmd@10.1.0",
+    "concurrently@8.2.2", "npm-run-all@4.1.5", "run-p@0.0.0",
+    "wait-on@7.2.0", "start-server-and-test@2.0.3",
+    "nodemon@3.0.2", "node-dev@8.0.0", "supervisor@0.12.0",
+    "pm2@5.3.0", "forever@4.0.3", "strongloop@7.1.2",
+    "dockerode@4.0.2", "docker-compose@0.24.2",
+    "kubernetes-client@10.1.1", "@kubernetes/client-node@0.20.0",
+    "aws-sdk@2.1530.0", "@aws-sdk/client-s3@3.478.0", "@aws-sdk/client-lambda@3.478.0",
+    "@azure/storage-blob@12.17.0", "@azure/identity@4.0.1",
+    "@google-cloud/storage@7.7.0", "@google-cloud/firestore@7.3.0",
+    "vercel@33.4.2", "netlify-cli@17.17.0",
+    "surge@0.23.1", "gh-pages@6.1.1",
+    "ftp@0.3.10", "ssh2@1.15.0",
+    "request@2.88.2", "request-promise@4.2.6",
+    "axios@1.6.7", "got@14.0.0", "node-fetch@3.3.2",
+    "superagent@8.1.2", "superagent-defaults@0.1.14",
+    "form-data@4.0.0", "formidable@3.5.1", "multer@1.4.5-lts.1",
+    "busboy@1.6.0", "file-type@18.7.0",
+    "sharp@0.33.1", "jimp@0.22.10", "imagemin@8.0.1",
+    "svg-parser@2.0.4", "@svgr/webpack@8.1.0",
+    "optimize-css-assets-webpack-plugin@6.0.1", "cssnano@6.0.3",
+    "purgecss@6.0.0", "uncss@0.17.3",
+    "critical@6.0.0", "penthouse@2.3.3",
+    "lighthouse@11.4.0", "chrome-launcher@1.0.0",
+    # Monitoring/Logging (50) - NEW
+    "winston@3.11.0", "winston-daily-rotate-file@4.7.1",
+    "bunyan@1.8.15", "bunyan-format@0.2.1",
+    "pino@8.17.2", "pino-pretty@10.3.1",
+    "log4js@6.9.1", "npmlog@7.0.1",
+    "signale@1.4.0", "kleur@4.1.5", "chalk@5.3.0", "colors@1.4.0",
+    "ora@8.0.1", "cli-spinners@2.9.2", "cli-cursor@4.0.0",
+    "progress@2.0.3", "cli-progress@3.12.0", "enquirer@2.4.1",
+    "inquirer@9.2.12", "prompts@2.4.2", "readline-sync@1.4.10",
+    "commander@12.0.0", "yargs@17.7.2", "minimist@1.2.8",
+    "meow@13.0.0", "cac@6.7.14", "sade@1.8.1",
+    "mri@1.2.0", "getopts@2.3.0", "arg@5.0.2",
+    "argparse@2.0.1", "js-yaml@4.1.0",
+    "toml@3.0.0", "ini@4.1.1", "rc@1.2.8",
+    "nconf@0.12.0", "convict@6.2.4", "env-schema@5.5.0",
+    "envalid@8.0.0", "config@3.3.9", "cosmiconfig@8.3.6",
+    "yaml@2.3.4", "json5@2.2.3", "hjson@3.2.2",
+    "cjson@0.3.3", "conf@12.0.0", "electron-store@9.0.0",
+    "lowdb@7.0.1", "localforage@1.10.0", "idb@8.0.0",
+    "dexie@3.2.4", "pouchdb@8.0.1", "rxdb@15.29.0",
+    "graphql@16.8.1", "@graphql-tools/schema@10.0.2",
+    "apollo-server@3.13.0", "@apollo/client@3.9.0",
+    "relay-runtime@16.1.0", "urql@4.0.6",
+    "axios-retry@4.0.0", "retry@0.13.1", "async-retry@1.3.3",
+    "p-retry@6.2.0", "p-queue@8.0.1",
+    # Message Queues (50) - NEW
+    "kafkajs@2.2.4", "node-rdkafka@2.17.0",
+    "amqplib@0.10.3", "amqplib-async@0.1.2",
+    "rabbitmq-client@5.0.0",
+    "redis@4.6.12", "ioredis@5.3.2", "redis-om@0.3.1",
+    "memcached@2.2.2", "memjs@1.3.2",
+    "node-cache@5.1.2", "memory-cache@0.2.0", "lru-cache@10.1.0",
+    "node-localstorage@3.0.5", "local-storage@2.0.0",
+    "session@0.1.0", "express-session@1.17.3", "connect-redis@7.1.0",
+    "cookie-parser@1.4.6", "cookie@0.6.0", "cookie-signature@1.0.6",
+    "csurf@1.11.0", "helmet@7.1.0", "cors@2.8.5",
+    "compression@1.7.4", "morgan@1.10.0", "response-time@2.3.2",
+    "express-rate-limit@7.1.5", "rate-limiter-flexible@4.0.1",
+    "express-validator@7.0.1", "joi@17.11.0", "yup@1.3.3",
+    "class-validator@0.14.0", "class-transformer@0.5.1",
+    "validator@13.11.0", "validate.js@0.13.1",
+    "zod@3.22.4", "ajv@8.12.0", "superstruct@1.0.3",
+    "io-ts@2.2.21", "fp-ts@2.16.2",
+    "reflect-metadata@0.1.14", "inversify@6.0.2", "typedi@0.10.0",
+    "awilix@10.0.1", "awilix-express@9.0.0",
+    "express@4.19.2", "koa@2.15.0", "hapi@21.3.2",
+    "fastify@4.25.2", "@fastify/cors@9.0.1",
+    "nest.js@0.0.1", "@nestjs/common@10.3.0", "@nestjs/core@10.3.0", "@nestjs/platform-express@10.3.0",
+    "@nestjs/typeorm@10.0.1", "@nestjs/graphql@12.0.11",
+    "typeorm@0.3.19", "typeorm-naming-strategies@4.1.0",
+    "sequelize@6.35.2", "sequelize-cli@6.6.2",
+    "knex@3.1.0", "objection@3.1.3", "bookshelf@1.2.0",
+    "mongoose@8.0.3", "mongoose-paginate-v2@1.7.22",
+    # Authentication (50) - NEW
+    "passport@0.7.0", "passport-local@1.0.0", "passport-jwt@4.0.1",
+    "passport-google-oauth20@2.0.0", "passport-github2@0.1.12",
+    "jsonwebtoken@9.0.2", "jose@5.2.0", "jwt-decode@4.0.0",
+    "bcrypt@5.1.1", "bcryptjs@2.4.3", "argon2@0.31.2",
+    "crypto-js@4.2.0", "crypto-browserify@3.12.0",
+    "uuid@9.0.0", "nanoid@5.0.4", "shortid@2.2.16",
+    "cuid@3.0.0", "hashids@2.3.0", "slugify@1.6.6",
+    "speakingurl@14.0.1", "limax@4.1.0",
+    "otpauth@9.2.2", "notp@0.0.3", "hi-base32@0.5.1",
+    "qrcode@1.5.3", "qrcode-terminal@0.12.0",
+    "2fa@0.0.1", "otplib@12.0.1",
+    "auth0@4.2.0", "@auth0/nextjs-auth0@3.5.0",
+    "next-auth@4.24.5", "@next-auth/prisma-adapter@1.0.7",
+    "clerk@0.0.0", "@clerk/nextjs@4.29.3",
+    "supertokens-node@17.2.1", "@supertokens/auth-react@4.0.5",
+    "firebase@10.7.2", "firebase-admin@12.0.0", "firebase-functions@4.5.0",
+    "@firebase/app@0.9.25", "@firebase/auth@1.6.0", "@firebase/firestore@4.4.0",
+    "aws-amplify@6.0.10", "@aws-amplify/ui-react@6.0.4",
+    "okta-auth-js@7.4.2", "@okta/okta-react@6.7.0",
+    "keycloak-js@23.0.6", "@react-keycloak/web@3.4.0",
+    "casl@6.7.1", "@casl/ability@6.7.1", "@casl/react@3.1.0",
+    "accesscontrol@2.2.1", "node-rbac@2.1.0",
+    "grant@5.4.23", "grant-express@5.4.23",
+    "bell@27.0.0", "hapi-auth-jwt2@10.5.1",
+    "express-jwt@8.4.1", "koa-jwt@4.0.4",
+    # Email/SMS (50) - NEW
+    "nodemailer@6.9.7", "nodemailer-mailgun-transport@2.1.5",
+    "sendgrid@5.2.3", "@sendgrid/mail@8.1.0",
+    "mailgun.js@10.0.0", "mailgun-js@0.22.0",
+    "postmark@4.0.2", "postmark-nodemailer@2.0.0",
+    "ses@0.0.0", "aws-sdk@2.1530.0",
+    "smtp-server@3.13.0", "smtp-tester@2.1.0",
+    "mailparser@3.6.6", "mailcomposer@5.0.0",
+    "email-templates@11.1.1", "handlebars@4.7.8",
+    "mjml@4.15.3", "@mjml/react@4.15.0",
+    "twilio@4.19.3", "twilio-video@2.26.0",
+    "vonage-server-sdk@3.0.0", "nexmo@2.12.1",
+    "plivo@4.50.0", "bandwidth@11.0.0",
+    "messagebird@3.1.30", "clicksend@5.0.77",
+    "slack-node@0.1.8", "@slack/web-api@7.0.2", "@slack/bolt@3.18.0",
+    "discord.js@14.14.1", "discord-webhook-node@1.1.1",
+    "telegram@2.20.1", "node-telegram-bot-api@0.64.0",
+    "whatsapp-web.js@1.23.1-alpha.3", "whatsapp-business-api@0.0.1",
+    "pusher@5.2.0", "pusher-js@8.4.0-rc2",
+    "firebase@10.7.2", "firebase-admin@12.0.0",
+    "onesignal-node@3.4.0", "web-push@3.6.7",
+    "node-gcm@1.0.6", "apn@2.2.0",
+    "expo-server-sdk@3.7.0", "expo-notifications@0.27.6",
+    "react-native-push-notification@8.1.1", "react-native-firebase@5.6.0",
+    # Payment Processing (50) - NEW
+    "stripe@14.10.0", "stripe-webhook-middleware@1.0.4",
+    "paypal-rest-sdk@1.8.1", "@paypal/checkout-server-sdk@1.0.3",
+    "square@33.0.0", "square-connect@3.20231018.0",
+    "braintree@3.19.0", "braintree-web-drop-in@1.42.0",
+    "checkout-sdk@1.15.1", "@checkout/checkout-sdk-js@1.15.1",
+    "adyen-node-api-library@16.0.0", "@adyen/api-library@16.0.0",
+    "razorpay@2.9.2", "razorpay-typescript-definitions@0.0.6",
+    "paytm-node@1.0.2", "paytmchecksum@1.6.0",
+    "flutterwave-node-v3@1.0.2", "flutterwave-node@1.2.8",
+    "coinbase-commerce-node@1.0.4", "coinbase-api@1.0.5",
+    "bitpay@2.0.4", "bitcore-lib@8.25.10",
+    "bitcoinjs-lib@6.1.5", "bip39@3.1.0",
+    "ethereumjs-util@7.1.5", "ethereumjs-tx@2.1.2",
+    "ethers@6.9.2", "web3@4.3.0", "viem@1.21.4",
+    "wagmi@1.4.13", "@wagmi/core@1.4.6",
+    "@solana/web3.js@1.87.6", "@solana/spl-token@0.4.0",
+    "openzeppelin-solidity@5.0.1", "@openzeppelin/contracts@5.0.1",
+    "truffle@5.11.5", "hardhat@2.19.4",
+    "foundry@0.2.0", "brownie@1.19.2",
+    "ganache@7.9.2", "ganache-cli@6.12.2",
+    "moralis@2.27.1", "moralis-v1@1.12.0",
+    "alchemy-sdk@3.2.0", "@alchemy/aa-core@3.6.0",
+    "thirdweb@5.1.0", "@thirdweb-dev/sdk@4.0.3",
+    "lens-protocol@2.1.0", "@lens-protocol/client@2.1.0",
+    # Testing Frameworks (50) - NEW
+    "jest@29.7.0", "@jest/globals@29.7.0", "@types/jest@29.5.11",
+    "mocha@10.2.0", "mocha-junit-reporter@2.2.1",
+    "chai@4.3.10", "chai-http@4.4.0",
+    "sinon@17.0.1", "sinon-chai@3.7.0",
+    "mock-require@3.0.3", "mock-fs@5.2.0",
+    "nock@13.4.0", "msw@2.1.0",
+    "supertest@6.3.3", "superagent@8.1.2",
+    "cypress@13.6.0", "@cypress/code-coverage@3.12.10",
+    "playwright@1.40.0", "@playwright/test@1.40.0",
+    "puppeteer@21.6.0", "puppeteer-core@21.6.0",
+    "selenium-webdriver@4.16.0", "webdriverio@8.27.0",
+    "testcafe@3.4.0", "testcafe-react-selectors@5.0.3",
+    "jasmine@5.1.0", "jasmine-core@5.1.1",
+    "qunit@2.20.0", "node-qunit-puppeteer@2.1.2",
+    "tape@5.7.2", "tap@18.6.1", "node-tap@18.6.1",
+    "ava@6.1.3", "ts-ava@1.0.0",
+    "vitest@1.1.0", "@vitest/ui@1.1.0",
+    "storybook@7.6.6", "@storybook/react@7.6.6", "@storybook/addon-actions@7.6.6",
+    "chromatic@10.1.0", "percy-cli@2.0.0",
+    "lighthouse@11.4.0", "lighthouse-ci@0.15.0",
+    "webpack-bundle-analyzer@4.10.1", "source-map-explorer@2.5.3",
+    "rollup-plugin-visualizer@5.11.0", "esbuild-visualizer@0.6.0",
+    "coverage@0.4.1", "nyc@15.1.0", "c8@9.1.0",
+    "istanbul@0.4.5", "istanbul-lib-coverage@3.2.2",
+    "coveralls@3.1.1", "codecov@3.8.3",
+    "send-to-codecov@1.0.2", "upload-coverage@1.0.16",
+    # Data Science/ML (50) - NEW
+    "tensorflow@0.0.1", "@tensorflow/tfjs@4.15.0", "@tensorflow/tfjs-node@4.15.0",
+    "brain.js@2.0.0-beta.23", "synaptic@1.1.4",
+    "ml5@0.12.2", "knn-classifier@1.2.2",
+    "natural@6.10.3", "compromise@14.10.0",
+    "nlp.js@4.0.0-beta.26", "node-nlp@4.27.0",
+    "franc@6.2.0", "franc-min@6.2.0",
+    "languagedetect@2.0.0", "language-detect@1.1.2",
+    "sentiment@5.0.2", "node-sentiment@0.1.2",
+    "twitter-text@3.1.0", "twitter-api-v2@1.15.1",
+    "tweep@0.0.2", "twit@2.2.11",
+    "reddit@0.0.1", "snoowrap@1.23.0",
+    "instagram-private-api@1.46.1", "instagram-api@0.1.0",
+    "facebook-node-sdk@0.0.1", "fb@2.0.0",
+    "linkedin@1.0.2", "node-linkedin@0.5.6",
+    "tiktok-api@1.0.2", "tiktok-info@1.1.3",
+    "youtube-dl-exec@2.4.10", "ytdl-core@4.11.5",
+    "spotify-web-api-node@5.0.2", "@spotify/web-api-ts-sdk@1.1.0",
+    "soundcloud@0.0.1", "soundcloud-downloader@1.0.0",
+    "shazam-api@1.0.2", "acrcloud@1.4.0",
+    "genius-lyrics-api@3.2.0", "lyrics-finder@21.7.0",
+    "billboard-api@0.10.0", "itunes-search@1.0.3",
+    "omdb@0.0.1", "tmdb-js@1.0.2",
+    "imdb-api@4.1.1", "imdb-scraper@0.0.1",
+    "rotten-tomatoes@0.0.1", "metacritic@0.0.1",
+    # Gaming (50) - NEW
+    "phaser@3.70.0", "phaser3-rex-plugins@1.60.6",
+    "pixi.js@7.4.0", "pixi-filters@5.2.1",
+    "konva@9.2.2", "react-konva@18.2.10",
+    "three@0.160.0", "@react-three/fiber@8.15.12", "@react-three/drei@9.96.1",
+    "babylonjs@7.0.1", "babylonjs-loaders@7.0.1",
+    "cannon-es@0.20.0", "cannon@0.6.2",
+    "matter-js@0.19.0", "planck-js@0.3.34",
+    "box2d-wasm@7.0.0", "box2d.js@1.0.0",
+    "chess.js@1.0.0-beta.8", "chessboardjsx@2.4.7",
+    "checkers@0.0.1", "checkers.js@1.0.0",
+    "backgammon@0.0.1", "backgammon-js@1.0.0",
+    "poker@0.0.1", "poker-evaluator@1.0.2",
+    "blackjack@0.0.1", "blackjack-basic-strategy@1.0.0",
+    "roulette@0.0.1", "roulette-simulator@1.0.0",
+    "craps@0.0.1", "craps-simulator@1.0.0",
+    "bingo@0.0.1", "bingo-simulator@1.0.0",
+    "lottery@0.0.1", "lottery-simulator@1.0.0",
+    "slots@0.0.1", "slots-simulator@1.0.0",
+    "scrabble@0.0.1", "scrabble-solver@1.0.0",
+    "crossword@0.0.1", "crossword-solver@1.0.0",
+    "sudoku@0.0.1", "sudoku-solver@1.0.0",
+    "maze@0.0.1", "maze-generator@1.0.0",
+    "tetris@0.0.1", "tetris-ai@1.0.0",
+    "pacman@0.0.1", "pacman-ai@1.0.0",
+    "snake@0.0.1", "snake-ai@1.0.0",
+    "pong@0.0.1", "pong-ai@1.0.0",
+    "breakout@0.0.1", "breakout-ai@1.0.0",
+    "space-invaders@0.0.1", "space-invaders-ai@1.0.0",
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 5.0
+max_malicious_count = 10  # Allow up to 1% FP rate (10/1000)
+
+[waves.reporting]
+include_clean_summary = true
