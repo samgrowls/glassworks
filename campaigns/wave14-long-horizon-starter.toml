@@ -53,18 +53,20 @@ suspicious_threshold = 5.0
 mode = "tiered"
 
 # Tier 1: Primary signals (always run)
+# Note: blockchain_c2 included for known wallet/IP detection (always runs)
 [[settings.scoring.tiers]]
 tier = 1
-detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+detectors = ["invisible_char", "glassware_pattern", "obfuscation", "blockchain_c2"]
 threshold = 0.0
-weight_multiplier = 1.5
+weight_multiplier = 1.0
 
-# Tier 2: Secondary confirmation (only if tier 1 score >= 5.0)
+# Tier 2: Secondary confirmation (only if tier 1 score >= 2.0)
+# Lowered threshold to catch GlassWorm C2 without invisible chars
 [[settings.scoring.tiers]]
 tier = 2
 detectors = ["blockchain_c2", "header_c2", "exfil_schema"]
-threshold = 5.0
-weight_multiplier = 1.0
+threshold = 2.0
+weight_multiplier = 0.8
 
 # Tier 3: Behavioral indicators (only if tier 1+2 score >= 10.0)
 [[settings.scoring.tiers]]

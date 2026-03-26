@@ -80,7 +80,8 @@ static GLASSWORM_C2_PATTERN: Lazy<Regex> = Lazy::new(|| {
 static FIVE_MIN_POLLING_PATTERN: Lazy<Regex> = Lazy::new(|| {
     // Match setInterval with 300000ms (5 minutes) - GlassWorm signature
     // Also match POLL_INTERVAL = 300000 or similar constant definitions
-    Regex::new(r"(setInterval\s*\([^)]+,\s*300000\s*\)|POLL_INTERVAL\s*=\s*300000)").unwrap()
+    // Use simpler pattern that doesn't try to match nested parens
+    Regex::new(r"(setInterval\s*\([^,]+,\s*300000|POLL_INTERVAL\s*=\s*300000)").unwrap()
 });
 
 /// Check if this looks like SDK source code (should be skipped)
@@ -172,8 +173,9 @@ impl Detector for BlockchainC2Detector {
     }
 
     fn should_short_circuit(&self, findings: &[Finding]) -> bool {
-        // Don't run Tier 3 if nothing found by Tier 1-2
-        findings.is_empty()
+        // ALWAYS run - known wallet/IP detection is critical
+        // Don't skip even if other detectors found nothing
+        false
     }
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
