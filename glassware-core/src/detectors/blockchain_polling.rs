@@ -56,22 +56,23 @@ const SOLANA_RPC_ENDPOINTS: &[&str] = &[
 ];
 
 /// Check for GlassWorm-specific C2 patterns
+/// UPDATED 2026-03-26: Only flag specific C2 patterns, not generic SDK usage
 fn has_glassworm_c2_patterns(content: &str) -> bool {
     let glassworm_patterns = [
-        // Pattern 1: Command extraction from tx metadata
-        "innerInstructions",
+        // Pattern 1: Command extraction from tx metadata (specific to C2)
         "decodeCommand",
         "executeCommand",
-        
-        // Pattern 2: Hidden wallet in code
-        "new PublicKey(\"",
-        "PublicKey.fromBase58(\"",
-        
-        // Pattern 3: Polling without user wallet context
+
+        // Pattern 2: Polling with hardcoded C2 wallet (not user wallet)
         "getSignaturesForAddress(C2_WALLET",
-        "getSignaturesForAddress(new PublicKey(",
+        "getSignaturesForAddress(new PublicKey(\"",
     ];
-    
+
+    // Must have one of the specific C2 patterns
+    // Do NOT flag generic SDK patterns like:
+    // - innerInstructions (used by all Solana apps)
+    // - new PublicKey(" (used everywhere)
+    // - executeCommand alone (common in many contexts)
     glassworm_patterns.iter().any(|p| content.contains(p))
 }
 
@@ -82,24 +83,59 @@ fn has_legitimate_sdk_usage(content: &str) -> bool {
         "process.env.SOLANA_WALLET",
         "process.env.PUBLIC_KEY",
         "process.env.RPC_URL",
-        
+
         // User wallet from props/state
         "props.wallet",
         "wallet.address",
         "wallet.publicKey",
-        
+
         // Wallet hooks (React)
         "useWallet(",
         "useAnchorWallet",
         "useConnection",
-        
+
         // Standard SDK methods
         "connection.getAccountInfo",
         "connection.getBalance",
         "connection.getParsedAccountInfo",
     ];
-    
+
     legitimate_patterns.iter().any(|p| content.contains(p))
+}
+
+/// Check if this looks like SDK source code (should be skipped)
+/// UPDATED 2026-03-26: SDK files contain function definitions, exports, class declarations
+fn is_sdk_source_code(content: &str) -> bool {
+    let sdk_patterns = [
+        // Function definitions (SDK method implementations)
+        "async getSignaturesForAddress(",
+        "async getTransaction(",
+        "async getBalance(",
+        "function getSignaturesForAddress(",
+        "function getTransaction(",
+        
+        // Class declarations
+        "class Connection",
+        "class PublicKey",
+        "class Transaction",
+        
+        // Export patterns
+        "export class",
+        "export function",
+        "export {",
+        "module.exports",
+        "exports.",
+        
+        // Constructor patterns
+        "constructor(rpcUrl",
+        "constructor(props",
+        
+        // TypeScript/JavaScript SDK patterns
+        "implements ConnectionInterface",
+        "extends EventEmitter",
+    ];
+
+    sdk_patterns.iter().any(|p| content.contains(p))
 }
 
 /// Patterns for blockchain polling detection
@@ -173,6 +209,13 @@ impl Detector for BlockchainPollingDetector {
 
         // Skip TypeScript definition files (.d.ts) - they contain type definitions, not C2 logic
         if path.ends_with(".d.ts") {
+            return findings;
+        }
+
+        // UPDATED 2026-03-26: Skip SDK source code files
+        // SDK files contain function definitions, class declarations, exports
+        // These are NOT C2 code - they're the legitimate blockchain SDK implementation
+        if is_sdk_source_code(content) {
             return findings;
         }
 
@@ -286,7 +329,11 @@ impl Detector for BlockchainPollingDetector {
             }
 
             // Check for transaction metadata parsing
-            if POLLING_PATTERNS[1].is_match(line) || POLLING_PATTERNS[6].is_match(line) || POLLING_PATTERNS[7].is_match(line) {
+            // UPDATED 2026-03-26: Only flag when combined with suspicious patterns
+            // innerInstructions and tx.meta are used by all Solana apps legitimately
+            // Only flag when combined with decodeCommand/executeCommand
+            if (POLLING_PATTERNS[1].is_match(line) || POLLING_PATTERNS[6].is_match(line) || POLLING_PATTERNS[7].is_match(line))
+                && (content.contains("decodeCommand") || content.contains("executeCommand")) {
                 has_transaction_parsing = true;
                 if first_match_line == 1 {
                     first_match_line = line_num + 1;
@@ -360,12 +407,12 @@ impl Detector for BlockchainPollingDetector {
 
         // Check for getSignaturesForAddress + setInterval combination
         if content.contains("getSignaturesForAddress") && content.contains("setInterval") {
-            // Check for legitimate SDK usage - if present, don't flag or flag as INFO only
-            if has_legitimate_sdk_usage(content) {
+            // Check for legitimate SDK usage - if present, don't flag
+            if has_legitimate_sdk_usage(content) || is_sdk_source_code(content) {
                 // Likely legitimate SDK usage - return early without flagging
                 return findings;
             }
-            
+
             // Generic polling without GlassWorm patterns or legitimate context = MEDIUM
             findings.push(Finding::new(
                 path,
@@ -387,7 +434,7 @@ impl Detector for BlockchainPollingDetector {
         // High: Solana RPC + polling (even without getSignaturesForAddress)
         if has_solana_rpc && has_set_interval && !has_get_signatures {
             // Check for legitimate SDK usage
-            if has_legitimate_sdk_usage(content) {
+            if has_legitimate_sdk_usage(content) || is_sdk_source_code(content) {
                 return findings;
             }
 
@@ -521,7 +568,8 @@ mod tests {
     fn test_detect_transaction_parsing() {
         let detector = BlockchainPollingDetector::new();
 
-        // Transaction metadata parsing with innerInstructions triggers GlassWorm C2 pattern
+        // Transaction metadata parsing - innerInstructions alone is NOT GlassWorm C2
+        // It's used by all Solana applications legitimately
         let content = r#"
             const tx = await connection.getTransaction(signature);
             const instructions = tx.meta.innerInstructions;
@@ -531,9 +579,9 @@ mod tests {
         let ir = FileIR::build(Path::new("test.js"), content);
         let findings = detector.detect(&ir);
 
-        assert!(!findings.is_empty());
-        // innerInstructions triggers GlassWorm C2 pattern detection
-        assert!(findings.iter().any(|f| f.description.contains("GlassWorm C2")));
+        // innerInstructions alone should NOT trigger GlassWorm C2 pattern
+        // It's a standard Solana SDK pattern used by all apps
+        assert!(findings.is_empty(), "Expected no findings for innerInstructions alone, got: {:?}", findings);
     }
 
     #[test]
@@ -815,5 +863,77 @@ mod tests {
         assert!(!findings.is_empty());
         assert!(findings.iter().any(|f| f.severity == Severity::Critical));
         assert!(findings.iter().any(|f| f.description.contains("GlassWorm C2")));
+    }
+
+    #[test]
+    fn test_no_detect_sdk_source_code() {
+        let detector = BlockchainPollingDetector::new();
+
+        // SDK source code with function definitions - should NOT be flagged
+        let content = r#"
+            export class Connection {
+                constructor(rpcUrl) {
+                    this.rpcUrl = rpcUrl;
+                }
+
+                async getSignaturesForAddress(address, options) {
+                    const response = await fetch(this.rpcUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            method: 'getSignaturesForAddress',
+                            params: [address, options]
+                        })
+                    });
+                    return response.json();
+                }
+
+                async getTransaction(signature) {
+                    const response = await fetch(this.rpcUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            method: 'getTransaction',
+                            params: [signature]
+                        })
+                    });
+                    return response.json();
+                }
+            }
+        "#;
+
+        let ir = FileIR::build(Path::new("connection.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should NOT flag SDK source code
+        assert!(findings.is_empty(), "Expected no findings for SDK source code, got: {:?}", findings);
+    }
+
+    #[test]
+    fn test_no_detect_sdk_function_definitions() {
+        let detector = BlockchainPollingDetector::new();
+
+        // SDK with function definitions - should NOT be flagged
+        let content = r#"
+            async function getSignaturesForAddress(connection, address, options) {
+                return await connection.request({
+                    method: 'getSignaturesForAddress',
+                    params: [address, options]
+                });
+            }
+
+            async function getBalance(connection, address) {
+                return await connection.request({
+                    method: 'getBalance',
+                    params: [address]
+                });
+            }
+
+            module.exports = { getSignaturesForAddress, getBalance };
+        "#;
+
+        let ir = FileIR::build(Path::new("utils.js"), content);
+        let findings = detector.detect(&ir);
+
+        // Should NOT flag SDK function definitions
+        assert!(findings.is_empty(), "Expected no findings for SDK function definitions, got: {:?}", findings);
     }
 }
