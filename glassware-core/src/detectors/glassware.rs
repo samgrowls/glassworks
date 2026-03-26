@@ -537,6 +537,20 @@ impl GlasswareDetector {
     #[cfg(feature = "regex")]
     fn detect_obfuscation_patterns(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
+
+        // Skip TypeScript definition files (.d.ts) - type definitions, not code
+        if file_path.ends_with(".d.ts") {
+            return findings;
+        }
+
+        // Skip files that are clearly type definitions (not executable code)
+        let is_type_definition = content.contains("interface ") 
+            || content.contains("type ") 
+            || (content.contains(": ") && content.contains("export {"));
+        if is_type_definition && !content.contains("function") && !content.contains("const ") {
+            return findings;
+        }
+
         let mut obfuscation_score = 0.0;
         let mut indicators = Vec::new();
 

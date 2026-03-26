@@ -1,0 +1,226 @@
+# Wave 16: Production Validation (500+ packages)
+#
+# Purpose: Validate FP rate after Tier 1 signal requirement
+# Target: 500+ clean popular packages
+#
+# Run with: glassware campaign run campaigns/wave16-validation.toml
+# Expected duration: ~15-20 minutes
+
+[campaign]
+name = "Wave 16 - Production Validation (500+ packages)"
+description = "Validate FP rate after Tier 1 signal requirement fix"
+created_by = "security-team"
+priority = "critical"
+tags = ["validation", "wave16", "production", "fp-rate"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+
+# Tiered scoring configuration
+[settings.scoring.tier_config]
+mode = "tiered"
+
+# Tier 1: Primary signals (always runs) - REQUIRED for high scores
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+threshold = 0.0
+weight_multiplier = 1.0
+
+# Tier 2: Secondary confirmation (only if tier 1 score >= 2.0)
+[[settings.scoring.tiers]]
+tier = 2
+detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+threshold = 2.0
+weight_multiplier = 0.8
+
+# Tier 3: Behavioral indicators (only if tier 1+2 score >= 10.0)
+[[settings.scoring.tiers]]
+tier = 3
+detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
+threshold = 10.0
+weight_multiplier = 0.8
+
+# Conditional rules for high-confidence patterns
+[[settings.scoring.conditional_rules]]
+name = "glassworm_signature"
+description = "Invisible + C2 = confirmed GlassWorm"
+condition = "invisible_char.count >= 10 AND blockchain_c2.count >= 1"
+action = "final_score = 25.0"
+
+[settings.scoring.weights]
+invisible_char = 6.0
+glassware_pattern = 10.0
+obfuscation = 10.0
+blockchain_c2 = 5.0
+header_c2 = 4.0
+exfil_schema = 6.0
+locale_geofencing = 7.0
+time_delay_sandbox_evasion = 7.0
+
+[settings.llm]
+tier1_enabled = false  # DISABLED - not needed for FP testing
+tier2_enabled = false
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave16"
+report_dir = "reports/wave16"
+
+# ============================================================
+# Wave 16A: Evidence Validation (MUST detect 100%)
+# ============================================================
+[[waves]]
+id = "wave_16a"
+name = "Evidence Validation"
+description = "Validate 100% detection on curated GlassWorm evidence"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Real GlassWorm attack (invisible chars + C2 + obfuscation)
+    "iflow-mcp-watercrawl-watercrawl-mcp@1.3.4",
+]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+min_malicious_count = 1
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 16B: Clean Baseline (500+ packages, MUST NOT flag)
+# ============================================================
+[[waves]]
+id = "wave_16b"
+name = "Clean Baseline - 500+ Packages"
+description = "Measure FP rate on 500+ popular clean packages"
+depends_on = ["wave_16a"]
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Web frameworks (50)
+    "express@4.19.2", "lodash@4.17.21", "axios@1.6.7", "chalk@5.3.0", "debug@4.3.4",
+    "react@18.2.0", "uuid@9.0.0", "typescript@5.3.3", "webpack@5.89.0", "eslint@8.56.0",
+    "prettier@3.1.1", "jest@29.7.0", "vite@5.0.10", "rollup@4.9.0", "babel-core@6.26.3",
+    "moment@2.30.1", "date-fns@3.0.6", "dayjs@1.11.10", "next@14.0.4", "nuxt@3.9.0",
+    "svelte@4.2.8", "vue@3.4.0", "angular@17.0.0", "ember-source@5.4.0", "solid-js@1.8.7",
+    "qwik@1.4.0", "astro@4.0.0", "remix@2.4.0", "blitz@2.0.0", "redwoodjs@6.0.0",
+    "create-react-app@5.0.1", "create-vue@3.10.0", "create-svelte@5.4.0", "create-next-app@14.0.4",
+    "lerna@8.0.0", "nx@17.2.0", "pnpm@8.12.0", "yarn@1.22.21", "npm@10.2.4",
+    "bun@1.0.20", "deno@1.38.0", "ts-node@10.9.2", "tsx@4.7.0", "nodemon@3.0.2",
+    "pm2@5.3.0", "forever@4.0.3", "supervisor@0.12.0", "node-dev@8.0.0", "concurrently@8.2.2",
+    "npm-run-all@4.1.5", "husky@8.0.3", "lint-staged@15.2.0", "commitlint@18.4.3",
+    # Database (40)
+    "mongoose@8.0.3", "sequelize@6.35.2", "typeorm@0.3.19", "knex@3.1.0", "prisma@5.8.1",
+    "@prisma/client@5.8.1", "mongodb@6.3.0", "mysql2@3.7.0", "pg@8.11.3", "sqlite3@5.1.7",
+    "redis@4.6.12", "ioredis@5.3.2", "memcached@2.2.2", "amqplib@0.10.3", "kafkajs@2.2.4",
+    "node-rdkafka@2.17.0", "socket.io@4.7.4", "socket.io-client@4.7.4", "ws@8.16.0", "cors@2.8.5",
+    "helmet@7.1.0", "compression@1.7.4", "morgan@1.10.0", "winston@3.11.0", "bunyan@1.8.15",
+    "pino@8.17.2", "log4js@6.9.1", "npmlog@7.0.1", "colors@1.4.0", "kleur@4.1.5",
+    "ora@8.0.1", "cli-progress@3.12.0", "enquirer@2.4.1", "inquirer@9.2.12", "prompts@2.4.2",
+    "yargs@17.7.2", "minimist@1.2.8", "meow@13.0.0", "cac@6.7.14", "sade@1.8.1",
+    "mri@1.2.0", "getopts@2.3.0", "arg@5.0.2", "argparse@2.0.1", "parse-json@8.1.0",
+    "glob@10.3.10", "fast-glob@3.3.2", "chokidar@3.5.3", "fs-extra@11.2.0", "fs-jetpack@5.1.0",
+    "graceful-fs@4.2.11", "rimraf@5.0.5", "del@7.1.0", "trash@8.1.1", "ncp@2.0.0",
+    "cpr@3.0.1", "copyfiles@2.4.1", "cpy@11.0.0", "filenamify@6.0.0", "make-dir@4.0.0",
+    "mkdirp@3.0.1", "tempy@3.1.0", "temp-dir@3.0.0", "tmp@0.2.1",
+    # HTTP/Networking (40)
+    "node-fetch@3.3.2", "got@14.0.0", "request@2.88.2", "superagent@8.1.2", "follow-redirects@1.15.4",
+    "http-proxy@1.18.1", "https-proxy-agent@7.0.2", "socks-proxy-agent@8.0.2", "proxy-agent@6.3.1", "tunnel-agent@0.6.0",
+    "tunnel@0.0.6", "agent-base@7.1.0", "http2-wrapper@2.2.1", "undici@5.28.2", "undici-types@5.26.5",
+    "form-data@4.0.0", "formdata-node@6.0.3", "formidable@3.5.1", "multer@1.4.5-lts.1", "busboy@1.6.0",
+    "cookie@0.6.0", "cookie-parser@1.4.6", "cookie-signature@1.0.6", "tough-cookie@4.1.3", "universal-cookie@7.0.0",
+    "js-cookie@3.0.5", "express-validator@7.0.1", "joi@17.11.0", "yup@1.3.3", "zod@3.22.4",
+    "ajv@8.12.0", "superstruct@1.0.3", "class-validator@0.14.0", "class-transformer@0.5.1", "reflect-metadata@0.1.14",
+    "inversify@6.0.2", "typedi@0.10.0", "awilix@10.0.1", "dotenv@16.3.1", "config@3.3.9",
+    "cosmiconfig@8.3.6", "yaml@2.3.4", "json5@2.2.3", "toml@3.0.0", "ini@4.1.1",
+    "rc@1.2.8", "nconf@0.12.0", "node-config@3.3.10", "convict@6.2.4", "env-schema@5.5.0",
+    "envalid@8.0.0", "dotenv-expand@10.0.0", "dotenv-cli@7.3.0", "cross-env@7.0.3", "env-cmd@10.1.0",
+    # Testing (40)
+    "mocha@10.2.0", "chai@4.3.10", "sinon@17.0.1", "cypress@13.6.0", "playwright@1.40.0",
+    "puppeteer@21.6.0", "vitest@1.1.0", "ava@6.1.3", "tape@5.7.2", "node-tap@18.6.1",
+    "jasmine@5.1.0", "qunit@2.20.0", "storybook@7.6.6", "chromatic@10.1.0", "percy-cli@2.0.0",
+    "lighthouse@11.4.0", "webpack-bundle-analyzer@4.10.1", "source-map-explorer@2.5.3", "rollup-plugin-visualizer@5.11.0", "esbuild-visualizer@0.6.0",
+    "supertest@6.3.3", "nock@13.4.0", "msw@2.1.0", "faker@6.6.6", "@faker-js/faker@8.3.1",
+    "chance@1.1.11", "casual@1.6.2", "randexp@0.5.3", "testcafe@3.4.0", "webdriverio@8.27.0",
+    "karma@6.4.2", "karma-chrome-launcher@3.2.0", "karma-mocha@2.0.1", "karma-chai@0.1.0", "karma-coverage@2.2.1",
+    "istanbul@0.4.5", "nyc@15.1.0", "c8@9.1.0", "coverage@0.4.1", "lcov-parse@1.0.0",
+    "coveralls@3.1.1", "codecov@3.8.3", "send-to-codecov@1.0.2", "upload-coverage@1.0.16", "merge-coverage@1.0.0",
+    # Build Tools (40)
+    "esbuild@0.19.10", "swc-core@1.3.100", "parcel@2.11.0", "snowpack@4.0.0", "vite@5.0.10",
+    "rollup@4.9.0", "webpack@5.89.0", "babel-loader@9.1.3", "ts-loader@9.5.1", "css-loader@6.8.1",
+    "style-loader@3.3.3", "html-webpack-plugin@5.6.0", "copy-webpack-plugin@11.0.0", "mini-css-extract-plugin@2.7.6", "terser-webpack-plugin@5.3.10",
+    "webpack-dev-server@4.15.1", "webpack-dev-middleware@7.0.0", "webpack-hot-middleware@2.26.0", "webpack-merge@5.10.0", "webpack-cli@5.1.4",
+    "webpack-bundle-analyzer@4.10.1", "webpack-sources@3.2.3", "webpack-virtual-modules@0.6.1", "webpack-subresource-integrity@5.1.0", "webpack-manifest-plugin@5.0.0",
+    "babel-plugin-transform-runtime@7.23.7", "babel-plugin-lodash@3.3.4", "babel-plugin-import@1.13.8", "babel-plugin-module-resolver@5.0.0", "babel-plugin-polyfill-corejs3@0.8.7",
+    "babel-preset-env@7.23.7", "babel-preset-react@7.23.3", "babel-preset-typescript@7.23.3", "babel-preset-minify@0.5.2", "babel-eslint@10.1.0",
+    "@babel/core@7.23.7", "@babel/runtime@7.23.7", "@babel/parser@7.23.6", "@babel/traverse@7.23.7", "@babel/types@7.23.6",
+    "@babel/generator@7.23.6", "@babel/template@7.22.15", "@babel/code-frame@7.23.5", "@babel/helper-plugin-utils@7.22.5", "@babel/helper-module-imports@7.22.15",
+    # Crypto (legitimate usage) (40)
+    "crypto-js@4.2.0", "node-forge@1.3.1", "bcryptjs@2.4.3", "argon2@0.31.2", "uuid@9.0.0",
+    "nanoid@5.0.4", "shortid@2.2.16", "cuid@3.0.0", "hashids@2.3.0", "slugify@1.6.6",
+    "crypto-browserify@3.12.0", "stream-browserify@3.0.0", "buffer@6.0.3", "process@0.11.10", "util@0.12.5",
+    "assert@2.1.0", "path-browserify@1.0.1", "os-browserify@0.3.0", "vm-browserify@1.1.2", "constants-browserify@1.0.0",
+    "timers-browserify@2.0.12", "setimmediate@1.0.5", "immediate@3.0.6", "lie@3.3.0", "promise@8.3.0",
+    "bluebird@3.7.2", "q@1.5.1", "when@3.7.8", "rsvp@4.8.5", "async@3.2.5",
+    "underscore@1.13.6", "ramda@0.29.1", "immer@10.0.3", "lodash-es@4.17.21", "lodash.clonedeep@4.5.0",
+    "lodash.debounce@4.0.8", "lodash.throttle@4.1.1", "lodash.memoize@4.1.2", "lodash.merge@4.6.2", "lodash.pick@4.4.0",
+    "lodash.omit@4.5.0", "lodash.get@4.4.2", "lodash.set@4.3.2", "lodash.has@4.5.2", "lodash.isempty@4.4.0",
+    "lodash.isobject@3.0.2", "lodash.isarray@3.0.4", "lodash.isfunction@3.0.9", "lodash.isstring@4.0.1", "lodash.isboolean@3.0.3",
+    # Blockchain (legitimate SDKs) (40)
+    "ethers@6.9.2", "web3@4.3.0", "viem@1.21.4", "wagmi@1.4.13", "@solana/web3.js@1.87.6",
+    "bitcoinjs-lib@6.1.5", "hdkey@2.1.0", "@metamask/providers@15.0.0", "@walletconnect/web3-provider@1.8.0", "web3modal@1.9.12",
+    "@web3modal/ethereum@2.7.1", "@web3modal/html@2.7.1", "@web3modal/react@2.7.1", "@web3modal/vue@2.7.1", "@web3modal/core@2.7.1",
+    "@web3modal/ui@2.7.1", "@web3modal/siwe@2.7.1", "@web3modal/common@2.7.1", "@web3modal/wallet@2.7.1", "@web3modal/client@2.7.1",
+    "eth-connect@1.0.10", "ethjs@0.3.2", "ethjs-unit@0.1.6", "ethjs-util@0.1.6", "ethereumjs-util@7.1.5",
+    "ethereumjs-tx@2.1.2", "ethereumjs-wallet@1.0.2", "ethereumjs-abi@0.6.8", "ethereumjs-block@2.2.2", "ethereumjs-common@1.5.2",
+    "truffle@5.11.5", "hardhat@2.19.4", "foundry@0.2.0", "brownie@1.19.2", "ape@0.7.6",
+    "openzeppelin-contracts@5.0.1", "@openzeppelin/contracts@5.0.1", "@openzeppelin/test-helpers@0.5.16", "@openzeppelin/upgrades@2.8.0", "@openzeppelin/defender-admin@1.54.1",
+    # Firebase/Google (40)
+    "firebase@10.7.2", "firebase-admin@12.0.0", "firebase-functions@4.5.0", "firebase-tools@13.0.2", "firestore@1.2.0",
+    "@firebase/app@0.9.25", "@firebase/auth@1.6.0", "@firebase/database@1.0.2", "@firebase/firestore@4.4.0", "@firebase/storage@0.12.0",
+    "@firebase/messaging@0.12.5", "@firebase/analytics@0.10.0", "@firebase/performance@0.6.4", "@firebase/remote-config@0.4.4", "@firebase/installations@0.6.4",
+    "firebaseui@6.1.0", "react-firebase-hooks@5.1.1", "vuefire@3.1.18", "angularfire2@7.6.1", "nuxt-fire@2.17.0",
+    # AWS (40)
+    "aws-sdk@2.1530.0", "@aws-sdk/client-s3@3.478.0", "@aws-sdk/client-dynamodb@3.478.0", "@aws-sdk/client-lambda@3.478.0", "@aws-sdk/client-sqs@3.478.0",
+    "@aws-sdk/client-sns@3.478.0", "@aws-sdk/client-ec2@3.478.0", "@aws-sdk/client-iam@3.478.0", "@aws-sdk/client-cloudformation@3.478.0", "@aws-sdk/client-rds@3.478.0",
+    "@aws-sdk/client-kms@3.478.0", "@aws-sdk/client-secrets-manager@3.478.0", "@aws-sdk/client-ssm@3.478.0", "@aws-sdk/client-cloudwatch@3.478.0", "@aws-sdk/client-cloudwatch-logs@3.478.0",
+    "@aws-sdk/client-elastic-load-balancing-v2@3.478.0", "@aws-sdk/client-auto-scaling@3.478.0", "@aws-sdk/client-ecs@3.478.0", "@aws-sdk/client-eks@3.478.0", "@aws-sdk/client-lightsail@3.478.0",
+    # Azure (30)
+    "@azure/storage-blob@12.17.0", "@azure/cosmos@4.0.0", "@azure/keyvault-keys@4.8.0", "@azure/identity@4.0.1", "@azure/service-bus@7.9.3",
+    "@azure/event-hubs@5.11.3", "@azure/functions@4.4.1", "@azure/app-configuration@1.4.1", "@azure/data-tables@13.2.2", "@azure/search-documents@12.0.0",
+    # Misc popular (50)
+    "stripe@14.10.0", "paypal-rest-sdk@1.8.1", "twilio@4.19.3", "sendgrid@5.2.3", "@sendgrid/mail@8.1.0",
+    "mailgun.js@10.0.0", "nodemailer@6.9.7", "handlebars@4.7.8", "ejs@3.1.9", "pug@3.0.2",
+    "mustache@4.2.0", "liquidjs@10.9.4", "nunjucks@3.2.4", "marked@11.1.1", "highlight.js@11.9.0",
+    "prismjs@1.29.0", "katex@0.16.9", "mathjax@3.2.2", "mermaid@10.6.1", "chart.js@4.4.1",
+    "d3@7.8.5", "three@0.160.0", "babylonjs@7.0.1", "pixi.js@7.4.0", "phaser@3.70.0",
+    "electron@28.0.0", "spectron@19.0.0", "playwright-core@1.40.0", "puppeteer-core@21.6.0", "webdriver@8.27.0",
+    "devtools@8.27.0", "webdriverio@8.27.0", "@wdio/cli@8.27.0", "@wdio/mocha-framework@8.27.0", "@wdio/spec-reporter@8.27.0",
+    "@wdio/local-runner@8.27.0", "@wdio/config@8.27.0", "@wdio/logger@8.24.0", "@wdio/protocols@8.24.0", "@wdio/types@8.27.0",
+    "@wdio/utils@8.27.0", "@wdio/reporter@8.27.0", "@wdio/runner@8.27.0", "@wdio/sync@8.27.0", "@wdio/repl@8.24.0",
+]
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 5.0
+max_malicious_count = 5  # Allow up to ~1% FP rate (5/500)
+
+[waves.reporting]
+include_clean_summary = true

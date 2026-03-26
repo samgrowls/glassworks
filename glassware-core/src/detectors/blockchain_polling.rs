@@ -60,20 +60,21 @@ const SOLANA_RPC_ENDPOINTS: &[&str] = &[
 fn has_glassworm_c2_patterns(content: &str) -> bool {
     let glassworm_patterns = [
         // Pattern 1: Command extraction from tx metadata (specific to C2)
+        // Must have BOTH decode AND execute (GlassWorm uses both together)
         "decodeCommand",
-        "executeCommand",
+        "executeCommand(",
 
         // Pattern 2: Polling with hardcoded C2 wallet (not user wallet)
         "getSignaturesForAddress(C2_WALLET",
         "getSignaturesForAddress(new PublicKey(\"",
     ];
 
-    // Must have one of the specific C2 patterns
-    // Do NOT flag generic SDK patterns like:
-    // - innerInstructions (used by all Solana apps)
-    // - new PublicKey(" (used everywhere)
-    // - executeCommand alone (common in many contexts)
-    glassworm_patterns.iter().any(|p| content.contains(p))
+    // Must have BOTH decodeCommand AND executeCommand (GlassWorm signature)
+    // OR one of the specific wallet patterns
+    let has_command_patterns = content.contains("decodeCommand") && content.contains("executeCommand(");
+    let has_wallet_patterns = glassworm_patterns[2..].iter().any(|p| content.contains(p));
+
+    has_command_patterns || has_wallet_patterns
 }
 
 /// Check for legitimate SDK usage patterns

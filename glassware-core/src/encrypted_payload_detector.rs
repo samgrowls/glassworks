@@ -52,6 +52,31 @@ static DECRYPT_PATTERN: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?i)(createDecipheriv|createDecipher|\.decrypt|\batob\s*\(|Buffer\.from\s*\([^)]*\)\s*\.toString)").unwrap()
 });
 
+/// Build tool signatures (skip build output)
+const BUILD_SIGNATURES: &[&str] = &[
+    "/* webpack",
+    "__webpack_require__",
+    "/* babel",
+    "rollupChunk",
+    "//# sourceMappingURL=",
+];
+
+/// Check if file is build tool output
+fn is_build_output(path: &str, content: &str) -> bool {
+    let path_lower = path.to_lowercase();
+    // Check for build directories (with and without leading slash)
+    if path_lower.contains("/dist/") || path_lower.contains("dist/") ||
+       path_lower.contains("/build/") || path_lower.contains("build/") ||
+       path_lower.contains("/bundle/") || path_lower.contains("bundle/") ||
+       path_lower.contains("/generator-build/") || path_lower.contains("generator-build/") {
+        return true;
+    }
+    if BUILD_SIGNATURES.iter().any(|s| content.contains(s)) {
+        return true;
+    }
+    false
+}
+
 /// Detector for encrypted payload patterns (GW005)
 pub struct EncryptedPayloadDetector;
 
@@ -101,6 +126,11 @@ impl Detector for EncryptedPayloadDetector {
 
         // Skip bundled/minified files (high FP rate)
         if ir.is_bundled() || ir.is_minified() {
+            return findings;
+        }
+
+        // Skip build tool output (build optimization, not encryption)
+        if is_build_output(&ir.metadata.path, ir.content()) {
             return findings;
         }
 

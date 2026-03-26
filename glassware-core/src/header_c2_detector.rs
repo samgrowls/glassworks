@@ -67,6 +67,72 @@ static EXEC_PATTERN: Lazy<Regex> =
 static CHILD_PROCESS_PATTERN: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\bchild_process\s*\+").unwrap());
 
+/// Build tool signatures (skip build output)
+const BUILD_SIGNATURES: &[&str] = &[
+    "/* webpack",
+    "__webpack_require__",
+    "/* babel",
+    "rollupChunk",
+    "//# sourceMappingURL=",
+];
+
+/// Build output directory patterns
+const BUILD_DIRS: &[&str] = &[
+    "/dist/", "dist/",
+    "/build/", "build/",
+    "/bundle/", "bundle/",
+    "/generator-build/", "generator-build/",
+];
+
+/// Known telemetry header prefixes (not C2)
+const TELEMETRY_HEADERS: &[&str] = &[
+    "X-Telemetry",
+    "X-Analytics",
+    "X-Build-Id",
+    "X-Prisma-",
+    "X-Firebase-",
+    "X-Vercel-",
+    "X-Netlify-",
+    "X-Sentry-",
+    "X-NewRelic-",
+    "X-Datadog-",
+    "X-Instana-",
+    "X-Dynatrace-",
+    "X-AppDynamics-",
+];
+
+/// Known C2 header patterns (always suspicious)
+const C2_HEADERS: &[&str] = &[
+    "X-Exfil",
+    "X-Session-Token",
+    "X-Data-Payload",
+    "X-Command",
+    "X-Exec",
+    "X-Eval",
+];
+
+/// Check if file is build tool output
+fn is_build_output(path: &str, content: &str) -> bool {
+    let path_lower = path.to_lowercase();
+    if BUILD_DIRS.iter().any(|d| path_lower.contains(d)) {
+        return true;
+    }
+    if BUILD_SIGNATURES.iter().any(|s| content.contains(s)) {
+        return true;
+    }
+    false
+}
+
+/// Check if header is known telemetry (not C2)
+fn is_telemetry_header(header_name: &str) -> bool {
+    TELEMETRY_HEADERS.iter().any(|t| header_name.starts_with(t))
+}
+
+/// Check if header is known C2 pattern
+fn is_c2_header(header_name: &str) -> bool {
+    C2_HEADERS.iter().any(|c| header_name.starts_with(c))
+}
+
 /// Detector for HTTP header C2 patterns (GW008)
 pub struct HeaderC2Detector;
 
@@ -113,6 +179,11 @@ impl Detector for HeaderC2Detector {
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
+
+        // Skip build tool output - header patterns in build tools are telemetry, not C2
+        if is_build_output(&ir.metadata.path, ir.content()) {
+            return findings;
+        }
 
         // Check for all three conditions
         let has_http_header = self.detect_http_header_extraction(ir.content());

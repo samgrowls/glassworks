@@ -454,11 +454,19 @@ impl ScoringEngine {
 
     /// Apply category diversity caps
     ///
-    /// Stricter caps than the old system to prevent false positives:
+    /// CRITICAL: GlassWorm attacks MUST have invisible Unicode characters.
+    /// Without Tier 1 signals (InvisibleCharacter, GlasswarePattern), the max score is capped at 5.0
+    /// regardless of how many Tier 2/3 detectors fire. This prevents false positives on legitimate
+    /// SDKs that happen to use blockchain, HTTP headers, crypto, etc.
+    ///
+    /// Caps with Tier 1 signals:
     /// - 1 category: capped at 5.0 (suspicious, not malicious)
     /// - 2 categories: capped at 7.0 (borderline malicious)
     /// - 3 categories: capped at 8.5 (likely malicious)
-    /// - 4+ categories: no cap (very likely malicious)
+    /// - 4+ categories: capped at 10.0 (very likely malicious)
+    ///
+    /// Caps WITHOUT Tier 1 signals (no invisible chars = not GlassWorm):
+    /// - Max score: 5.0 (suspicious, but not malicious)
     fn apply_category_caps(
         &self,
         score: f32,
@@ -467,12 +475,24 @@ impl ScoringEngine {
         let categories: HashSet<_> = patterns.iter().map(|p| &p.category).collect();
         let category_count = categories.len();
 
+        // Check for Tier 1 signals (GlassWorm-specific indicators)
+        let has_tier1_signal = categories.iter().any(|c| {
+            matches!(c, DetectionCategory::InvisibleCharacter | DetectionCategory::GlasswarePattern)
+        });
+
+        // Without Tier 1 signals (invisible chars), cap at 3.5 (below suspicious threshold of 4.0)
+        // This is the core GlassWorm detection principle: no invisible chars = not GlassWorm
+        if !has_tier1_signal {
+            return score.min(3.5);
+        }
+
+        // With Tier 1 signals, apply normal category caps
         match category_count {
             0 => 0.0,
             1 => score.min(5.0),   // Single category capped at 5.0
             2 => score.min(7.0),   // Two categories capped at 7.0
             3 => score.min(8.5),   // Three categories capped at 8.5
-            _ => score.min(10.0),  // 4+ categories = no cap
+            _ => score.min(10.0),  // 4+ categories capped at 10.0
         }
     }
 

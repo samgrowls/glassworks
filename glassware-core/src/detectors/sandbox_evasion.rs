@@ -70,6 +70,47 @@ const SILENT_EXIT_PATTERNS: &[&str] = &[
     "exit(0)",
 ];
 
+/// Build tool signatures (indicates build output, not runtime code)
+const BUILD_SIGNATURES: &[&str] = &[
+    "/* webpack",
+    "__webpack_require__",
+    "/* babel",
+    "/* @babel",
+    "rollupChunk",
+    "/* ts-loader",
+    "/* esbuild",
+    "//# sourceMappingURL=",
+    "__VITE__",
+    "/* parcel",
+];
+
+/// Build output directory patterns
+const BUILD_DIRS: &[&str] = &[
+    "/dist/", "dist/",
+    "/build/", "build/",
+    "/bundle/", "bundle/",
+    "/out/",
+    "/generator-build/", "generator-build/",
+    "/.next/",
+    "/.nuxt/",
+];
+
+/// Check if file is build tool output (should be skipped for evasion detection)
+fn is_build_output(path: &str, content: &str) -> bool {
+    // Check path for build directories
+    let path_lower = path.to_lowercase();
+    if BUILD_DIRS.iter().any(|d| path_lower.contains(d)) {
+        return true;
+    }
+    
+    // Check content for build signatures
+    if BUILD_SIGNATURES.iter().any(|s| content.contains(s)) {
+        return true;
+    }
+    
+    false
+}
+
 /// Compiled regex patterns
 static CI_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"process\.env\.(CI|GITHUB_ACTIONS|TRAVIS|JENKINS|CIRCLECI|GITLAB_CI|BUILDKITE|TEAMCITY)|\bisCI\b|\bis_ci\b").unwrap()
@@ -129,6 +170,11 @@ impl Detector for SandboxEvasionDetector {
         let mut findings = Vec::new();
         let content = ir.content();
         let path = &ir.metadata.path;
+
+        // Skip build tool output - CI checks in build tools are optimization, not evasion
+        if is_build_output(path, content) {
+            return findings;
+        }
 
         // Track matches
         let mut ci_check_lines: Vec<usize> = Vec::new();

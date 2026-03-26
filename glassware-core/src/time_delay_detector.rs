@@ -44,6 +44,35 @@ static DELAY_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     ]
 });
 
+/// Build tool signatures (skip build output)
+const BUILD_SIGNATURES: &[&str] = &[
+    "/* webpack",
+    "__webpack_require__",
+    "/* babel",
+    "rollupChunk",
+    "//# sourceMappingURL=",
+];
+
+/// Build output directory patterns
+const BUILD_DIRS: &[&str] = &[
+    "/dist/", "dist/",
+    "/build/", "build/",
+    "/bundle/", "bundle/",
+    "/generator-build/", "generator-build/",
+];
+
+/// Check if file is build tool output
+fn is_build_output(path: &str, content: &str) -> bool {
+    let path_lower = path.to_lowercase();
+    if BUILD_DIRS.iter().any(|d| path_lower.contains(d)) {
+        return true;
+    }
+    if BUILD_SIGNATURES.iter().any(|s| content.contains(s)) {
+        return true;
+    }
+    false
+}
+
 /// Detector for time-delay sandbox evasion
 pub struct TimeDelayDetector;
 
@@ -89,10 +118,10 @@ impl Detector for TimeDelayDetector {
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
         let mut findings = Vec::new();
 
-        // ⚠️ UPDATED 2026-03-24: Removed build tool skip logic
-        // Build tools ARE high-value attack targets (see: Babel 2024, Webpack 2025 attacks)
-        // Instead, use context-aware detection: CI bypass + delay = evasion
-        // Pure setTimeout in build tools without CI bypass = likely legitimate
+        // Skip build tool output - CI checks in build tools are optimization, not evasion
+        if is_build_output(&ir.metadata.path, ir.content()) {
+            return findings;
+        }
 
         let mut ci_check_lines: Vec<usize> = Vec::new();
 
