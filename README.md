@@ -1,89 +1,98 @@
-# glassware — Autonomous GlassWare Detection System
+# glassware — GlassWorm Steganography Detection System
 
-**Production-ready Rust-based campaign orchestration for detecting GlassWare steganographic attacks in npm packages and GitHub repositories.**
+**Production-ready Rust-based scanner for detecting GlassWorm steganographic attacks in npm packages and GitHub repositories.**
 
 [![Release](https://img.shields.io/github/v/release/samgrowls/glassworks)](https://github.com/samgrowls/glassworks/releases)
 [![License](https://img.shields.io/github/license/samgrowls/glassworks)](LICENSE)
 
 ---
 
-## 🎯 What It Does
+## 🎯 What Is GlassWorm?
 
-**glassware** detects steganographic payloads, invisible Unicode characters, bidirectional text attacks, and behavioral evasion patterns in source code and repositories.
+**GlassWorm** is a supply chain attack technique that hides malicious payloads using invisible Unicode characters (steganography) combined with decoder functions. The attack was first identified in 2024 and has evolved through multiple waves targeting npm packages and GitHub repositories.
 
-### Key Features
-
-- ✅ **Campaign Orchestration** - Run large-scale scanning campaigns (100k+ packages)
-- ✅ **Checkpoint/Resume** - Reliable interruption recovery
-- ✅ **Interactive TUI** - Live monitoring with command palette
-- ✅ **LLM-Powered Analysis** - Natural language queries about findings
-- ✅ **Markdown Reports** - Professional stakeholder reports
-- ✅ **13+ Detectors** - Unicode, behavioral, and semantic analysis
+**Key Characteristics:**
+- Invisible Unicode characters (ZWSP, ZWNJ, Variation Selectors) encode hidden payloads
+- Decoder functions extract and execute the hidden code at runtime
+- Often combined with blockchain-based C2 (Solana) for command retrieval
+- Uses sandbox evasion to avoid detection in CI/CD environments
 
 ---
 
-## ⚠️ Current State & Known Issues
+## 🛡️ What glassware Does
 
-**Version:** v0.30.0-fp-eliminated (2026-03-24)
+**glassware** detects GlassWorm attacks through 13+ specialized detectors organized in tiers:
 
-**⚠️ CRITICAL:** Recent tuning eliminated false positives by whitelisting high-value target packages (UI frameworks, build tools). This is a **temporary workaround**, not a proper fix.
+| Tier | Detectors | Purpose |
+|------|-----------|---------|
+| **Tier 1** | InvisibleCharacter, Homoglyph, BidirectionalOverride, GlasswarePattern | Primary GlassWorm indicators |
+| **Tier 2** | EncryptedPayload, HeaderC2, ExfilSchema | Secondary confirmation |
+| **Tier 3** | BlockchainC2, TimeDelaySandboxEvasion, LocaleGeofencing | Behavioral analysis |
 
-**See:** [`HANDOFF/CRITICAL-STATE-MAR24.md`](HANDOFF/CRITICAL-STATE-MAR24.md) for:
-- Dangerous whitelist entries that should be removed
-- Proper detector fixes needed
-- Evidence library expansion requirements
-- Testing workflows
+### Detection Approach
 
-**Current Detection Performance:**
-- Wave 10 (611 packages): ~0% malicious rate
-- Evidence detection: 1/2 packages (50%)
-- False positives: ~0% (achieved via whitelisting)
+**Context-Aware Detection:** glassware distinguishes between:
+- Build tool patterns vs. runtime evasion
+- Telemetry headers vs. C2 communication
+- Legitimate SDK usage vs. malicious C2
 
-**Next Priority:** Remove dangerous whitelist entries and fix detectors properly.
+**No Package Whitelisting:** Detection is based on code patterns, not package popularity.
 
 ---
 
 ## 🚀 Quick Start
 
-### Install
+### Prerequisites
+
+- Rust 1.70+
+- Optional: LLM API keys (Cerebras, NVIDIA) for AI-powered analysis
+
+### Build
 
 ```bash
-# Build from source
+# Clone repository
+git clone https://github.com/samgrowls/glassworks.git
+cd glassworks
+
+# Build release binary
 cargo build --release
 
-# Binary location
-./target/release/glassware-orchestrator --help
+# Verify installation
+./target/release/glassware --help
 ```
 
-### Run Your First Campaign
+### Scan a Single Package
 
 ```bash
-# Run Wave 6 calibration campaign
-./target/release/glassware-orchestrator campaign run campaigns/wave6.toml
+# Scan npm package
+./target/release/glassware scan-npm <package>@<version>
 
-# Monitor in TUI (in another terminal)
-./target/release/glassware-orchestrator campaign monitor <case-id>
+# Example
+./target/release/glassware scan-npm express@4.19.2
+
+# Scan with LLM analysis
+./target/release/glassware scan-npm <package>@<version> --llm
+```
+
+### Scan a Tarball
+
+```bash
+# Scan local tarball
+./target/release/glassware scan-tarball evidence/package.tgz
+```
+
+### Run a Campaign
+
+```bash
+# Run campaign from TOML config
+./target/release/glassware campaign run campaigns/wave15-validation.toml
+
+# Monitor progress (in another terminal)
+./target/release/glassware campaign monitor <case-id>
 
 # Generate report after completion
-./target/release/glassware-orchestrator campaign report <case-id>
+./target/release/glassware campaign report <case-id>
 ```
-
-### TUI Demo
-
-```bash
-# Launch TUI demo with sample data
-./target/release/glassware-orchestrator campaign demo
-```
-
-**Keyboard shortcuts:**
-- `q` - Quit
-- `Tab` - Switch tabs
-- `p` - Pause/Resume
-- `x` - Cancel
-- `c` - Adjust concurrency
-- `Enter` - Drill down into package
-- `l` - Run LLM analysis
-- `?` - Ask question about package
 
 ---
 
@@ -91,131 +100,147 @@ cargo build --release
 
 | Document | Purpose |
 |----------|---------|
-| **[HANDOFF/README.md](HANDOFF/README.md)** | **Developer handoff & getting started** |
-| [docs/CAMPAIGN-USER-GUIDE.md](docs/CAMPAIGN-USER-GUIDE.md) | Complete user guide |
-| [HANDOFF/FINAL-SESSION-SUMMARY.md](HANDOFF/FINAL-SESSION-SUMMARY.md) | Session summary |
-| [HANDOFF/FUTURE/ROADMAP-2026.md](HANDOFF/FUTURE/ROADMAP-2026.md) | Strategic roadmap |
-
----
-
-## 📁 Project Structure
-
-```
-glassworks/
-├── glassware-core/              # Detection engine (library)
-├── glassware-orchestrator/      # Campaign orchestrator (binary)
-├── glassware-cli/               # Simple scanner (binary)
-├── campaigns/                   # Campaign configurations
-│   └── wave6.toml              # Calibration campaign
-├── docs/                        # User documentation
-├── design/                      # Architecture docs
-├── HANDOFF/                     # Developer documentation
-└── harness/                     # Python tools (legacy)
-```
-
----
-
-## 🎮 Commands Reference
-
-### Campaign Management
-
-```bash
-# Run campaign
-glassware-orchestrator campaign run campaigns/wave6.toml
-
-# Resume interrupted campaign
-glassware-orchestrator campaign resume <case-id>
-
-# List campaigns
-glassware-orchestrator campaign list
-
-# Show status
-glassware-orchestrator campaign status <case-id>
-
-# TUI monitoring
-glassware-orchestrator campaign demo              # Demo mode
-glassware-orchestrator campaign monitor <case-id> # Live monitoring
-```
-
-### Analysis & Reporting
-
-```bash
-# Generate markdown report
-glassware-orchestrator campaign report <case-id>
-
-# Ask LLM questions
-glassware-orchestrator campaign query <case-id> "Why was express flagged?"
-
-# Send commands
-glassware-orchestrator campaign command <case-id> pause
-```
-
----
-
-## 💾 Cache Management
-
-**glassware** caches scan results to avoid re-scanning the same package versions. Cache entries expire after 7 days by default.
-
-### Cache Files
-
-| File | Purpose | Default Location |
-|------|---------|------------------|
-| Scan cache | Stores scan results | `.glassware-orchestrator-cache.db` |
-| Checkpoint DB | Campaign resume data | `.glassware-checkpoints.db` |
-| LLM cache | Caches LLM responses | `.glassware-llm-cache.json` |
-
-### Cache Commands
-
-```bash
-# Show cache statistics
-glassware cache-stats
-
-# Clear all cache entries
-glassware cache-clear
-
-# Clean up expired entries only
-glassware cache-cleanup
-
-# Disable caching for a single scan
-glassware scan-npm firebase@10.7.2 --no-cache
-```
-
-### When to Clear Cache
-
-Clear the cache when:
-- Detector logic has changed and you want fresh results
-- You suspect cached findings are stale
-- Debugging detection issues
-
-```bash
-# Full cache clear
-rm -f .glassware-orchestrator-cache.db
-glassware cache-clear
-
-# Also clear checkpoints if needed
-rm -f .glassware-checkpoints.db
-```
+| **[docs/USER-GUIDE.md](docs/USER-GUIDE.md)** | Complete user guide |
+| **[docs/DEVELOPER-GUIDE.md](docs/DEVELOPER-GUIDE.md)** | Developer reference |
+| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** | System architecture |
+| **[docs/DETECTORS.md](docs/DETECTORS.md)** | Detector reference |
+| **[docs/CAMPAIGN-OPERATOR-GUIDE.md](docs/CAMPAIGN-OPERATOR-GUIDE.md)** | Campaign operations |
 
 ---
 
 ## 🔬 Detection Capabilities
 
-### L1 Detectors (Primary)
-- Invisible character detection
-- Homoglyph/confusable character detection
-- Bidirectional text override detection
-- Unicode tag character detection
+### Tier 1: Primary Indicators
 
-### L2 Detectors (Secondary)
-- GlassWare pattern detection
-- Encrypted payload detection
-- RDD (URL dependency) detection
-- JPD author signature detection
+| Detector | Detects | Severity |
+|----------|---------|----------|
+| **InvisibleCharacter** | ZWSP, ZWNJ, Variation Selectors | High |
+| **Homoglyph** | Confusable Unicode characters | Medium |
+| **BidirectionalOverride** | RTL text override attacks | Medium |
+| **GlasswarePattern** | Steganography + decoder combination | Critical |
 
-### L3 Detectors (Behavioral)
-- Locale geofencing detection
-- Time delay sandbox evasion
-- Blockchain C2 detection
+### Tier 2: Secondary Confirmation
+
+| Detector | Detects | Severity |
+|----------|---------|----------|
+| **EncryptedPayload** | High-entropy blobs + dynamic execution | High |
+| **HeaderC2** | HTTP header extraction + decryption + exec | Critical |
+| **ExfilSchema** | Data exfiltration patterns | High |
+
+### Tier 3: Behavioral Analysis
+
+| Detector | Detects | Severity |
+|----------|---------|----------|
+| **BlockchainC2** | Known C2 wallets/IPs, GlassWorm signature | Critical |
+| **TimeDelaySandboxEvasion** | CI bypass + time delays | Critical |
+| **LocaleGeofencing** | Geographic targeting (Russia skip) | Critical |
+
+---
+
+## 📊 Scoring System
+
+glassware uses a tiered scoring system with category diversity caps:
+
+| Categories Detected | Max Score | Interpretation |
+|---------------------|-----------|----------------|
+| 1 category | 5.0 | Suspicious |
+| 2 categories | 7.0 | Borderline malicious |
+| 3 categories | 8.5 | Likely malicious |
+| 4+ categories | 10.0+ | Very likely malicious |
+
+**Malicious Threshold:** 7.0 (configurable per campaign)
+
+### GlassWorm Signature Detection
+
+When specific GlassWorm patterns are detected, scores can reach 25.0+:
+
+```toml
+[[settings.scoring.conditional_rules]]
+name = "glassworm_signature"
+condition = "invisible_char.count >= 10 AND blockchain_c2.count >= 1"
+action = "final_score = 25.0"
+```
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+```bash
+# Tier 1 LLM (Cerebras - fast triage)
+export GLASSWARE_LLM_BASE_URL="https://api.cerebras.ai/v1"
+export GLASSWARE_LLM_API_KEY="csk-..."
+export GLASSWARE_LLM_MODEL="llama-3.3-70b"
+
+# Tier 2 LLM (NVIDIA - deep analysis)
+export NVIDIA_API_KEY="nvapi-..."
+
+# GitHub (private repos)
+export GITHUB_TOKEN="ghp_..."
+```
+
+### Campaign Configuration
+
+Campaigns are configured via TOML files:
+
+```toml
+[campaign]
+name = "My Campaign"
+description = "Description"
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+
+[settings.scoring]
+malicious_threshold = 7.0
+
+[settings.scoring.tier_config]
+mode = "tiered"
+
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern"]
+threshold = 0.0
+
+[[waves]]
+id = "wave_1"
+name = "Evidence Validation"
+
+[[waves.sources]]
+type = "packages"
+list = ["package@1.0.0"]
+```
+
+See [`campaigns/wave15-validation.toml`](campaigns/wave15-validation.toml) for a complete example.
+
+---
+
+## 📈 Performance Metrics
+
+| Metric | Value |
+|--------|-------|
+| Binary size | ~25MB |
+| Scan speed | ~50k LOC/sec |
+| npm scan | ~0.5s per package |
+| GitHub scan | ~5-20s per repo |
+| Memory usage | ~50MB during scan |
+
+---
+
+## 🧪 Evidence Validation
+
+glassware maintains a curated evidence set of confirmed GlassWorm attacks:
+
+| Package | Type | Detection Status |
+|---------|------|------------------|
+| iflow-mcp-watercrawl-mcp-1.3.4 | Real Attack | ✅ Detected (8.50) |
+| glassworm-combo-002 | Synthetic | ✅ Detected (7.00) |
+| glassworm-combo-003 | Synthetic | ✅ Detected (7.00) |
+| glassworm-combo-004 | Synthetic | ✅ Detected (7.00) |
+
+**Evidence Detection Rate:** 100% (4/4)
 
 ---
 
@@ -225,8 +250,8 @@ rm -f .glassware-checkpoints.db
 ┌─────────────────────────────────────────────────────────────┐
 │                    Campaign Executor                         │
 │  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐ │
-│  │ Wave 6A      │────►│ Wave 6B      │────►│ Wave 6C      │ │
-│  │ (validate)   │     │ (validate)   │     │ (hunt)       │ │
+│  │ Wave 1       │────►│ Wave 2       │────►│ Wave 3       │ │
+│  │ (evidence)   │     │ (clean)      │     │ (hunt)       │ │
 │  └──────────────┘     └──────────────┘     └──────────────┘ │
 │                           │                                  │
 │                  ┌────────▼────────┐                         │
@@ -243,83 +268,23 @@ rm -f .glassware-checkpoints.db
 └─────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## 🤝 Contributing
-
-### For Users
-
-1. **Report bugs** via GitHub Issues
-2. **Request features** via GitHub Issues
-3. **Share findings** and detection patterns
-
-### For Developers
-
-1. **Read HANDOFF/README.md** for developer onboarding
-2. **Review ROADMAP-2026.md** for strategic direction
-3. **Start with good first issues**
-
-### Building
-
-```bash
-# Debug build
-cargo build -p glassware-orchestrator
-
-# Release build (optimized)
-cargo build -p glassware-orchestrator --release
-
-# Run tests
-cargo test --features "full,llm"
-```
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
 ---
 
-## 📊 Performance
+## 📝 License
 
-| Metric | Value |
-|--------|-------|
-| Binary size | ~25MB |
-| Scan speed | ~50k LOC/sec |
-| npm scan | ~0.5s per package |
-| GitHub scan | ~5-20s per repo |
-| Memory usage | ~50MB during scan |
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🔐 Security
+## 🔗 References
 
-**This tool is for defensive security research only.**
-
-- Use responsibly
-- Respect rate limits
-- Don't scan without permission
-- Report findings responsibly
+- [GlassWorm Writeup](https://codeberg.org/tip-o-deincognito/glassworm-writeup)
+- [Aikido Security Blog](https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode)
+- [Sonatype Research](https://www.sonatype.com/blog/glassworm-supply-chain-attack)
 
 ---
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE)
-
----
-
-## 🙏 Acknowledgments
-
-- Koi Security - GlassWorm research
-- Aikido Security - Campaign analysis
-- Endor Labs - Threat intelligence
-- Socket.dev - Real-time detection
-
----
-
-## 📬 Contact
-
-- **GitHub:** https://github.com/samgrowls/glassworks
-- **Issues:** https://github.com/samgrowls/glassworks/issues
-- **Documentation:** See `HANDOFF/` and `docs/` directories
-
----
-
-**Last updated:** March 23, 2026
-**Version:** 0.15.0
-**Status:** Production ready
+**Version:** v0.67.0-production-ready
+**Last Updated:** 2026-03-26
