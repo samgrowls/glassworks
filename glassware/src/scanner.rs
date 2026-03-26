@@ -526,6 +526,15 @@ impl Scanner {
                 if let Some(ext) = path.extension() {
                     let ext_str = ext.to_string_lossy().to_string();
                     if self.config.extensions.contains(&ext_str) {
+                        // Skip large files (>1MB) to avoid hanging on massive library files
+                        if let Ok(metadata) = std::fs::metadata(&path) {
+                            if metadata.len() > 1024 * 1024 { // 1MB
+                                debug!("Skipping large file: {} ({:.2}MB)", 
+                                    path.display(), 
+                                    metadata.len() as f64 / (1024.0 * 1024.0));
+                                continue;
+                            }
+                        }
                         files.push(path);
                     }
                 }

@@ -39,15 +39,15 @@ pub struct GlasswareDetector {
 #[cfg(feature = "regex")]
 lazy_static::lazy_static! {
     static ref DECODER_PATTERNS: Vec<Regex> = vec![
-        // codePointAt with VS constants
-        Regex::new(r"codePointAt\s*\(\s*0\s*\)").unwrap(),
+        // codePointAt with VS constants (GlassWorm signature)
+        Regex::new(r"codePointAt\s*\(\s*0x[Ff][Ee]00\s*\)").unwrap(),  // VS1-16
         Regex::new(r"codePointAt\s*\([^)]*0x[Ff][Ee]00").unwrap(),
-        Regex::new(r"codePointAt\s*\([^)]*0x[Ee]0100").unwrap(),
-        // String.fromCharCode/fromCodePoint
-        Regex::new(r"String\.fromCharCode\s*\(").unwrap(),
-        Regex::new(r"String\.fromCodePoint\s*\(").unwrap(),
-        // Filter patterns
-        Regex::new(r"\.filter\s*\(\s*c\s*=>\s*c\s*!==\s*null\s*\)").unwrap(),
+        Regex::new(r"codePointAt\s*\([^)]*0x[Ee]0100").unwrap(),  // VS17-256
+        // String.fromCodePoint with VS (more specific than fromCharCode)
+        Regex::new(r"fromCodePoint\s*\([^)]*0x[Ff][Ee]0").unwrap(),
+        // Filter patterns specific to invisible chars
+        Regex::new(r"\.filter\s*\([^)]*0x200[BCD]").unwrap(),  // ZWSP/ZWNJ/ZWJ
+        Regex::new(r"\.filter\s*\([^)]*0x[Ff][Ee]0").unwrap(),  // VS range
     ];
 
     static ref EVAL_PATTERNS: Vec<Regex> = vec![
@@ -57,10 +57,9 @@ lazy_static::lazy_static! {
     ];
 
     static ref ENCODING_PATTERNS: Vec<Regex> = vec![
-        Regex::new(r"Buffer\.from\s*\([^,]+,\s*hex\s*\)").unwrap(),
-        Regex::new(r"Buffer\.from\s*\([^,]+,\s*base64\s*\)").unwrap(),
-        Regex::new(r"\batob\s*\(").unwrap(),
-        Regex::new(r"\bbtoa\s*\(").unwrap(),
+        // REMOVED generic patterns - these are NOT GlassWorm-specific
+        // atob(), btoa(), Buffer.from are standard JS APIs used everywhere
+        // Only flag if combined with invisible chars (handled in detect_glassware_patterns)
     ];
 
     // Pattern for detecting VS constants in visible code
@@ -351,9 +350,18 @@ impl GlasswareDetector {
     }
 
     /// Detect decoder function patterns in visible code
+    /// 
+    /// CRITICAL FIX 2026-03-25: Require invisible chars OR VS-specific decoder
+    /// Previously flagged legitimate libraries that use codePointAt for Unicode handling
     #[cfg(feature = "regex")]
     fn detect_decoder_functions(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
+
+        // First check if file has invisible Unicode chars (required for GlassWorm)
+        let has_invisible = Self::find_invisible_unicode(content).len() > 0;
+        if !has_invisible {
+            return findings;  // No invisible chars = NOT GlassWorm
+        }
 
         for (line_num, line) in content.lines().enumerate() {
             // Check for VS constant patterns (indicates decoder code)
@@ -402,11 +410,17 @@ impl GlasswareDetector {
         Vec::new()
     }
 
-    /// Detect original GlassWare patterns
+    /// Detect GlassWorm steganography patterns
+    /// 
+    /// CRITICAL FIX 2026-03-25: Require BOTH invisible chars AND decoder patterns
+    /// Previously flagged legitimate libraries (firebase, web3, prisma) due to
+    /// generic patterns like atob(), fromCharCode() which are standard JS APIs.
+    /// 
+    /// Real GlassWorm = Invisible Unicode + VS-specific decoder + (optionally) execution
     #[cfg(feature = "regex")]
     fn detect_glassware_patterns(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
-        
+
         // Skip minified/bundled files (high FP rate)
         let path_lower = file_path.to_lowercase();
         let is_minified = path_lower.contains(".min.")
@@ -414,80 +428,114 @@ impl GlasswareDetector {
             || path_lower.contains("/build/")
             || path_lower.contains("/bundle")
             || path_lower.ends_with(".bundle.js");
-        
+
         if is_minified {
             return findings;
         }
-        
-        // Skip if file appears to be minified (short variable names, no whitespace)
+
+        // Skip if file appears to be minified
         if self.is_minified_content(content) {
             return findings;
         }
-        
-        let mut indicators = Vec::new();
 
+        // STEP 1: Check for invisible Unicode characters (REQUIRED)
+        let invisible_chars = Self::find_invisible_unicode(content);
+        if invisible_chars.is_empty() {
+            return findings;  // No invisible chars = NOT GlassWorm (prevents FPs on firebase, web3, etc.)
+        }
+
+        // STEP 2: Check for GlassWorm-specific decoder patterns
+        let mut decoder_indicators = Vec::new();
+        
         for (line_num, line) in content.lines().enumerate() {
+            // VS-specific decoding (GlassWorm signature - HIGH confidence)
             for pattern in &self.decoder_patterns {
                 if let Some(m) = pattern.find(line) {
-                    indicators.push((line_num, m.start(), "decoder_pattern"));
+                    // Only flag if it's VS-specific (0xFE00, 0xE0100), not generic fromCharCode
+                    if line.contains("0xFE00") || line.contains("0xE0100") || line.contains("0xfe0") {
+                        decoder_indicators.push((line_num, m.start(), "vs_decoder", 0.95));
+                    }
+                    // Skip generic fromCharCode/fromCodePoint without VS context (legitimate usage)
                 }
             }
 
-            for pattern in &self.eval_patterns {
-                if let Some(m) = pattern.find(line) {
-                    indicators.push((line_num, m.start(), "eval_pattern"));
-                }
+            // Check for filtering invisible chars specifically
+            if line.contains(".filter") && (line.contains("0x200") || line.contains("0xFE0")) {
+                decoder_indicators.push((line_num, 0, "invisible_filter", 0.90));
             }
 
-            for pattern in &self.encoding_patterns {
-                if let Some(m) = pattern.find(line) {
-                    indicators.push((line_num, m.start(), "encoding_pattern"));
-                }
+            // Check for VS reconstruction
+            if line.contains("fromCodePoint") && line.contains("map") &&
+               (line.contains("0xFE0") || line.contains("0xE01")) {
+                decoder_indicators.push((line_num, 0, "vs_reconstruction", 0.92));
             }
         }
 
-        // Only report if we have multiple indicators (reduces FPs)
-        if indicators.len() >= 2 {
-            let confidence = Self::calculate_confidence(indicators.len());
+        // STEP 3: Only flag if we have BOTH invisible chars AND decoder
+        if decoder_indicators.is_empty() {
+            return findings;  // Invisible chars without decoder = likely legitimate i18n data
+        }
 
-            for (line_num, col, indicator_type) in indicators {
-                let severity = if confidence >= 0.8 {
-                    Severity::Critical
-                } else if confidence >= 0.6 {
-                    Severity::High
-                } else {
-                    Severity::Medium
-                };
+        // STEP 4: Calculate confidence based on combination
+        let invisible_score = (invisible_chars.len() as f64).min(50.0) / 50.0 * 0.40;  // Up to 40%
+        let decoder_score: f64 = decoder_indicators.iter().map(|(_, _, _, c)| *c as f64).sum::<f64>() * 0.60;  // Up to 60%
+        let confidence = (invisible_score + decoder_score).min(1.0);
 
-                let finding = Finding {
-                    file: file_path.to_string(),
-                    line: line_num + 1,
-                    column: col + 1,
-                    code_point: 0,
-                    character: String::new(),
-                    raw_bytes: None,
-                    category: DetectionCategory::GlasswarePattern,
-                    severity,
-                    description: format!(
-                        "GlassWare attack pattern detected: {} (confidence: {:.0}%)",
-                        indicator_type,
-                        confidence * 100.0
-                    ),
-                    remediation: Self::get_remediation(confidence),
-                    cwe_id: Some("CWE-956".to_string()),
-                    references: vec![
-                        "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode".to_string(),
-                    ],
-                    context: Some(content.lines().nth(line_num).unwrap_or("").to_string()),
-                    decoded_payload: None,
-                    confidence: None,
-                };
+        // Only flag if confidence >= 70%
+        if confidence >= 0.70 {
+            let severity = if confidence >= 0.90 {
+                Severity::Critical
+            } else if confidence >= 0.80 {
+                Severity::High
+            } else {
+                Severity::Medium
+            };
 
-                findings.push(finding);
-            }
+            let finding = Finding {
+                file: file_path.to_string(),
+                line: decoder_indicators[0].0 + 1,
+                column: decoder_indicators[0].1 + 1,
+                code_point: 0,
+                character: String::new(),
+                raw_bytes: None,
+                category: DetectionCategory::GlasswarePattern,
+                severity,
+                description: format!(
+                    "GlassWorm steganography detected: {} invisible chars + decoder (confidence: {:.0}%)",
+                    invisible_chars.len(),
+                    confidence * 100.0
+                ),
+                remediation: "Review code for hidden payloads. Check for dynamic code execution (eval, Function, dynamic require).".to_string(),
+                cwe_id: Some("CWE-956".to_string()),
+                references: vec![
+                    "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode".to_string(),
+                ],
+                context: Some(content.lines().nth(decoder_indicators[0].0).unwrap_or("").to_string()),
+                decoded_payload: None,
+                confidence: Some(confidence),
+            };
+
+            findings.push(finding);
         }
 
         findings
+    }
+
+    /// Find invisible Unicode characters in content
+    fn find_invisible_unicode(content: &str) -> Vec<(usize, char)> {
+        content.char_indices()
+            .filter(|(_, ch)| {
+                let cp = *ch as u32;
+                // Variation Selectors (GlassWorm primary)
+                (cp >= 0xFE00 && cp <= 0xFE0F) ||  // VS1-16
+                (cp >= 0xE0100 && cp <= 0xE01EF) || // VS17-256
+                // Zero-Width characters
+                cp == 0x200B ||  // ZWSP
+                cp == 0x200C ||  // ZWNJ
+                cp == 0x200D ||  // ZWJ
+                cp == 0x2060     // Word Joiner
+            })
+            .collect()
     }
 
     #[cfg(not(feature = "regex"))]

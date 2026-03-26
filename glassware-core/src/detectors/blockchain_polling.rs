@@ -171,6 +171,11 @@ impl Detector for BlockchainPollingDetector {
         let content = ir.content();
         let path = &ir.metadata.path;
 
+        // Skip TypeScript definition files (.d.ts) - they contain type definitions, not C2 logic
+        if path.ends_with(".d.ts") {
+            return findings;
+        }
+
         // Check for GlassWorm-specific C2 patterns FIRST (always Critical)
         if has_glassworm_c2_patterns(content) {
             findings.push(Finding::new(
@@ -200,6 +205,10 @@ impl Detector for BlockchainPollingDetector {
         let mut has_memo = false;
         let mut matched_wallets: Vec<&str> = Vec::new();
         let mut first_match_line = 1;
+
+        // Track memo findings to avoid flooding (limit to first 3 per file)
+        let mut memo_findings = 0;
+        const MAX_MEMO_FINDINGS: usize = 3;
 
         for (line_num, line) in content.lines().enumerate() {
             let line = line.trim();
@@ -302,9 +311,10 @@ impl Detector for BlockchainPollingDetector {
                 );
             }
 
-            // Check for memo instruction usage
-            if POLLING_PATTERNS[5].is_match(line) {
+            // Check for memo instruction usage (LIMITED to avoid flooding)
+            if POLLING_PATTERNS[5].is_match(line) && memo_findings < MAX_MEMO_FINDINGS {
                 has_memo = true;
+                memo_findings += 1;
                 if first_match_line == 1 {
                     first_match_line = line_num + 1;
                 }
