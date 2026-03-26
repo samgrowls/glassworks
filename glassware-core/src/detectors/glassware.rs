@@ -417,6 +417,9 @@ impl GlasswareDetector {
     /// generic patterns like atob(), fromCharCode() which are standard JS APIs.
     /// 
     /// Real GlassWorm = Invisible Unicode + VS-specific decoder + (optionally) execution
+    /// 
+    /// ALSO detects heavy obfuscation patterns (string arrays, XOR decryption, bracket notation)
+    /// which are commonly used in GlassWorm attacks even without invisible chars.
     #[cfg(feature = "regex")]
     fn detect_glassware_patterns(&self, content: &str, file_path: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
@@ -438,15 +441,24 @@ impl GlasswareDetector {
             return findings;
         }
 
-        // STEP 1: Check for invisible Unicode characters (REQUIRED)
+        // === PATH 1: Invisible Unicode + decoder (GlassWorm steganography) ===
         let invisible_chars = Self::find_invisible_unicode(content);
-        if invisible_chars.is_empty() {
-            return findings;  // No invisible chars = NOT GlassWorm (prevents FPs on firebase, web3, etc.)
+        if !invisible_chars.is_empty() {
+            findings.extend(self.detect_stego_with_invisible_chars(content, file_path, invisible_chars));
         }
 
-        // STEP 2: Check for GlassWorm-specific decoder patterns
+        // === PATH 2: Heavy obfuscation patterns (GlassWorm without invisible chars) ===
+        findings.extend(self.detect_obfuscation_patterns(content, file_path));
+
+        findings
+    }
+
+    /// Detect GlassWorm steganography with invisible characters
+    #[cfg(feature = "regex")]
+    fn detect_stego_with_invisible_chars(&self, content: &str, file_path: &str, invisible_chars: Vec<(usize, char)>) -> Vec<Finding> {
+        let mut findings = Vec::new();
         let mut decoder_indicators = Vec::new();
-        
+
         for (line_num, line) in content.lines().enumerate() {
             // VS-specific decoding (GlassWorm signature - HIGH confidence)
             for pattern in &self.decoder_patterns {
@@ -471,17 +483,16 @@ impl GlasswareDetector {
             }
         }
 
-        // STEP 3: Only flag if we have BOTH invisible chars AND decoder
+        // Only flag if we have decoder patterns
         if decoder_indicators.is_empty() {
-            return findings;  // Invisible chars without decoder = likely legitimate i18n data
+            return findings;
         }
 
-        // STEP 4: Calculate confidence based on combination
-        let invisible_score = (invisible_chars.len() as f64).min(50.0) / 50.0 * 0.40;  // Up to 40%
-        let decoder_score: f64 = decoder_indicators.iter().map(|(_, _, _, c)| *c as f64).sum::<f64>() * 0.60;  // Up to 60%
+        // Calculate confidence based on combination
+        let invisible_score = (invisible_chars.len() as f64).min(50.0) / 50.0 * 0.40;
+        let decoder_score: f64 = decoder_indicators.iter().map(|(_, _, _, c)| *c as f64).sum::<f64>() * 0.60;
         let confidence = (invisible_score + decoder_score).min(1.0);
 
-        // Only flag if confidence >= 70%
         if confidence >= 0.70 {
             let severity = if confidence >= 0.90 {
                 Severity::Critical
@@ -513,6 +524,97 @@ impl GlasswareDetector {
                 context: Some(content.lines().nth(decoder_indicators[0].0).unwrap_or("").to_string()),
                 decoded_payload: None,
                 confidence: Some(confidence),
+            };
+
+            findings.push(finding);
+        }
+
+        findings
+    }
+
+    /// Detect heavy obfuscation patterns commonly used in GlassWorm attacks
+    /// This catches obfuscation WITHOUT invisible chars (different attack variant)
+    #[cfg(feature = "regex")]
+    fn detect_obfuscation_patterns(&self, content: &str, file_path: &str) -> Vec<Finding> {
+        let mut findings = Vec::new();
+        let mut obfuscation_score = 0.0;
+        let mut indicators = Vec::new();
+
+        // Indicator 1: String array obfuscation (multiple string literals in array)
+        let string_array_pattern = Regex::new(r#"['"][a-zA-Z0-9]{3,}['\"].*,.*['"][a-zA-Z0-9]{3,}['\"].*,.*['"][a-zA-Z0-9]{3,}['"]"#).unwrap();
+        if string_array_pattern.is_match(content) {
+            obfuscation_score += 0.25;
+            indicators.push("string_array");
+        }
+
+        // Indicator 2: XOR decryption pattern
+        let xor_pattern = Regex::new(r"\^\s*0x[0-9A-Fa-f]{2,}|\^\s*[0-9]{2,}").unwrap();
+        if xor_pattern.is_match(content) {
+            obfuscation_score += 0.25;
+            indicators.push("xor_decryption");
+        }
+
+        // Indicator 3: Bracket notation for function calls (String['fromCharCode'])
+        let bracket_notation = Regex::new(r#"String\s*\[\s*['"]fromCharCode['"]\s*\]|String\s*\[\s*['"]fromCodePoint['"]\s*\]"#).unwrap();
+        if bracket_notation.is_match(content) {
+            obfuscation_score += 0.30;
+            indicators.push("bracket_notation");
+        }
+
+        // Indicator 4: Atob-based decryption with XOR
+        let atob_xor = Regex::new(r"atob\s*\([^)]*\).*\^|\^.*atob\s*\(").unwrap();
+        if atob_xor.is_match(content) {
+            obfuscation_score += 0.30;
+            indicators.push("atob_xor");
+        }
+
+        // Indicator 5: RC4-like stream cipher
+        let rc4_pattern = Regex::new(r"S\s*=\s*\[\].*for.*S\[.*\]\s*=\s*.*S\[.*\]").unwrap();
+        if rc4_pattern.is_match(content) {
+            obfuscation_score += 0.25;
+            indicators.push("rc4_cipher");
+        }
+
+        // Indicator 6: eval/Function with decoded content
+        let dynamic_exec = Regex::new(r"(eval|Function)\s*\(\s*[^)]*\^|[^)]*atob[^)]*\)\s*\)").unwrap();
+        if dynamic_exec.is_match(content) {
+            obfuscation_score += 0.30;
+            indicators.push("dynamic_exec");
+        }
+
+        // Only flag if we have 2+ obfuscation indicators (reduces FPs while catching more attacks)
+        if indicators.len() >= 2 {
+            let severity = if obfuscation_score >= 0.80 {
+                Severity::Critical
+            } else if obfuscation_score >= 0.60 {
+                Severity::High
+            } else {
+                Severity::Medium
+            };
+
+            let finding = Finding {
+                file: file_path.to_string(),
+                line: 1,
+                column: 1,
+                code_point: 0,
+                character: String::new(),
+                raw_bytes: None,
+                category: DetectionCategory::GlasswarePattern,
+                severity,
+                description: format!(
+                    "GlassWorm obfuscation detected: {} indicators ({}) (confidence: {:.0}%)",
+                    indicators.len(),
+                    indicators.join(", "),
+                    obfuscation_score * 100.0
+                ),
+                remediation: "Review code for obfuscated malicious payloads. Check for dynamic code execution and network exfiltration.".to_string(),
+                cwe_id: Some("CWE-956".to_string()),
+                references: vec![
+                    "https://www.aikido.dev/blog/glassware-returns-unicode-attack-github-npm-vscode".to_string(),
+                ],
+                context: Some(content.lines().take(5).collect::<Vec<_>>().join("\n")),
+                decoded_payload: None,
+                confidence: Some(obfuscation_score),
             };
 
             findings.push(finding);

@@ -1,0 +1,365 @@
+# Wave 13: Iterative Testing Campaign
+#
+# Purpose: Systematic iterative testing for long-horizon scanning
+# Target: Start small (50 pkg), scale to medium (500 pkg), then large (2000+ pkg)
+#
+# Run with: glassware campaign run campaigns/wave13-iterative-test.toml --llm
+# Expected duration: ~30 seconds for wave A, ~3 min for wave B, ~10 min for wave C
+
+[campaign]
+name = "Wave 13 - Iterative Testing"
+description = "Systematic testing: evidence validation → small wave → medium wave → large wave"
+created_by = "security-team"
+priority = "critical"
+tags = ["iterative", "validation", "wave13", "long-horizon"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+rate_limit_github = 5.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.whitelist]
+# Minimal whitelist - only core infrastructure packages
+# Detectors now use context-aware logic to prevent FPs
+packages = []
+crypto_packages = []
+build_tools = []
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+
+[settings.llm]
+tier1_enabled = true
+tier1_provider = "cerebras"
+tier1_threshold = 6.0
+tier2_enabled = true
+tier2_threshold = 8.0
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave13"
+report_dir = "reports/wave13"
+
+# ============================================================
+# Wave 13A: Evidence Tarball Validation (MUST detect)
+# ============================================================
+[[waves]]
+id = "wave_13a"
+name = "Evidence Tarball Validation"
+description = "Validate detection on known malicious evidence tarballs"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Real GlassWorm attacks (should detect)
+    "react-native-country-select@0.3.91",
+    "iflow-mcp-watercrawl-watercrawl-mcp@1.3.4",
+    # Clean baseline (should NOT detect)
+    "express@4.19.2",
+    "lodash@4.17.21",
+    "axios@1.6.7",
+]
+
+[waves.expectations]
+must_flag_all = false  # Only malicious ones should flag
+min_malicious_count = 2
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 13B: Small Wave - High Risk Categories (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_13b"
+name = "Small Wave - High Risk (100 pkg)"
+description = "Test on high-risk categories: phone, auth, crypto, locale"
+depends_on = ["wave_13a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "packages"
+list = [
+    # Phone/SMS (high risk)
+    "react-native-phone-input@1.3.7",
+    "react-native-otp-inputs@0.3.1",
+    "react-native-communications@2.5.0",
+    "react-native-sms@1.11.0",
+    "react-native-call-detection@1.9.0",
+    # Auth (high risk)
+    "react-native-biometrics@3.0.1",
+    "react-native-touch-id@4.4.1",
+    "react-native-fingerprint-scanner@6.0.0",
+    # Crypto (high risk)
+    "react-native-crypto@2.2.0",
+    "react-native-aes-crypto@3.0.3",
+    "react-native-randombytes@3.6.1",
+    # Locale (geofencing risk)
+    "react-native-localize@3.0.6",
+    "react-native-locale@0.0.15",
+    # Popular packages (should be clean)
+    "react@18.2.0",
+    "react-dom@18.2.0",
+    "typescript@5.3.3",
+    "webpack@5.89.0",
+    "babel-core@6.26.3",
+    "eslint@8.56.0",
+    "prettier@3.1.1",
+    "jest@29.7.0",
+    "vitest@1.1.0",
+    "vite@5.0.10",
+    "rollup@4.9.0",
+    "esbuild@0.19.10",
+    "swc-core@1.3.100",
+    "parcel@2.11.0",
+    "snowpack@4.0.0",
+    "next@14.0.4",
+    "nuxt@3.9.0",
+    "svelte@4.2.8",
+    "vue@3.4.0",
+    "angular@17.0.0",
+    "ember-source@5.4.0",
+    "glimmer@0.92.0",
+    "solid-js@1.8.7",
+    "qwik@1.4.0",
+    "astro@4.0.0",
+    "remix@2.4.0",
+    "blitz@2.0.0",
+    "redwoodjs@6.0.0",
+    "create-react-app@5.0.1",
+    "create-vue@3.10.0",
+    "create-svelte@5.4.0",
+    "create-next-app@14.0.4",
+    "create-t3-app@7.0.0",
+    "create-nx-workspace@17.2.0",
+    "lerna@8.0.0",
+    "nx@17.2.0",
+    "pnpm@8.12.0",
+    "yarn@1.22.21",
+    "npm@10.2.4",
+    "bun@1.0.20",
+    "deno@1.38.0",
+    "ts-node@10.9.2",
+    "tsx@4.7.0",
+    "nodemon@3.0.2",
+    "pm2@5.3.0",
+    "forever@4.0.3",
+    "supervisor@0.12.0",
+    "node-dev@8.0.0",
+    "concurrently@8.2.2",
+    "npm-run-all@4.1.5",
+    "husky@8.0.3",
+    "lint-staged@15.2.0",
+    "commitlint@18.4.3",
+    "semantic-release@23.0.0",
+    "standard-version@9.5.0",
+    "changesets@2.27.0",
+    "turborepo@1.11.3",
+    "rush@5.110.0",
+    "bazel@7.0.0",
+    "esbuild-register@3.5.0",
+    "sucrase@3.35.0",
+    "@babel/register@7.23.7",
+    "@swc/register@0.1.10",
+    "tsconfig-paths@4.2.0",
+    "module-alias@2.2.3",
+    "dotenv@16.3.1",
+    "config@3.3.9",
+    "cosmiconfig@8.3.6",
+    "rc@1.2.8",
+    "ini@4.1.1",
+    "yaml@2.3.4",
+    "toml@3.0.0",
+    "json5@2.2.3",
+    "fast-json-patch@3.1.1",
+    "joi@17.11.0",
+    "yup@1.3.3",
+    "zod@3.22.4",
+    "ajv@8.12.0",
+    "superstruct@1.0.3",
+    "io-ts@2.2.21",
+    "runtypes@6.7.0",
+    "ts-runtime-checks@0.6.0",
+    "typescript-is@0.19.0",
+    "class-validator@0.14.0",
+    "class-transformer@0.5.1",
+    "reflect-metadata@0.1.14",
+    "inversify@6.0.2",
+    "typedi@0.10.0",
+    "awilix@10.0.1",
+    "winston@3.11.0",
+    "bunyan@1.8.15",
+    "pino@8.17.2",
+    "log4js@6.9.1",
+    "debug@4.3.4",
+    "chalk@5.3.0",
+    "colors@1.4.0",
+    "cli-table3@0.6.3",
+    "ora@8.0.1",
+    "inquirer@9.2.12",
+    "commander@12.0.0",
+    "yargs@17.7.2",
+    "minimist@1.2.8",
+    "meow@13.0.0",
+    "cac@6.7.14",
+    "kleur@4.1.5",
+    "sade@1.8.1",
+    "mri@1.2.0",
+    "getopts@2.3.0",
+    "arg@5.0.2",
+    "argparse@2.0.1",
+    "parse-json@8.1.0",
+    "glob@10.3.10",
+    "fast-glob@3.3.2",
+    "chokidar@3.5.3",
+    "fs-extra@11.2.0",
+    "fs-jetpack@5.1.0",
+    "graceful-fs@4.2.11",
+    "rimraf@5.0.5",
+    "del@7.1.0",
+    "trash@8.1.1",
+    "ncp@2.0.0",
+    "cpr@3.0.1",
+    "copyfiles@2.4.1",
+    "cpy@11.0.0",
+    "filenamify@6.0.0",
+    "make-dir@4.0.0",
+    "mkdirp@3.0.1",
+    "tempy@3.1.0",
+    "temp-dir@3.0.0",
+    "tmp@0.2.1",
+]
+
+[waves.expectations]
+min_threat_score = 5.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 13C: Medium Wave - Broader Hunt (500 packages)
+# ============================================================
+[[waves]]
+id = "wave_13c"
+name = "Medium Wave - Broader Hunt (500 pkg)"
+description = "Scale up to 500 packages across multiple ecosystems"
+depends_on = ["wave_13b"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_category"
+category = "ai-ml"
+samples = 100
+max_downloads = 100000
+
+[[waves.sources]]
+type = "npm_category"
+category = "native-build"
+samples = 100
+max_downloads = 100000
+
+[[waves.sources]]
+type = "npm_category"
+category = "install-scripts"
+samples = 100
+max_downloads = 100000
+
+[[waves.sources]]
+type = "npm_category"
+category = "crypto"
+samples = 100
+max_downloads = 100000
+
+[[waves.sources]]
+type = "npm_category"
+category = "web3"
+samples = 100
+max_downloads = 100000
+
+[waves.expectations]
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 13D: Large Wave - Long Horizon Test (2000 packages)
+# ============================================================
+[[waves]]
+id = "wave_13d"
+name = "Large Wave - Long Horizon (2000 pkg)"
+description = "Long horizon test with 2000+ packages"
+depends_on = ["wave_13c"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["react"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["vue"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["angular"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["typescript"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["webpack"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["babel"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["eslint"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["jest"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["axios"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["lodash"]
+samples_per_keyword = 200
+max_downloads = 1000000
+
+[waves.expectations]
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true
