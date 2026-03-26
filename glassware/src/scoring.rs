@@ -459,9 +459,6 @@ impl ScoringEngine {
     /// - 2 categories: capped at 7.0 (borderline malicious)
     /// - 3 categories: capped at 8.5 (likely malicious)
     /// - 4+ categories: no cap (very likely malicious)
-    ///
-    /// EXCEPTION: If patterns include Critical severity with high count (>100),
-    /// the cap is relaxed to allow legitimate high-volume detections.
     fn apply_category_caps(
         &self,
         score: f32,
@@ -469,17 +466,6 @@ impl ScoringEngine {
     ) -> f32 {
         let categories: HashSet<_> = patterns.iter().map(|p| &p.category).collect();
         let category_count = categories.len();
-
-        // Check for high-volume critical findings (exception to caps)
-        let has_high_volume_critical = patterns.iter().any(|p| {
-            p.max_severity == Severity::Critical && p.count > 100
-        });
-
-        if has_high_volume_critical {
-            // Relax caps for high-volume critical findings
-            // This catches real attacks like aifabrix-miso-client (9000+ encrypted payload findings)
-            return score.min(10.0);
-        }
 
         match category_count {
             0 => 0.0,
