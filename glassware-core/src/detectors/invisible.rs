@@ -61,6 +61,14 @@ impl InvisibleCharDetector {
             return findings;  // TypeScript definitions - rarely contain malicious code
         }
 
+        // CRITICAL FIX 2026-03-26: Skip locale data directories immediately
+        // Packages like 'intl' have locale-data/ with thousands of RLM characters
+        // These are legitimate Unicode for Arabic/RTL languages, not steganography
+        if path_lower.contains("/locale-data/") || path_lower.contains("/localedata/") 
+            || path_lower.contains("/cldr/") || path_lower.contains("/unicode-data/") {
+            return findings;  // Locale data - legitimate Unicode, not steganography
+        }
+
         // Check if this is an i18n/translation file (legitimate use of ZWNJ/ZWJ)
         let is_i18n_context = self.is_i18n_file(file_path, content);
 
@@ -164,6 +172,17 @@ impl InvisibleCharDetector {
     /// Check if file is an i18n/translation file (legitimate ZWNJ/ZWJ usage)
     fn is_i18n_file(&self, file_path: &str, content: &str) -> bool {
         let path_lower = file_path.to_lowercase();
+
+        // CRITICAL FIX 2026-03-26: Skip locale data directories
+        // Packages like 'intl' have locale-data/ with thousands of RLM characters
+        // These are legitimate Unicode for Arabic/RTL languages, not steganography
+        let locale_data_dirs = [
+            "/locale-data/", "/localedata/",
+            "/cldr/", "/unicode-data/",
+        ];
+        if locale_data_dirs.iter().any(|dir| path_lower.contains(dir)) {
+            return true;
+        }
 
         // Check for i18n-related directories
         let i18n_dirs = [

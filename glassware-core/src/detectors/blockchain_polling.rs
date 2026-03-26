@@ -57,24 +57,17 @@ const SOLANA_RPC_ENDPOINTS: &[&str] = &[
 
 /// Check for GlassWorm-specific C2 patterns
 /// UPDATED 2026-03-26: Only flag specific C2 patterns, not generic SDK usage
+/// UPDATED 2026-03-26 (2): Require 5-minute polling pattern for C2 detection
 fn has_glassworm_c2_patterns(content: &str) -> bool {
-    let glassworm_patterns = [
-        // Pattern 1: Command extraction from tx metadata (specific to C2)
-        // Must have BOTH decode AND execute (GlassWorm uses both together)
-        "decodeCommand",
-        "executeCommand(",
-
-        // Pattern 2: Polling with hardcoded C2 wallet (not user wallet)
-        "getSignaturesForAddress(C2_WALLET",
-        "getSignaturesForAddress(new PublicKey(\"",
-    ];
-
-    // Must have BOTH decodeCommand AND executeCommand (GlassWorm signature)
-    // OR one of the specific wallet patterns
+    // GlassWorm C2 requires BOTH:
+    // 1. Command extraction (decodeCommand + executeCommand)
+    // 2. 5-minute polling (300000ms)
+    
     let has_command_patterns = content.contains("decodeCommand") && content.contains("executeCommand(");
-    let has_wallet_patterns = glassworm_patterns[2..].iter().any(|p| content.contains(p));
-
-    has_command_patterns || has_wallet_patterns
+    let has_5min_polling = content.contains("300000") || content.contains("5 * 60 * 1000") || content.contains("5*60*1000");
+    
+    // Must have BOTH command extraction AND 5-minute polling
+    has_command_patterns && has_5min_polling
 }
 
 /// Check for legitimate SDK usage patterns
@@ -154,10 +147,10 @@ static POLLING_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
         Regex::new(r"new\s+Connection\s*\(").unwrap(),
         // Memo instruction
         Regex::new(r"Memo(?:Instruction|Program)?").unwrap(),
-        // Transaction metadata parsing
-        Regex::new(r"tx\.meta(?:innerInstructions)?|transaction\.meta").unwrap(),
-        // Inner instructions (GlassWorm command extraction)
-        Regex::new(r"innerInstructions").unwrap(),
+        // REMOVED 2026-03-26: tx.meta and innerInstructions are too generic
+        // These are used by all Solana apps legitimately, not just C2
+        // Regex::new(r"tx\.meta(?:innerInstructions)?|transaction\.meta").unwrap(),
+        // Regex::new(r"innerInstructions").unwrap(),
     ]
 });
 
@@ -331,10 +324,11 @@ impl Detector for BlockchainPollingDetector {
 
             // Check for transaction metadata parsing
             // UPDATED 2026-03-26: Only flag when combined with suspicious patterns
-            // innerInstructions and tx.meta are used by all Solana apps legitimately
+            // getTransaction is used by all Solana apps legitimately
             // Only flag when combined with decodeCommand/executeCommand
-            if (POLLING_PATTERNS[1].is_match(line) || POLLING_PATTERNS[6].is_match(line) || POLLING_PATTERNS[7].is_match(line))
-                && (content.contains("decodeCommand") || content.contains("executeCommand")) {
+            if POLLING_PATTERNS[1].is_match(line)
+                && content.contains("decodeCommand") 
+                && content.contains("executeCommand(") {
                 has_transaction_parsing = true;
                 if first_match_line == 1 {
                     first_match_line = line_num + 1;
@@ -359,32 +353,9 @@ impl Detector for BlockchainPollingDetector {
                 );
             }
 
-            // Check for memo instruction usage (LIMITED to avoid flooding)
-            if POLLING_PATTERNS[5].is_match(line) && memo_findings < MAX_MEMO_FINDINGS {
-                has_memo = true;
-                memo_findings += 1;
-                if first_match_line == 1 {
-                    first_match_line = line_num + 1;
-                }
-
-                findings.push(
-                    Finding::new(
-                        path,
-                        line_num + 1,
-                        1,
-                        0,
-                        '\0',
-                        DetectionCategory::BlockchainC2,
-                        Severity::Medium,
-                        "Memo instruction usage (potential data hiding)",
-                        "Solana memo instructions can hide C2 commands or exfiltrated data. \
-                         Review memo content for encoded payloads.",
-                    )
-                    .with_cwe_id("CWE-506")
-                    .with_reference("https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode")
-                    .with_confidence(0.65),
-                );
-            }
+            // REMOVED 2026-03-26: Memo instruction findings
+            // Memo instructions are used by many legitimate Solana apps
+            // Only flag if combined with decodeCommand/executeCommand (handled above)
         }
 
         // Check for 5-minute polling interval (GlassWorm signature - always Critical)
