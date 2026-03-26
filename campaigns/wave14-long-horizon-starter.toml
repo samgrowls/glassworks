@@ -45,8 +45,50 @@ crypto_packages = []
 build_tools = []
 
 [settings.scoring]
-malicious_threshold = 7.0
-suspicious_threshold = 4.0
+malicious_threshold = 10.0  # Higher threshold for long-horizon
+suspicious_threshold = 5.0
+
+# Tiered scoring configuration
+[settings.scoring.tier_config]
+mode = "tiered"
+
+# Tier 1: Primary signals (always run)
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+threshold = 0.0
+weight_multiplier = 1.5
+
+# Tier 2: Secondary confirmation (only if tier 1 score >= 5.0)
+[[settings.scoring.tiers]]
+tier = 2
+detectors = ["blockchain_c2", "header_c2", "exfil_schema"]
+threshold = 5.0
+weight_multiplier = 1.0
+
+# Tier 3: Behavioral indicators (only if tier 1+2 score >= 10.0)
+[[settings.scoring.tiers]]
+tier = 3
+detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
+threshold = 10.0
+weight_multiplier = 0.8
+
+# Conditional rules
+[[settings.scoring.conditional_rules]]
+name = "glassworm_signature"
+description = "Invisible + C2 = confirmed GlassWorm"
+condition = "invisible_char.count >= 10 AND blockchain_c2.count >= 1"
+action = "final_score = 25.0"
+
+[settings.scoring.weights]
+invisible_char = 6.0
+glassware_pattern = 10.0
+obfuscation = 8.0
+blockchain_c2 = 5.0  # Reduced weight - only confirms other signals
+header_c2 = 4.0      # Reduced weight
+exfil_schema = 6.0
+locale_geofencing = 7.0
+time_delay_sandbox_evasion = 7.0
 
 [settings.llm]
 tier1_enabled = true

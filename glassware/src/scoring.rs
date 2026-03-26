@@ -1,4 +1,4 @@
-//! Scoring Engine with Deduplication, LLM Feedback, and Reputation
+//! Scoring Engine with Deduplication, LLM Feedback, Reputation, and Tiered Execution
 //!
 //! This module implements the Phase A.5 scoring system redesign:
 //! 1. Deduplicates findings by pattern (383 similar findings = 1 pattern)
@@ -6,11 +6,12 @@
 //! 3. Applies reputation multipliers (popular packages get benefit of doubt)
 //! 4. Raises malicious threshold to 8.0
 //! 5. Maintains 100% evidence detection via exceptions
+//! 6. Supports tiered detector execution (Phase 2 modular scoring)
 
 use glassware_core::{Finding, Severity, DetectionCategory, FindingPattern};
 use std::collections::{HashMap, HashSet};
 
-pub use crate::scoring_config::ScoringConfig;
+pub use crate::scoring_config::{ScoringConfig, TierMode, TierDefinition, DetectorWeights, ConditionalRule};
 pub use crate::package_context::PackageContext;
 use crate::llm::LlmVerdict;
 
@@ -46,7 +47,7 @@ impl ScoringEngine {
     ///
     /// # Returns
     ///
-    /// A threat score between 0.0 and 10.0
+    /// A threat score between 0.0 and 10.0 (or higher with tiered mode)
     ///
     /// # Example
     ///
@@ -72,6 +73,21 @@ impl ScoringEngine {
             return 0.0;
         }
 
+        // Check if tiered mode is enabled
+        if self.config.tier_config.mode == TierMode::Tiered && !self.config.tier_config.tiers.is_empty() {
+            return self.calculate_score_tiered(findings, llm_verdict);
+        }
+
+        // Independent mode (original behavior)
+        self.calculate_score_independent(findings, llm_verdict)
+    }
+
+    /// Calculate score in independent mode (original behavior)
+    fn calculate_score_independent(
+        &self,
+        findings: &[Finding],
+        llm_verdict: Option<&LlmVerdict>,
+    ) -> f32 {
         // STEP 1: Deduplicate findings by pattern
         let patterns = self.deduplicate_findings(findings);
 
@@ -97,6 +113,275 @@ impl ScoringEngine {
 
         // STEP 7: Clamp to valid range [0.0, 10.0]
         base_score.min(10.0).max(0.0)
+    }
+
+    /// Calculate score in tiered mode (new behavior)
+    ///
+    /// Tiers execute sequentially, with each tier's threshold gating the next tier.
+    /// This allows for conditional scoring where certain detectors only contribute
+    /// if other detectors have already flagged the package as suspicious.
+    fn calculate_score_tiered(
+        &self,
+        findings: &[Finding],
+        llm_verdict: Option<&LlmVerdict>,
+    ) -> f32 {
+        let mut tier_sum = 0.0;
+        
+        // Execute tiers in order
+        for tier_def in &self.config.tier_config.tiers {
+            // Check if threshold met from previous tiers
+            if tier_sum < tier_def.threshold {
+                continue;  // Skip this tier
+            }
+            
+            // Run detectors in this tier
+            let tier_score = self.run_tier_detectors(tier_def, findings);
+            tier_sum += tier_score * tier_def.weight_multiplier;
+        }
+        
+        // Apply conditional rules
+        tier_sum = self.apply_conditional_rules(tier_sum, findings);
+        
+        // Apply LLM multiplier if provided
+        if let Some(llm) = llm_verdict {
+            tier_sum *= self.calculate_llm_multiplier(llm);
+        }
+        
+        // Apply reputation multiplier
+        tier_sum *= self.package_context.reputation_multiplier();
+        
+        // Apply exceptions (known C2, steganography, etc.)
+        tier_sum = self.apply_exceptions(tier_sum, findings);
+        
+        // In tiered mode, allow scores above 10.0 for confirmed attacks
+        // GlassWorm signature can reach 30.0+
+        tier_sum.max(0.0)
+    }
+    
+    /// Run detectors for a specific tier
+    fn run_tier_detectors(&self, tier_def: &TierDefinition, findings: &[Finding]) -> f32 {
+        let mut tier_score = 0.0;
+        
+        // Group findings by category for this tier
+        let tier_findings: Vec<&Finding> = findings.iter()
+            .filter(|f| self.detector_matches_tier(&f.category, tier_def))
+            .collect();
+        
+        if tier_findings.is_empty() {
+            return 0.0;
+        }
+        
+        // Deduplicate findings within this tier (convert Vec<&Finding> to Vec<Finding>)
+        let tier_findings_owned: Vec<Finding> = tier_findings.iter().map(|f| (*f).clone()).collect();
+        let patterns = self.deduplicate_findings(&tier_findings_owned);
+        
+        // Calculate score for this tier
+        for pattern in &patterns {
+            let pattern_score = self.calculate_pattern_score(pattern);
+            
+            // Apply detector-specific weight
+            let weight = self.config.weights.get_detector_weight(&pattern.category);
+            tier_score += pattern_score * weight;
+        }
+        
+        tier_score
+    }
+    
+    /// Check if a detector category matches a tier's detector list
+    fn detector_matches_tier(&self, category: &DetectionCategory, tier_def: &TierDefinition) -> bool {
+        let category_name = self.category_to_detector_name(category);
+        tier_def.detectors.iter().any(|d| d == &category_name)
+    }
+    
+    /// Convert DetectionCategory to detector name string
+    fn category_to_detector_name(&self, category: &DetectionCategory) -> String {
+        match category {
+            DetectionCategory::InvisibleCharacter => "invisible_char".to_string(),
+            DetectionCategory::Homoglyph => "homoglyph".to_string(),
+            DetectionCategory::BidirectionalOverride => "bidirectional_override".to_string(),
+            DetectionCategory::UnicodeTag => "unicode_tag".to_string(),
+            DetectionCategory::NormalizationAttack => "normalization_attack".to_string(),
+            DetectionCategory::GlasswarePattern => "glassware_pattern".to_string(),
+            DetectionCategory::EmojiObfuscation => "emoji_obfuscation".to_string(),
+            DetectionCategory::SteganoPayload => "stegano_payload".to_string(),
+            DetectionCategory::DecoderFunction => "decoder_function".to_string(),
+            DetectionCategory::PipeDelimiterStego => "pipe_delimiter_stego".to_string(),
+            DetectionCategory::EncryptedPayload => "encrypted_payload".to_string(),
+            DetectionCategory::HeaderC2 => "header_c2".to_string(),
+            DetectionCategory::HardcodedKeyDecryption => "hardcoded_key_decryption".to_string(),
+            DetectionCategory::Rc4Pattern => "rc4_pattern".to_string(),
+            DetectionCategory::LocaleGeofencing => "locale_geofencing".to_string(),
+            DetectionCategory::TimeDelaySandboxEvasion => "time_delay_sandbox_evasion".to_string(),
+            DetectionCategory::BlockchainC2 => "blockchain_c2".to_string(),
+            DetectionCategory::RddAttack => "rdd_attack".to_string(),
+            DetectionCategory::ForceMemoPython => "forcememo_python".to_string(),
+            DetectionCategory::JpdAuthor => "jpd_author".to_string(),
+            DetectionCategory::XorShiftObfuscation => "xor_shift_obfuscation".to_string(),
+            DetectionCategory::IElevatorCom => "ielevator_com".to_string(),
+            DetectionCategory::ApcInjection => "apc_injection".to_string(),
+            DetectionCategory::MemexecLoader => "memexec_loader".to_string(),
+            DetectionCategory::ExfilSchema => "exfil_schema".to_string(),
+            DetectionCategory::SocketIOC2 => "socketio_c2".to_string(),
+            DetectionCategory::Unknown => "unknown".to_string(),
+        }
+    }
+    
+    /// Apply conditional rules to adjust score
+    fn apply_conditional_rules(&self, current_score: f32, findings: &[Finding]) -> f32 {
+        let mut final_score = current_score;
+        
+        // Build detector score map
+        let mut detector_scores: HashMap<String, f32> = HashMap::new();
+        let mut detector_counts: HashMap<String, u32> = HashMap::new();
+        
+        for finding in findings {
+            let name = self.category_to_detector_name(&finding.category);
+            *detector_scores.entry(name.clone()).or_insert(0.0) += 1.0;
+            *detector_counts.entry(name).or_insert(0) += 1;
+        }
+        
+        // Evaluate each rule
+        for rule in &self.config.conditional_rules {
+            if self.evaluate_condition(rule, &detector_scores, &detector_counts, final_score) {
+                final_score = self.apply_rule_action(rule, final_score);
+            }
+        }
+        
+        final_score
+    }
+    
+    /// Evaluate a conditional rule's condition
+    fn evaluate_condition(
+        &self,
+        rule: &ConditionalRule,
+        detector_scores: &HashMap<String, f32>,
+        detector_counts: &HashMap<String, u32>,
+        final_score: f32,
+    ) -> bool {
+        // Simple condition parser
+        // Supports: AND, OR, comparisons
+        let condition = &rule.condition;
+        
+        // Handle AND
+        if condition.contains(" AND ") {
+            let parts: Vec<&str> = condition.split(" AND ").collect();
+            return parts.iter().all(|part| {
+                self.evaluate_simple_condition(part.trim(), detector_scores, detector_counts, final_score)
+            });
+        }
+        
+        // Handle OR
+        if condition.contains(" OR ") {
+            let parts: Vec<&str> = condition.split(" OR ").collect();
+            return parts.iter().any(|part| {
+                self.evaluate_simple_condition(part.trim(), detector_scores, detector_counts, final_score)
+            });
+        }
+        
+        // Simple condition
+        self.evaluate_simple_condition(condition, detector_scores, detector_counts, final_score)
+    }
+    
+    /// Evaluate a simple condition (no AND/OR)
+    fn evaluate_simple_condition(
+        &self,
+        condition: &str,
+        detector_scores: &HashMap<String, f32>,
+        detector_counts: &HashMap<String, u32>,
+        final_score: f32,
+    ) -> bool {
+        // Parse: <field> <operator> <value>
+        let parts: Vec<&str> = condition.split_whitespace().collect();
+        if parts.len() != 3 {
+            return false;
+        }
+        
+        let field = parts[0];
+        let op = parts[1];
+        let value_str = parts[2];
+        
+        // Get field value
+        let field_value = self.get_field_value(field, detector_scores, detector_counts, final_score);
+        let compare_value: f32 = value_str.parse().unwrap_or(0.0);
+        
+        // Evaluate operator
+        match op {
+            "==" => (field_value - compare_value).abs() < 0.001,
+            "!=" => (field_value - compare_value).abs() >= 0.001,
+            "<" => field_value < compare_value,
+            ">" => field_value > compare_value,
+            "<=" => field_value <= compare_value,
+            ">=" => field_value >= compare_value,
+            _ => false,
+        }
+    }
+    
+    /// Get value for a field reference
+    fn get_field_value(
+        &self,
+        field: &str,
+        detector_scores: &HashMap<String, f32>,
+        detector_counts: &HashMap<String, u32>,
+        final_score: f32,
+    ) -> f32 {
+        if field == "final_score" {
+            return final_score;
+        }
+        
+        // Parse: <detector>.<field>
+        let parts: Vec<&str> = field.split('.').collect();
+        if parts.len() != 2 {
+            return 0.0;
+        }
+        
+        let detector = parts[0];
+        let field_type = parts[1];
+        
+        match field_type {
+            "score" => *detector_scores.get(detector).unwrap_or(&0.0),
+            "count" => *detector_counts.get(detector).unwrap_or(&0) as f32,
+            "detected" => {
+                let count = detector_counts.get(detector).unwrap_or(&0);
+                if *count > 0 { 1.0 } else { 0.0 }
+            },
+            _ => 0.0,
+        }
+    }
+    
+    /// Apply a rule's action to the score
+    fn apply_rule_action(&self, rule: &ConditionalRule, current_score: f32) -> f32 {
+        let action = &rule.action;
+        
+        // Parse action: <target> <op> <value>
+        // Supported: final_score = <value>, final_score += <value>, final_score *= <multiplier>
+        if action.starts_with("final_score") {
+            if action.contains(" = ") {
+                let parts: Vec<&str> = action.split(" = ").collect();
+                if parts.len() == 2 {
+                    if let Ok(value) = parts[1].parse::<f32>() {
+                        return value;
+                    }
+                }
+            } else if action.contains(" += ") {
+                let parts: Vec<&str> = action.split(" += ").collect();
+                if parts.len() == 2 {
+                    if let Ok(value) = parts[1].parse::<f32>() {
+                        return current_score + value;
+                    }
+                }
+            } else if action.contains(" *= ") {
+                let parts: Vec<&str> = action.split(" *= ").collect();
+                if parts.len() == 2 {
+                    if let Ok(multiplier) = parts[1].parse::<f32>() {
+                        return current_score * multiplier;
+                    }
+                }
+            }
+        }
+        
+        // For now, weight adjustments are handled differently
+        // This is a simplified implementation
+        current_score
     }
 
     /// Deduplicate findings by pattern similarity
