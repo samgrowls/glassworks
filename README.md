@@ -152,6 +152,52 @@ glassware-orchestrator campaign command <case-id> pause
 
 ---
 
+## 💾 Cache Management
+
+**glassware** caches scan results to avoid re-scanning the same package versions. Cache entries expire after 7 days by default.
+
+### Cache Files
+
+| File | Purpose | Default Location |
+|------|---------|------------------|
+| Scan cache | Stores scan results | `.glassware-orchestrator-cache.db` |
+| Checkpoint DB | Campaign resume data | `.glassware-checkpoints.db` |
+| LLM cache | Caches LLM responses | `.glassware-llm-cache.json` |
+
+### Cache Commands
+
+```bash
+# Show cache statistics
+glassware cache-stats
+
+# Clear all cache entries
+glassware cache-clear
+
+# Clean up expired entries only
+glassware cache-cleanup
+
+# Disable caching for a single scan
+glassware scan-npm firebase@10.7.2 --no-cache
+```
+
+### When to Clear Cache
+
+Clear the cache when:
+- Detector logic has changed and you want fresh results
+- You suspect cached findings are stale
+- Debugging detection issues
+
+```bash
+# Full cache clear
+rm -f .glassware-orchestrator-cache.db
+glassware cache-clear
+
+# Also clear checkpoints if needed
+rm -f .glassware-checkpoints.db
+```
+
+---
+
 ## 🔬 Detection Capabilities
 
 ### L1 Detectors (Primary)

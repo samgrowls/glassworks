@@ -106,6 +106,9 @@ async fn main() -> Result<()> {
         Commands::CacheCleanup => {
             cmd_cache_cleanup(&cli).await?;
         }
+        Commands::CacheClear => {
+            cmd_cache_clear(&cli).await?;
+        }
         Commands::SamplePackages { ref category, ref samples, ref output } => {
             cmd_sample_packages(&cli, category.clone(), *samples, output.as_deref()).await?;
         }
@@ -761,6 +764,19 @@ async fn cmd_cache_cleanup(cli: &Cli) -> Result<()> {
 
     if !cli.quiet {
         println!("Cleaned up {} expired cache entries", removed);
+    }
+
+    Ok(())
+}
+
+/// Cache clear command.
+async fn cmd_cache_clear(cli: &Cli) -> Result<()> {
+    let orchestrator = create_orchestrator(cli).await?;
+
+    orchestrator.clear_cache().await?;
+
+    if !cli.quiet {
+        println!("Cache cleared successfully");
     }
 
     Ok(())

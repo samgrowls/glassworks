@@ -354,6 +354,9 @@ pub enum Commands {
     /// Clean up expired cache entries.
     CacheCleanup,
 
+    /// Clear all cache entries.
+    CacheClear,
+
     /// Scan tarball files directly.
     ScanTarball {
         /// Paths to .tgz/.tar.gz files to scan.
