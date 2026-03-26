@@ -85,12 +85,25 @@ action = "final_score = 25.0"
 [settings.scoring.weights]
 invisible_char = 6.0
 glassware_pattern = 10.0
-obfuscation = 8.0
+obfuscation = 12.0  # Increased weight for obfuscation-only attacks
 blockchain_c2 = 5.0  # Reduced weight - only confirms other signals
 header_c2 = 4.0      # Reduced weight
 exfil_schema = 6.0
 locale_geofencing = 7.0
 time_delay_sandbox_evasion = 7.0
+
+# Conditional rules for high-confidence patterns
+[[settings.scoring.conditional_rules]]
+name = "obfuscation_only_attack"
+description = "High obfuscation score indicates malicious intent"
+condition = "obfuscation.score >= 8.0"
+action = "final_score *= 1.3"
+
+[[settings.scoring.conditional_rules]]
+name = "glassworm_signature"
+description = "Invisible + C2 = confirmed GlassWorm"
+condition = "invisible_char.count >= 10 AND blockchain_c2.count >= 1"
+action = "final_score = 25.0"
 
 [settings.llm]
 tier1_enabled = true
