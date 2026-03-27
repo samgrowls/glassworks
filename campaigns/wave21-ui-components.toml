@@ -1,0 +1,154 @@
+# Wave 21: UI Component Libraries Hunt (300 packages)
+#
+# Purpose: Hunt for GlassWorm in UI component ecosystem
+# Target: 300 UI component packages (Material-UI, Ant Design, Chakra, etc.)
+# Rationale: Popular UI libs are high-value targets for supply chain attacks
+#
+# Run with: glassware campaign run campaigns/wave21-ui-components.toml
+# Expected duration: ~15-20 minutes
+
+[campaign]
+name = "Wave 21 - UI Components Hunt (300 packages)"
+description = "Hunt for GlassWorm in UI component ecosystem"
+created_by = "security-team"
+priority = "high"
+tags = ["hunt", "wave21", "ui-components", "high-risk"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+
+[settings.scoring.tier_config]
+mode = "tiered"
+
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+threshold = 0.0
+weight_multiplier = 1.0
+
+[[settings.scoring.tiers]]
+tier = 2
+detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+threshold = 2.0
+weight_multiplier = 0.8
+
+[[settings.scoring.tiers]]
+tier = 3
+detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
+threshold = 10.0
+weight_multiplier = 0.8
+
+[[settings.scoring.conditional_rules]]
+name = "glassworm_signature"
+condition = "invisible_char.count >= 10 AND blockchain_c2.count >= 1"
+action = "final_score = 25.0"
+
+[settings.scoring.weights]
+invisible_char = 6.0
+glassware_pattern = 10.0
+obfuscation = 10.0
+blockchain_c2 = 5.0
+header_c2 = 4.0
+exfil_schema = 6.0
+locale_geofencing = 7.0
+time_delay_sandbox_evasion = 7.0
+
+[settings.llm]
+tier1_enabled = false
+tier2_enabled = false
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave21"
+report_dir = "reports/wave21"
+
+# ============================================================
+# Wave 21A: Evidence Validation
+# ============================================================
+[[waves]]
+id = "wave_21a"
+name = "Evidence Validation"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = ["iflow-mcp-watercrawl-watercrawl-mcp@1.3.4"]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 21B: React UI Libraries (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_21b"
+name = "React UI Libraries"
+depends_on = ["wave_21a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["react-ui", "material-ui", "antd", "chakra-ui", "react-bootstrap"]
+samples_per_keyword = 20
+max_downloads = 500000
+
+[waves.expectations]
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 21C: Vue/Angular UI (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_21c"
+name = "Vue/Angular UI"
+depends_on = ["wave_21b"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["vue-ui", "angular-ui", "vuetify", "primevue", "ng-zorro"]
+samples_per_keyword = 20
+max_downloads = 500000
+
+[waves.expectations]
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 21D: Form/Table/Chart (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_21d"
+name = "Form/Table/Chart"
+depends_on = ["wave_21c"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["react-table", "react-form", "recharts", "chartjs", "ag-grid"]
+samples_per_keyword = 20
+max_downloads = 500000
+
+[waves.expectations]
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true

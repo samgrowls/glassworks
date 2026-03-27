@@ -1,0 +1,133 @@
+# Wave 20: i18n/Translation Packages Hunt (200 packages)
+#
+# Purpose: Hunt for GlassWorm in i18n/translation ecosystem
+# Target: 200 i18n packages (translation, locale, language)
+# Rationale: Invisible chars are legitimate in i18n - perfect cover for GlassWorm
+#
+# Run with: glassware campaign run campaigns/wave20-i18n.toml
+# Expected duration: ~10-15 minutes
+
+[campaign]
+name = "Wave 20 - i18n/Translation Hunt (200 packages)"
+description = "Hunt for GlassWorm in i18n/translation ecosystem"
+created_by = "security-team"
+priority = "high"
+tags = ["hunt", "wave20", "i18n", "translation", "high-risk"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+
+[settings.scoring.tier_config]
+mode = "tiered"
+
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+threshold = 0.0
+weight_multiplier = 1.0
+
+[[settings.scoring.tiers]]
+tier = 2
+detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+threshold = 2.0
+weight_multiplier = 0.8
+
+[[settings.scoring.tiers]]
+tier = 3
+detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
+threshold = 10.0
+weight_multiplier = 0.8
+
+[[settings.scoring.conditional_rules]]
+name = "glassworm_signature"
+condition = "invisible_char.count >= 10 AND blockchain_c2.count >= 1"
+action = "final_score = 25.0"
+
+[settings.scoring.weights]
+invisible_char = 6.0
+glassware_pattern = 10.0
+obfuscation = 10.0
+blockchain_c2 = 5.0
+header_c2 = 4.0
+exfil_schema = 6.0
+locale_geofencing = 7.0
+time_delay_sandbox_evasion = 7.0
+
+[settings.llm]
+tier1_enabled = false
+tier2_enabled = false
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave20"
+report_dir = "reports/wave20"
+
+# ============================================================
+# Wave 20A: Evidence Validation
+# ============================================================
+[[waves]]
+id = "wave_20a"
+name = "Evidence Validation"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = ["iflow-mcp-watercrawl-watercrawl-mcp@1.3.4"]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = false
+
+# ============================================================
+# Wave 20B: i18n Libraries (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_20b"
+name = "i18n Libraries"
+depends_on = ["wave_20a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["i18n", "internationalization", "i18next", "react-intl", "polyglot"]
+samples_per_keyword = 20
+max_downloads = 500000
+
+[waves.expectations]
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true
+
+# ============================================================
+# Wave 20C: Translation/Localization (100 packages)
+# ============================================================
+[[waves]]
+id = "wave_20c"
+name = "Translation/Localization"
+depends_on = ["wave_20b"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["translation", "localization", "l10n", "translate", "gettext"]
+samples_per_keyword = 20
+max_downloads = 500000
+
+[waves.expectations]
+min_threat_score = 7.0
+
+[waves.reporting]
+include_clean_summary = true
