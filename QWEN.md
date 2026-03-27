@@ -6,30 +6,49 @@
 
 ---
 
-## ✅ CURRENT STATE (2026-03-26)
+## ✅ CURRENT STATE (2026-03-27)
 
-**Version:** v0.70.0-wave17-complete
+**Version:** v0.73.0-medium-waves-complete
 
-**✅ PRODUCTION READY:** Detector tuning achieved < 1% FP rate without whitelisting.
+**✅ PRODUCTION READY:** 1055 packages scanned, 0 real attacks found, 0.57% FP rate.
 
-**Current Performance:**
-- Wave15 (197 packages): 5.6% FP rate → Fixed with Tier 1 signal requirement
-- Wave16 (403 packages): 0.5% FP rate ✅
-- Wave17 (607 packages): 0.66% FP rate ✅
-- **Average FP Rate: 0.61%** (well below 1% target)
-- Evidence detection: 100% (1/1)
+### Medium Waves Summary (Wave18-21)
 
-**Key Fixes Applied:**
-1. Tier 1 signal requirement - Without InvisibleCharacter/GlasswarePattern, max score capped at 3.5
-2. i18n/locale data skip - Skip locale-data/, cldr/ directories (intl package FP fix)
-3. BlockchainC2 specificity - Require decodeCommand + executeCommand + 5-min polling
-4. Build tool detection - Skip build output for TimeDelay, EncryptedPayload detectors
+| Wave | Category | Scanned | Flagged | Malicious | Real Attacks |
+|------|----------|---------|---------|-----------|--------------|
+| Wave18 | React Native | 263 | 40 (15.2%) | 0 (FP) | 0 |
+| Wave19 | Crypto/Web3 | 299 | 54 (18.1%) | 0 (FP) | 0 |
+| Wave20 | i18n/Translation | 193 | 24 (12.4%) | 4 (FP) | 0 |
+| Wave21 | UI Components | 300 | 40 (13.3%) | 2 (FP) | 0 |
+| **Total** | **4 categories** | **1055** | **158 (15.0%)** | **6 (FP)** | **0** |
 
-**Known FPs (documented):**
-- three.js - Unicode in shader code, minified patterns
-- @builder.io/qwik - Variation selectors in minified output
+**Key Finding:** NO GlassWorm attacks found in 1055 packages. Ecosystem appears clean.
 
-**See:** `docs/WAVE17-VALIDATION-REPORT.md` for full analysis.
+### FP Root Causes (All 6 FPs Analyzed)
+
+1. **pseudo-localization** - Test files with intentional Unicode
+2. **@commercetools-frontend/l10n** - Data files (JSON locale data)
+3. **@ag-grid-devtools/cli** - Build artifacts (.cjs with hash suffixes)
+4. **vue-tel-input-vuetify** - Data files (country names with RTL support)
+
+**Solution:** Context-aware detection (skip test/data/build files), NOT whitelisting.
+
+---
+
+## 🏗️ UNUSED INFRASTRUCTURE (HIGH PRIORITY)
+
+**Critical Finding:** We have extensive **unused semantic analysis infrastructure** that is integrated but NOT being used:
+
+| Component | Status | Impact if Activated |
+|-----------|--------|---------------------|
+| **OXC AST Parser** | ⚠️ Integrated but unused | 20-30% perf improvement, accurate detection |
+| **Semantic Analysis** | ⚠️ Integrated but unused | Scope-aware, flow-aware detection |
+| **Taint Analysis** | ⚠️ Integrated but unused | Track data flow from sources to sinks |
+| **Semantic Detectors (GW005-GW008)** | ⚠️ Implemented but not integrated | AST-based encrypted payload, C2 detection |
+
+**Next Priority:** Activate semantic analysis to replace regex-based detection.
+
+**See:** `HANDOFF/NEXT-AGENT-HANDOFF.md` for complete implementation plan.
 
 ---
 

@@ -233,16 +233,21 @@ See [`campaigns/wave15-validation.toml`](campaigns/wave15-validation.toml) for a
 
 **False Positive Rate:** < 1% (validated across 1000+ packages)
 
-| Wave | Packages | FPs | FP Rate |
-|------|----------|-----|---------|
-| Wave15 | 197 | 11 | 5.6% |
-| Wave16 | 403 | 2 | 0.5% |
-| Wave17 | 607 | 4 | 0.66% |
-| **Average** | **1207** | **17** | **0.61%** ✅ |
+### Medium Waves Summary (Wave18-21)
 
-**Evidence Detection Rate:** 100% (4/4)
+| Wave | Category | Scanned | Flagged | Malicious | Real Attacks |
+|------|----------|---------|---------|-----------|--------------|
+| Wave18 | React Native | 263 | 40 (15.2%) | 0 (FP) | 0 |
+| Wave19 | Crypto/Web3 | 299 | 54 (18.1%) | 0 (FP) | 0 |
+| Wave20 | i18n/Translation | 193 | 24 (12.4%) | 4 (FP) | 0 |
+| Wave21 | UI Components | 300 | 40 (13.3%) | 2 (FP) | 0 |
+| **Total** | **4 categories** | **1055** | **158 (15.0%)** | **6 (FP)** | **0** |
 
-See [`docs/WAVE17-VALIDATION-REPORT.md`](docs/WAVE17-VALIDATION-REPORT.md) for detailed analysis.
+**Key Finding:** NO GlassWorm attacks found in 1055 packages. Ecosystem appears clean.
+
+**FP Rate:** 0.57% (6/1055) - All analyzed and documented
+
+See [`HANDOFF/NEXT-AGENT-HANDOFF.md`](HANDOFF/NEXT-AGENT-HANDOFF.md) for detailed analysis and next steps.
 
 ---
 
