@@ -1,0 +1,379 @@
+# 10k Package GlassWorm Hunt - Master Campaign
+
+**Purpose:** Large-scale GlassWorm detection across 10,000 npm packages
+**Expected Duration:** 8-12 hours
+**Priority:** Critical
+
+---
+
+[campaign]
+name = "10k Package GlassWorm Hunt"
+description = "Large-scale GlassWorm detection across 10,000 npm packages"
+created_by = "security-team"
+priority = "critical"
+tags = ["hunt", "10k", "large-scale"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+tier_config = { mode = "tiered" }
+
+# Tier 1: Primary signals (REQUIRED for high scores)
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern"]
+threshold = 0.0
+weight_multiplier = 1.0
+
+# Tier 2: Secondary confirmation
+[[settings.scoring.tiers]]
+tier = 2
+detectors = ["header_c2", "exfil_schema", "blockchain_c2", "obfuscation"]
+threshold = 2.0
+weight_multiplier = 0.8
+
+# Tier 3: Behavioral indicators
+[[settings.scoring.tiers]]
+tier = 3
+detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
+threshold = 10.0
+weight_multiplier = 0.8
+
+[settings.scoring.weights]
+invisible_char = 6.0
+glassware_pattern = 10.0
+obfuscation = 10.0
+blockchain_c2 = 5.0
+header_c2 = 4.0
+exfil_schema = 6.0
+locale_geofencing = 7.0
+time_delay_sandbox_evasion = 7.0
+
+[settings.llm]
+tier1_enabled = false
+tier2_enabled = false
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/10k-scan"
+report_dir = "reports/10k-scan"
+
+# ============================================================
+# Wave 1: Evidence Validation
+# ============================================================
+[[waves]]
+id = "wave_1"
+name = "Evidence Validation"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "tarballs"
+list = [
+    "evidence/iflow-mcp-watercrawl-watercrawl-mcp-1.3.4.tgz",
+]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+
+# ============================================================
+# Wave 2: Web Frameworks (2500 packages)
+# ============================================================
+[[waves]]
+id = "wave_2"
+name = "Web Frameworks"
+depends_on = ["wave_1"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["react"]
+samples_per_keyword = 500
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["vue"]
+samples_per_keyword = 500
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["angular"]
+samples_per_keyword = 500
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["svelte"]
+samples_per_keyword = 500
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["next"]
+samples_per_keyword = 500
+max_downloads = 500000
+
+[waves.expectations]
+max_malicious_count = 50
+
+# ============================================================
+# Wave 3: Build Tools (1500 packages)
+# ============================================================
+[[waves]]
+id = "wave_3"
+name = "Build Tools"
+depends_on = ["wave_2"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["webpack"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["babel"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["vite"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["rollup"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["esbuild"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[waves.expectations]
+max_malicious_count = 30
+
+# ============================================================
+# Wave 4: Testing Tools (1500 packages)
+# ============================================================
+[[waves]]
+id = "wave_4"
+name = "Testing Tools"
+depends_on = ["wave_3"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["jest"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["mocha"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["cypress"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["playwright"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["vitest"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[waves.expectations]
+max_malicious_count = 30
+
+# ============================================================
+# Wave 5: State Management (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_5"
+name = "State Management"
+depends_on = ["wave_4"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["redux"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["mobx"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["zustand"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["recoil"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["pinia"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[waves.expectations]
+max_malicious_count = 20
+
+# ============================================================
+# Wave 6: Utility Libraries (1500 packages)
+# ============================================================
+[[waves]]
+id = "wave_6"
+name = "Utility Libraries"
+depends_on = ["wave_5"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["lodash"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["axios"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["moment"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["chalk"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["debug"]
+samples_per_keyword = 300
+max_downloads = 500000
+
+[waves.expectations]
+max_malicious_count = 30
+
+# ============================================================
+# Wave 7: CLI Tools (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_7"
+name = "CLI Tools"
+depends_on = ["wave_6"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["commander"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["yargs"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["inquirer"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["ora"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["chalk"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[waves.expectations]
+max_malicious_count = 20
+
+# ============================================================
+# Wave 8: Security & Crypto (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_8"
+name = "Security & Crypto"
+depends_on = ["wave_7"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["crypto"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["bcrypt"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["jsonwebtoken"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["helmet"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[[waves.sources]]
+type = "npm_search"
+keywords = ["passport"]
+samples_per_keyword = 200
+max_downloads = 500000
+
+[waves.expectations]
+max_malicious_count = 20

@@ -1,10 +1,7 @@
 # Wave 24: Web Frameworks & State Management (2000 packages)
-
-**Purpose:** Hunt for GlassWorm in web frameworks and state management libraries
-**Rationale:** Core dependencies with massive downstream impact
-**Expected Duration:** ~2-3 hours
-
----
+# Purpose: Hunt for GlassWorm in web frameworks and state management libraries
+# Rationale: Core dependencies with massive downstream impact
+# Expected Duration: ~2-3 hours
 
 [campaign]
 name = "Wave 24 - Web Frameworks & State Management"
@@ -26,13 +23,13 @@ tier_config = { mode = "tiered" }
 
 [[settings.scoring.tiers]]
 tier = 1
-detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+detectors = ["invisible_char", "glassware_pattern"]
 threshold = 0.0
 weight_multiplier = 1.0
 
 [[settings.scoring.tiers]]
 tier = 2
-detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+detectors = ["header_c2", "exfil_schema", "blockchain_c2", "obfuscation"]
 threshold = 2.0
 weight_multiplier = 0.8
 
@@ -90,29 +87,34 @@ depends_on = ["wave_24a"]
 mode = "hunt"
 
 [[waves.sources]]
-type = "npm-search"
-query = "react"
-limit = 200
+type = "npm_search"
+keywords = ["react"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "vue"
-limit = 200
+type = "npm_search"
+keywords = ["vue"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "angular"
-limit = 200
+type = "npm_search"
+keywords = ["angular"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "svelte"
-limit = 200
+type = "npm_search"
+keywords = ["svelte"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "next"
-limit = 200
+type = "npm_search"
+keywords = ["next"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [waves.expectations]
 must_flag_all = false
@@ -129,29 +131,34 @@ depends_on = ["wave_24b"]
 mode = "hunt"
 
 [[waves.sources]]
-type = "npm-search"
-query = "redux"
-limit = 200
+type = "npm_search"
+keywords = ["redux"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "mobx"
-limit = 200
+type = "npm_search"
+keywords = ["mobx"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "zustand"
-limit = 200
+type = "npm_search"
+keywords = ["zustand"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "recoil"
-limit = 200
+type = "npm_search"
+keywords = ["recoil"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "jotai"
-limit = 200
+type = "npm_search"
+keywords = ["jotai"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [waves.expectations]
 must_flag_all = false

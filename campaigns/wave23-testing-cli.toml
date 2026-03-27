@@ -1,10 +1,7 @@
 # Wave 23: Testing Frameworks & CLI Tools (2000 packages)
-
-**Purpose:** Hunt for GlassWorm in testing frameworks and CLI tools
-**Rationale:** High developer trust, often excluded from security scans
-**Expected Duration:** ~2-3 hours
-
----
+# Purpose: Hunt for GlassWorm in testing frameworks and CLI tools
+# Rationale: High developer trust, often excluded from security scans
+# Expected Duration: ~2-3 hours
 
 [campaign]
 name = "Wave 23 - Testing & CLI Tools Hunt"
@@ -26,13 +23,13 @@ tier_config = { mode = "tiered" }
 
 [[settings.scoring.tiers]]
 tier = 1
-detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+detectors = ["invisible_char", "glassware_pattern"]
 threshold = 0.0
 weight_multiplier = 1.0
 
 [[settings.scoring.tiers]]
 tier = 2
-detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+detectors = ["header_c2", "exfil_schema", "blockchain_c2", "obfuscation"]
 threshold = 2.0
 weight_multiplier = 0.8
 
@@ -90,29 +87,34 @@ depends_on = ["wave_23a"]
 mode = "hunt"
 
 [[waves.sources]]
-type = "npm-search"
-query = "mocha"
-limit = 200
+type = "npm_search"
+keywords = ["mocha"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "chai"
-limit = 200
+type = "npm_search"
+keywords = ["chai"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "sinon"
-limit = 200
+type = "npm_search"
+keywords = ["sinon"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "cypress"
-limit = 200
+type = "npm_search"
+keywords = ["cypress"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "playwright"
-limit = 200
+type = "npm_search"
+keywords = ["playwright"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [waves.expectations]
 must_flag_all = false
@@ -129,29 +131,34 @@ depends_on = ["wave_23b"]
 mode = "hunt"
 
 [[waves.sources]]
-type = "npm-search"
-query = "commander"
-limit = 200
+type = "npm_search"
+keywords = ["commander"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "yargs"
-limit = 200
+type = "npm_search"
+keywords = ["yargs"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "chalk"
-limit = 200
+type = "npm_search"
+keywords = ["chalk"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "ora"
-limit = 200
+type = "npm_search"
+keywords = ["ora"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "inquirer"
-limit = 200
+type = "npm_search"
+keywords = ["inquirer"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [waves.expectations]
 must_flag_all = false

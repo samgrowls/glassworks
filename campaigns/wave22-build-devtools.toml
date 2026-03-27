@@ -1,10 +1,7 @@
 # Wave 22: Build Tools & DevTools Hunt (2000 packages)
-
-**Purpose:** Hunt for GlassWorm in build tools and DevTools ecosystem
-**Rationale:** Build tools have high trust and wide distribution - prime targets
-**Expected Duration:** ~2-3 hours
-
----
+# Purpose: Hunt for GlassWorm in build tools and DevTools ecosystem
+# Rationale: Build tools have high trust and wide distribution - prime targets
+# Expected Duration: ~2-3 hours
 
 [campaign]
 name = "Wave 22 - Build Tools & DevTools Hunt"
@@ -24,18 +21,21 @@ malicious_threshold = 7.0
 suspicious_threshold = 4.0
 tier_config = { mode = "tiered" }
 
+# Tier 1: Primary signals (always runs) - REQUIRED for high scores
 [[settings.scoring.tiers]]
 tier = 1
-detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+detectors = ["invisible_char", "glassware_pattern"]
 threshold = 0.0
 weight_multiplier = 1.0
 
+# Tier 2: Secondary confirmation (only if tier 1 score >= 2.0)
 [[settings.scoring.tiers]]
 tier = 2
-detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+detectors = ["header_c2", "exfil_schema", "blockchain_c2", "obfuscation"]
 threshold = 2.0
 weight_multiplier = 0.8
 
+# Tier 3: Behavioral indicators (only if tier 1+2 score >= 10.0)
 [[settings.scoring.tiers]]
 tier = 3
 detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
@@ -90,29 +90,34 @@ depends_on = ["wave_22a"]
 mode = "hunt"
 
 [[waves.sources]]
-type = "npm-search"
-query = "webpack"
-limit = 200
+type = "npm_search"
+keywords = ["webpack"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "babel"
-limit = 200
+type = "npm_search"
+keywords = ["babel"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "rollup"
-limit = 200
+type = "npm_search"
+keywords = ["rollup"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "vite"
-limit = 200
+type = "npm_search"
+keywords = ["vite"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "esbuild"
-limit = 200
+type = "npm_search"
+keywords = ["esbuild"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [waves.expectations]
 must_flag_all = false
@@ -129,29 +134,34 @@ depends_on = ["wave_22b"]
 mode = "hunt"
 
 [[waves.sources]]
-type = "npm-search"
-query = "eslint"
-limit = 200
+type = "npm_search"
+keywords = ["eslint"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "prettier"
-limit = 200
+type = "npm_search"
+keywords = ["prettier"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "typescript"
-limit = 200
+type = "npm_search"
+keywords = ["typescript"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "jest"
-limit = 200
+type = "npm_search"
+keywords = ["jest"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [[waves.sources]]
-type = "npm-search"
-query = "debug"
-limit = 200
+type = "npm_search"
+keywords = ["debug"]
+samples_per_keyword = 200
+max_downloads = 500000
 
 [waves.expectations]
 must_flag_all = false
