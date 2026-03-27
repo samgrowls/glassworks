@@ -18,24 +18,26 @@ cache_ttl_days = 7
 [settings.scoring]
 malicious_threshold = 7.0
 suspicious_threshold = 4.0
-tier_config = { mode = "tiered" }
+
+[settings.scoring.tier_config]
+mode = "tiered"
 
 # Tier 1: Primary signals (REQUIRED for high scores)
-[[settings.scoring.tiers]]
+[[settings.scoring.tier_config.tiers]]
 tier = 1
 detectors = ["invisible_char", "glassware_pattern"]
 threshold = 0.0
 weight_multiplier = 1.0
 
 # Tier 2: Secondary confirmation (requires Tier 1 signal)
-[[settings.scoring.tiers]]
+[[settings.scoring.tier_config.tiers]]
 tier = 2
 detectors = ["header_c2", "exfil_schema", "blockchain_c2", "obfuscation"]
 threshold = 2.0
 weight_multiplier = 0.8
 
 # Tier 3: Behavioral indicators
-[[settings.scoring.tiers]]
+[[settings.scoring.tier_config.tiers]]
 tier = 3
 detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
 threshold = 10.0

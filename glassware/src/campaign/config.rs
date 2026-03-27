@@ -9,6 +9,7 @@ use std::path::Path;
 use tracing::{debug, info};
 
 use crate::campaign::types::{Priority, WaveMode, SortOrder, GitHubSort};
+use crate::scoring_config::{TierConfig, DetectorWeights, ConditionalRule};
 
 /// Complete campaign configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -498,6 +499,15 @@ pub struct ScoringConfig {
     /// Threat score threshold for "suspicious" classification
     #[serde(default = "default_suspicious_threshold")]
     pub suspicious_threshold: f32,
+    /// Tiered scoring configuration
+    #[serde(default)]
+    pub tier_config: TierConfig,
+    /// Detector weights
+    #[serde(default)]
+    pub weights: DetectorWeights,
+    /// Conditional scoring rules
+    #[serde(default)]
+    pub conditional_rules: Vec<ConditionalRule>,
 }
 
 impl Default for ScoringConfig {
@@ -505,6 +515,9 @@ impl Default for ScoringConfig {
         Self {
             malicious_threshold: default_malicious_threshold(),
             suspicious_threshold: default_suspicious_threshold(),
+            tier_config: TierConfig::default(),
+            weights: DetectorWeights::default(),
+            conditional_rules: Vec::new(),
         }
     }
 }

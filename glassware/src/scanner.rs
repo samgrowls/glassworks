@@ -75,6 +75,8 @@ pub struct ScannerConfig {
     pub threat_threshold: f32,
     /// GlassWorm configuration (scoring, detectors, whitelist, etc.)
     pub glassware_config: glassware_core::GlasswareConfig,
+    /// Scoring configuration with tiered scoring support
+    pub scoring: crate::scoring_config::ScoringConfig,
 }
 
 impl Default for ScannerConfig {
@@ -114,6 +116,7 @@ impl Default for ScannerConfig {
             ],
             threat_threshold: 5.0,  // Updated for better sensitivity
             glassware_config: glassware_core::GlasswareConfig::default(),
+            scoring: crate::scoring_config::ScoringConfig::default(),
         }
     }
 }
@@ -160,6 +163,7 @@ impl From<crate::config::GlasswareConfig> for ScannerConfig {
             ],
             threat_threshold: config.scoring.malicious_threshold,
             glassware_config: core_config,
+            scoring: crate::scoring_config::ScoringConfig::default(),  // Use default for From impl
         }
     }
 }
@@ -205,8 +209,8 @@ impl Scanner {
 
         let findings = self.scan_directory(&package.path).await?;
 
-        // Use new ScoringEngine with deduplication, LLM feedback, and reputation
-        let scoring_config = ScoringConfig::default();
+        // Use ScoringEngine with campaign config (includes tiered scoring)
+        let scoring_config = self.config.scoring.clone();  // ✅ Use campaign config
         let package_context = PackageContext::new(package.name.clone(), package.version.clone());
         let scoring_engine = ScoringEngine::new(scoring_config, package_context);
         let threat_score = scoring_engine.calculate_score(&findings, None);
@@ -427,7 +431,7 @@ impl Scanner {
         let findings = self.scan_directory_for_tarball(scan_path.to_str().unwrap()).await?;
 
         // Calculate threat score using new ScoringEngine
-        let scoring_config = ScoringConfig::default();
+        let scoring_config = self.config.scoring.clone();  // ✅ Use campaign config
         let package_context = PackageContext::new(name.clone(), version.clone());
         let scoring_engine = ScoringEngine::new(scoring_config, package_context);
         let threat_score = scoring_engine.calculate_score(&findings, None);

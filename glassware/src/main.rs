@@ -17,6 +17,7 @@ use glassware::{
     scan_registry::{ScanRegistry, ScanStatus},
     cli_validator, config::GlasswareConfig,
     campaign::{CampaignResult, ReportGenerator, ConfigSummary, CheckpointManager, CampaignCheckpoint},
+    scoring_config::ScoringConfig,
 };
 use glassware_core::Severity;
 use tracing::{error, info, warn, Level};
@@ -973,6 +974,7 @@ async fn create_orchestrator(cli: &Cli) -> Result<Orchestrator> {
                     jpd_author: 3.0,
                 },
             },
+            scoring: ScoringConfig::default(),  // Add scoring config for tiered scoring
         },
         cache_db_path: if cli.no_cache {
             None

@@ -45,17 +45,32 @@ impl WaveExecutor {
         let scoring_config = crate::scoring_config::ScoringConfig {
             malicious_threshold: settings.scoring.malicious_threshold,
             suspicious_threshold: settings.scoring.suspicious_threshold,
-            category_weight: 2.0,
-            critical_weight: 3.0,
-            high_weight: 1.5,
-            tier_config: settings.scoring.tier_config.clone(),  // Use tiered scoring from campaign config
+            tier_config: crate::scoring_config::TierConfig {
+                mode: settings.scoring.tier_config.mode.clone(),
+                tiers: settings.scoring.tier_config.tiers.clone(),
+            },
+            weights: settings.scoring.weights.clone(),
+            conditional_rules: settings.scoring.conditional_rules.clone(),
+            // Use defaults for legacy/other fields
+            ..Default::default()
         };
+
+        // Log scoring config for debugging
+        info!("Scoring config: malicious_threshold={}, tier_mode={:?}", 
+            scoring_config.malicious_threshold, scoring_config.tier_config.mode);
+        info!("Number of tiers: {}", scoring_config.tier_config.tiers.len());
 
         let scanner = crate::scanner::Scanner::with_config(
             crate::scanner::ScannerConfig {
                 max_concurrent: max_concurrency,
                 glassware_config: glassware_core::GlasswareConfig {
-                    scoring: scoring_config,
+                    scoring: glassware_core::ScoringConfig {
+                        malicious_threshold: scoring_config.malicious_threshold,
+                        suspicious_threshold: scoring_config.suspicious_threshold,
+                        category_weight: 2.0,
+                        critical_weight: 3.0,
+                        high_weight: 1.5,
+                    },
                     detectors: glassware_core::DetectorWeights {
                         invisible_char: 1.0,
                         homoglyph: 1.0,
@@ -70,6 +85,7 @@ impl WaveExecutor {
                         jpd_author: 3.0,
                     },
                 },
+                scoring: scoring_config.clone(),  // ✅ Pass scoring config for tiered scoring
                 ..Default::default()
             }
         );
