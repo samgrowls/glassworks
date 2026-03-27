@@ -41,13 +41,14 @@ impl WaveExecutor {
         event_bus: EventBus,
         max_concurrency: usize,
     ) -> Self {
-        // Convert campaign scoring to glassware-core format
-        let scoring_config = glassware_core::config::ScoringConfig {
+        // Convert campaign scoring to glassware/src format (has tiered scoring)
+        let scoring_config = crate::scoring_config::ScoringConfig {
             malicious_threshold: settings.scoring.malicious_threshold,
             suspicious_threshold: settings.scoring.suspicious_threshold,
             category_weight: 2.0,
             critical_weight: 3.0,
             high_weight: 1.5,
+            tier_config: settings.scoring.tier_config.clone(),  // Use tiered scoring from campaign config
         };
 
         let scanner = crate::scanner::Scanner::with_config(
