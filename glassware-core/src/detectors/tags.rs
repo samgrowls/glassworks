@@ -6,6 +6,7 @@
 //! - U+E0000-U+E007F: Tags (language tags, etc.)
 
 use crate::config::UnicodeConfig;
+use crate::context_filter::{classify_file_by_path, FileClassification};
 use crate::detector::{Detector, DetectorMetadata, DetectorTier, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::ir::FileIR;
@@ -117,6 +118,23 @@ impl Detector for UnicodeTagDetector {
     }
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        // Skip test/data/build files to reduce false positives
+        match classify_file_by_path(Path::new(&ir.metadata.path)) {
+            FileClassification::Test => {
+                tracing::debug!("UnicodeTag: Skipping test file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Data => {
+                tracing::debug!("UnicodeTag: Skipping data file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::BuildOutput => {
+                tracing::debug!("UnicodeTag: Skipping build output: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Production => {}  // Continue detection
+        }
+
         self.detect_impl(ir.content(), &ir.metadata.path)
     }
 

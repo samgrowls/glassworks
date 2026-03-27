@@ -3,8 +3,10 @@
 //! Detects encrypted payload patterns using semantic analysis and taint tracking.
 //! This is the semantic version of the regex-based encrypted_payload_detector.
 
+use crate::context_filter::{classify_file, FileClassification};
 use crate::detector::SemanticDetector;
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::semantic::build_semantic;
 use crate::taint::{FlowKind, TaintFlow, TaintSink, TaintSource};
 use std::path::Path;
 
@@ -34,12 +36,32 @@ impl SemanticDetector for Gw005SemanticDetector {
 
     fn detect_semantic(
         &self,
-        _source_code: &str,
+        source_code: &str,
         path: &Path,
         flows: &[TaintFlow],
         _sources: &[TaintSource],
         _sinks: &[TaintSink],
     ) -> Vec<Finding> {
+        // Build semantic analysis for context classification
+        if let Some(analysis) = build_semantic(source_code, path) {
+            // Skip test/data/build files - these are common false positive sources
+            match classify_file(&analysis, path) {
+                FileClassification::Test => {
+                    tracing::debug!("GW005: Skipping test file: {:?}", path);
+                    return vec![];
+                }
+                FileClassification::Data => {
+                    tracing::debug!("GW005: Skipping data file: {:?}", path);
+                    return vec![];
+                }
+                FileClassification::BuildOutput => {
+                    tracing::debug!("GW005: Skipping build output: {:?}", path);
+                    return vec![];
+                }
+                FileClassification::Production => {}  // Continue detection
+            }
+        }
+
         flows
             .iter()
             .filter_map(|flow| {
@@ -68,7 +90,7 @@ impl SemanticDetector for Gw005SemanticDetector {
 
                 Some(Finding::new(
                     &path.to_string_lossy(),
-                    byte_offset_to_line(_source_code, flow.source.span().0),
+                    byte_offset_to_line(source_code, flow.source.span().0),
                     1,
                     0,
                     '\0',

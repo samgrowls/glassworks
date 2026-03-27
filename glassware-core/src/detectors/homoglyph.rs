@@ -6,6 +6,7 @@ use crate::config::UnicodeConfig;
 use crate::confusables::data::{
     get_base_char, get_confusable_script, get_similarity, is_confusable,
 };
+use crate::context_filter::{classify_file_by_path, FileClassification};
 use crate::detector::{Detector, DetectorMetadata, DetectorTier, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::ir::FileIR;
@@ -172,6 +173,23 @@ impl Detector for HomoglyphDetector {
     }
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        // Skip test/data/build files to reduce false positives
+        match classify_file_by_path(Path::new(&ir.metadata.path)) {
+            FileClassification::Test => {
+                tracing::debug!("Homoglyph: Skipping test file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Data => {
+                tracing::debug!("Homoglyph: Skipping data file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::BuildOutput => {
+                tracing::debug!("Homoglyph: Skipping build output: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Production => {}  // Continue detection
+        }
+
         self.detect_impl(ir.content(), &ir.metadata.path)
     }
 

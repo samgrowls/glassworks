@@ -2,6 +2,7 @@
 //!
 //! Wraps the existing Unicode scanning logic to implement the Detector trait.
 
+use crate::context_filter::{classify_file_by_path, FileClassification};
 use crate::detector::{Detector, DetectorMetadata};
 use crate::finding::Finding;
 use crate::ir::FileIR;
@@ -16,6 +17,8 @@ use std::path::Path;
 /// - Bidirectional override detection
 /// - Glassware pattern detection
 /// - Unicode tag detection
+///
+/// Context-Aware: Skips test files, data files, and build output to reduce false positives.
 pub struct UnicodeDetector;
 
 impl Detector for UnicodeDetector {
@@ -24,6 +27,23 @@ impl Detector for UnicodeDetector {
     }
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        // Skip test/data/build files to reduce false positives
+        match classify_file_by_path(Path::new(&ir.metadata.path)) {
+            FileClassification::Test => {
+                tracing::debug!("Unicode: Skipping test file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Data => {
+                tracing::debug!("Unicode: Skipping data file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::BuildOutput => {
+                tracing::debug!("Unicode: Skipping build output: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Production => {}  // Continue detection
+        }
+
         // Use the existing UnicodeScanner to perform the scan
         // Note: UnicodeScanner still uses its own internal logic
         // The IR's unicode analysis is available via ir.unicode() if needed
@@ -35,7 +55,7 @@ impl Detector for UnicodeDetector {
         DetectorMetadata {
             name: "unicode".to_string(),
             version: "1.0.0".to_string(),
-            description: "Detects Unicode-based attacks including invisible characters, homoglyphs, and bidirectional overrides".to_string().to_string(),
+            description: "Detects Unicode-based attacks including invisible characters, homoglyphs, and bidirectional overrides (context-aware)".to_string(),
         }
     }
 }

@@ -11,10 +11,12 @@
 use regex::Regex;
 
 use crate::config::UnicodeConfig;
+use crate::context_filter::{classify_file_by_path, FileClassification};
 use crate::decoder::{decode_vs_stego, find_vs_runs, is_vs_codepoint};
 use crate::detector::{Detector, DetectorMetadata, DetectorTier};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::ir::FileIR;
+use std::path::Path;
 
 /// Minimum run length of VS codepoints to consider as stego payload
 const DEFAULT_MIN_RUN_LENGTH: usize = 16;
@@ -778,6 +780,23 @@ impl Detector for GlasswareDetector {
     }
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        // Skip test/data/build files to reduce false positives
+        match classify_file_by_path(Path::new(&ir.metadata.path)) {
+            FileClassification::Test => {
+                tracing::debug!("Glassware: Skipping test file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Data => {
+                tracing::debug!("Glassware: Skipping data file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::BuildOutput => {
+                tracing::debug!("Glassware: Skipping build output: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Production => {}  // Continue detection
+        }
+
         self.detect_impl(ir.content(), &ir.metadata.path)
     }
 

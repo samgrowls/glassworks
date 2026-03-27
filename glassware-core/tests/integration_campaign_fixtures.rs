@@ -14,12 +14,23 @@ fn scan_fixture(relative_path: &str) -> Vec<glassware_core::finding::Finding> {
         .join("tests")
         .join("fixtures")
         .join(relative_path);
-    
+
     let content = std::fs::read_to_string(&fixture_path)
         .unwrap_or_else(|e| panic!("Failed to read fixture {}: {}", fixture_path.display(), e));
-    
+
+    // Use a fake path for classification to avoid test fixture paths being classified as test files
+    // The fake path mimics where this file would be in a real npm package
+    // Preserve the original file extension for proper language detection
+    let fake_path = if relative_path.ends_with(".ts") || relative_path.ends_with(".tsx") {
+        Path::new("src/index.ts")
+    } else if relative_path.ends_with(".json") {
+        Path::new("src/data.json")
+    } else {
+        Path::new("src/index.js")
+    };
+
     let engine = ScanEngine::default_detectors();
-    engine.scan(&fixture_path, &content)
+    engine.scan(fake_path, &content)
 }
 
 /// Helper to check if a finding category exists in results

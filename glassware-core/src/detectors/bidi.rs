@@ -3,6 +3,7 @@
 //! Detects bidirectional text overrides that can reverse displayed text.
 
 use crate::config::UnicodeConfig;
+use crate::context_filter::{classify_file_by_path, FileClassification};
 use crate::detector::{Detector, DetectorMetadata, DetectorTier, ScanContext};
 use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::ir::FileIR;
@@ -143,6 +144,23 @@ impl Detector for BidiDetector {
     }
 
     fn detect(&self, ir: &FileIR) -> Vec<Finding> {
+        // Skip test/data/build files to reduce false positives
+        match classify_file_by_path(Path::new(&ir.metadata.path)) {
+            FileClassification::Test => {
+                tracing::debug!("Bidi: Skipping test file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Data => {
+                tracing::debug!("Bidi: Skipping data file: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::BuildOutput => {
+                tracing::debug!("Bidi: Skipping build output: {:?}", ir.metadata.path);
+                return vec![];
+            }
+            FileClassification::Production => {}  // Continue detection
+        }
+
         self.detect_impl(ir.content(), &ir.metadata.path)
     }
 

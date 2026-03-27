@@ -76,17 +76,15 @@ impl UnicodeScanner {
             || path_lower.contains("/out/")   // ClojureScript compiled output
             || path_lower.contains("/gyp/")   // GYP build files
             || path_lower.contains("/lib/");  // Compiled libraries
-        
+
         // Combined bundled check
         let is_likely_bundled = is_bundled || is_large_file;
 
-        // Skip test/fixture directories (but NOT our test fixtures under tests/fixtures/)
-        let is_test_file = (path_lower.contains("/test/")
-            || path_lower.contains("/tests/")
-            || path_lower.contains("/__tests__/")
-            || path_lower.contains("/fixtures/")
-            || path_lower.contains("/node_modules/"))
-            && !path_lower.contains("/tests/fixtures/");  // Allow our test fixtures
+        // Use context filter for test/data/build file detection (more accurate than path patterns)
+        use crate::context_filter::{classify_file_by_path, FileClassification};
+        let path = std::path::Path::new(file_path);
+        let file_classification = classify_file_by_path(path);
+        let is_test_file = matches!(file_classification, FileClassification::Test);
 
         // Run all enabled detectors
         if self.config.detectors.invisible_chars && !is_documentation && !is_test_file {

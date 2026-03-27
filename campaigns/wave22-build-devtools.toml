@@ -1,0 +1,159 @@
+# Wave 22: Build Tools & DevTools Hunt (2000 packages)
+
+**Purpose:** Hunt for GlassWorm in build tools and DevTools ecosystem
+**Rationale:** Build tools have high trust and wide distribution - prime targets
+**Expected Duration:** ~2-3 hours
+
+---
+
+[campaign]
+name = "Wave 22 - Build Tools & DevTools Hunt"
+description = "Hunt for GlassWorm in build tools and DevTools (2000 packages)"
+created_by = "security-team"
+priority = "high"
+tags = ["hunt", "wave22", "build-tools", "devtools", "high-risk"]
+
+[settings]
+concurrency = 20
+rate_limit_npm = 10.0
+cache_enabled = true
+cache_ttl_days = 7
+
+[settings.scoring]
+malicious_threshold = 7.0
+suspicious_threshold = 4.0
+tier_config = { mode = "tiered" }
+
+[[settings.scoring.tiers]]
+tier = 1
+detectors = ["invisible_char", "glassware_pattern", "obfuscation"]
+threshold = 0.0
+weight_multiplier = 1.0
+
+[[settings.scoring.tiers]]
+tier = 2
+detectors = ["header_c2", "exfil_schema", "blockchain_c2"]
+threshold = 2.0
+weight_multiplier = 0.8
+
+[[settings.scoring.tiers]]
+tier = 3
+detectors = ["locale_geofencing", "time_delay_sandbox_evasion"]
+threshold = 10.0
+weight_multiplier = 0.8
+
+[settings.scoring.weights]
+invisible_char = 6.0
+glassware_pattern = 10.0
+obfuscation = 10.0
+blockchain_c2 = 5.0
+header_c2 = 4.0
+exfil_schema = 6.0
+locale_geofencing = 7.0
+time_delay_sandbox_evasion = 7.0
+
+[settings.llm]
+tier1_enabled = false
+tier2_enabled = false
+
+[settings.output]
+formats = ["json", "markdown"]
+evidence_collection = true
+evidence_dir = "evidence/wave22"
+report_dir = "reports/wave22"
+
+# ============================================================
+# Wave 22A: Evidence Validation
+# ============================================================
+[[waves]]
+id = "wave_22a"
+name = "Evidence Validation"
+depends_on = []
+mode = "validate"
+
+[[waves.sources]]
+type = "packages"
+list = ["iflow-mcp-watercrawl-watercrawl-mcp@1.3.4"]
+
+[waves.expectations]
+must_flag_all = true
+min_threat_score = 7.0
+min_malicious_count = 1
+
+# ============================================================
+# Wave 22B: Build Tools (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_22b"
+name = "Build Tools"
+depends_on = ["wave_22a"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm-search"
+query = "webpack"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "babel"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "rollup"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "vite"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "esbuild"
+limit = 200
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 7.0
+max_malicious_count = 10
+
+# ============================================================
+# Wave 22C: DevTools (1000 packages)
+# ============================================================
+[[waves]]
+id = "wave_22c"
+name = "DevTools"
+depends_on = ["wave_22b"]
+mode = "hunt"
+
+[[waves.sources]]
+type = "npm-search"
+query = "eslint"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "prettier"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "typescript"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "jest"
+limit = 200
+
+[[waves.sources]]
+type = "npm-search"
+query = "debug"
+limit = 200
+
+[waves.expectations]
+must_flag_all = false
+max_threat_score = 7.0
+max_malicious_count = 10

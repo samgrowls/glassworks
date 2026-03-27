@@ -3,6 +3,7 @@
 //! Detects hand-rolled RC4-like cipher patterns combined with dynamic execution.
 //! Uses a hybrid approach: regex for structural indicators, OXC for scope-aware analysis.
 
+use crate::context_filter::{classify_file_by_path, FileClassification};
 use crate::detector::SemanticDetector;
 use crate::finding::{DetectionCategory, Finding, Severity};
 use crate::taint::{TaintFlow, TaintSink, TaintSource};
@@ -69,6 +70,23 @@ impl SemanticDetector for Gw007SemanticDetector {
         _sources: &[TaintSource],
         sinks: &[TaintSink],
     ) -> Vec<Finding> {
+        // Skip test/data/build files based on path - these are common false positive sources
+        match classify_file_by_path(path) {
+            FileClassification::Test => {
+                tracing::debug!("GW007: Skipping test file: {:?}", path);
+                return vec![];
+            }
+            FileClassification::Data => {
+                tracing::debug!("GW007: Skipping data file: {:?}", path);
+                return vec![];
+            }
+            FileClassification::BuildOutput => {
+                tracing::debug!("GW007: Skipping build output: {:?}", path);
+                return vec![];
+            }
+            FileClassification::Production => {}  // Continue detection
+        }
+
         let mut findings = Vec::new();
 
         // For each DynamicExec sink, check if RC4 indicators are present in its scope

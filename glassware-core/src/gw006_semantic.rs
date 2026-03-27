@@ -3,8 +3,10 @@
 //! Detects hardcoded cryptographic keys used for decryption followed by dynamic execution.
 //! This is the GlassWare Wave 6 pattern: encrypted payloads with embedded keys.
 
+use crate::context_filter::{classify_file, FileClassification};
 use crate::detector::SemanticDetector;
 use crate::finding::{DetectionCategory, Finding, Severity};
+use crate::semantic::build_semantic;
 use crate::taint::{FlowKind, TaintFlow, TaintSink, TaintSource};
 use std::path::Path;
 
@@ -40,6 +42,26 @@ impl SemanticDetector for Gw006SemanticDetector {
         _sources: &[TaintSource],
         _sinks: &[TaintSink],
     ) -> Vec<Finding> {
+        // Build semantic analysis for context classification
+        if let Some(analysis) = build_semantic(source_code, path) {
+            // Skip test/data/build files - these are common false positive sources
+            match classify_file(&analysis, path) {
+                FileClassification::Test => {
+                    tracing::debug!("GW006: Skipping test file: {:?}", path);
+                    return vec![];
+                }
+                FileClassification::Data => {
+                    tracing::debug!("GW006: Skipping data file: {:?}", path);
+                    return vec![];
+                }
+                FileClassification::BuildOutput => {
+                    tracing::debug!("GW006: Skipping build output: {:?}", path);
+                    return vec![];
+                }
+                FileClassification::Production => {}  // Continue detection
+            }
+        }
+
         flows
             .iter()
             .filter_map(|flow| {

@@ -38,6 +38,7 @@
 pub mod classify;
 pub mod config;
 pub mod confusables;
+pub mod context_filter;
 pub mod correlation;
 pub mod decoder;
 pub mod detector;
